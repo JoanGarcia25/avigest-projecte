@@ -84,20 +84,78 @@ BEGIN
             VALUES (v_id_nau, NEW.id_sensor, 'WARNING', 'Temperatura baixa a la nau',
                     CONCAT('Temperatura mesurada: ', NEW.valor, ' ºC (Mínim admès: ', v_llindar_min, ' ºC). Calefacció activada.'));
 
-        -- Temperatura normalitzada -> Apagar ventiladors si estaven encesos
+        -- Temperatura normalitzada -> Apagar ventiladors i calefactors si estaven encesos
         ELSE
             IF v_id_actuador_vent IS NOT NULL AND v_estat_vent = 'ON' THEN
                 UPDATE actuadors SET estat_actual = 'OFF' WHERE id_actuador = v_id_actuador_vent;
                 INSERT INTO registre_actuacions (id_actuador, accio, motiu, disparat_per_sensor_id)
                 VALUES (v_id_actuador_vent, 'DESACTIVAR', 'Temperatura restablerta dins dels paràmetres normals', NEW.id_sensor);
             END IF;
+
+            -- Millora: Apagar calefactors si la temperatura ja no és baixa
+            IF v_id_actuador_cal IS NOT NULL AND v_estat_cal = 'ON' THEN
+                UPDATE actuadors SET estat_actual = 'OFF' WHERE id_actuador = v_id_actuador_cal;
+                INSERT INTO registre_actuacions (id_actuador, accio, motiu, disparat_per_sensor_id)
+                VALUES (v_id_actuador_cal, 'DESACTIVAR', 'Temperatura restablerta dins dels paràmetres normals. Calefacció ja no necessària.', NEW.id_sensor);
+            END IF;
         END IF;
 
     -- =========================================================================
-    -- CAS B: Sensor de SILO DE GRA / PINSO
+    -- CAS B: Sensor d'HUMITAT
+    -- =========================================================================
+    ELSEIF v_tipus_sensor = 'humitat' THEN
+        -- Humitat per sobre del llindar màxim -> Alarma WARNING
+        IF v_llindar_max IS NOT NULL AND NEW.valor > v_llindar_max THEN
+            -- Engegar ventiladors per extreure humitat excessiva
+            SELECT id_actuador, estat_actual INTO v_id_actuador_vent, v_estat_vent
+            FROM actuadors
+            WHERE id_nau = v_id_nau AND tipus_actuador = 'ventilador' AND actiu = TRUE
+            LIMIT 1;
+
+            IF v_id_actuador_vent IS NOT NULL AND v_estat_vent = 'OFF' THEN
+                UPDATE actuadors SET estat_actual = 'ON' WHERE id_actuador = v_id_actuador_vent;
+                INSERT INTO registre_actuacions (id_actuador, accio, motiu, disparat_per_sensor_id)
+                VALUES (v_id_actuador_vent, 'ACTIVAR', CONCAT('Humitat excessiva: ', NEW.valor, ' % supera límit ', v_llindar_max, ' %'), NEW.id_sensor);
+            END IF;
+
+            INSERT INTO alarmes_incidencies (id_nau, id_sensor, nivell_criticitat, titol, descripcio)
+            VALUES (v_id_nau, NEW.id_sensor, 'WARNING', 'Humitat excessiva a la nau',
+                    CONCAT('Humitat mesurada: ', NEW.valor, ' % (Màxim admès: ', v_llindar_max, ' %). Ventilació activada per reduir la condensació.'));
+
+        -- Humitat per sota del llindar mínim -> Alarma INFO
+        ELSEIF v_llindar_min IS NOT NULL AND NEW.valor < v_llindar_min THEN
+            INSERT INTO alarmes_incidencies (id_nau, id_sensor, nivell_criticitat, titol, descripcio)
+            VALUES (v_id_nau, NEW.id_sensor, 'INFO', 'Humitat baixa a la nau',
+                    CONCAT('Humitat mesurada: ', NEW.valor, ' % (Mínim recomanat: ', v_llindar_min, ' %). Considerar humidificació o reducció de ventilació.'));
+        END IF;
+
+    -- =========================================================================
+    -- CAS C: Sensor de CO2 (Qualitat de l'aire)
+    -- =========================================================================
+    ELSEIF v_tipus_sensor = 'co2' THEN
+        -- CO2 per sobre del llindar màxim -> Alarma CRITICAL i engegar ventiladors
+        IF v_llindar_max IS NOT NULL AND NEW.valor > v_llindar_max THEN
+            SELECT id_actuador, estat_actual INTO v_id_actuador_vent, v_estat_vent
+            FROM actuadors
+            WHERE id_nau = v_id_nau AND tipus_actuador = 'ventilador' AND actiu = TRUE
+            LIMIT 1;
+
+            IF v_id_actuador_vent IS NOT NULL AND v_estat_vent = 'OFF' THEN
+                UPDATE actuadors SET estat_actual = 'ON' WHERE id_actuador = v_id_actuador_vent;
+                INSERT INTO registre_actuacions (id_actuador, accio, motiu, disparat_per_sensor_id)
+                VALUES (v_id_actuador_vent, 'ACTIVAR', CONCAT('CO2 perillós: ', NEW.valor, ' ppm supera límit ', v_llindar_max, ' ppm'), NEW.id_sensor);
+            END IF;
+
+            INSERT INTO alarmes_incidencies (id_nau, id_sensor, nivell_criticitat, titol, descripcio)
+            VALUES (v_id_nau, NEW.id_sensor, 'CRITICAL', 'Nivell de CO2 perillós a la nau',
+                    CONCAT('CO2 mesurat: ', NEW.valor, ' ppm (Màxim admès: ', v_llindar_max, ' ppm). Ventilació d''emergència activada. Risc per al benestar animal.'));
+        END IF;
+
+    -- =========================================================================
+    -- CAS D: Sensor de SILO DE GRA / PINSO
     -- =========================================================================
     ELSEIF v_tipus_sensor = 'silo_gra' THEN
-        -- Si el nivell del silo cau per sota del mínim establert (ex: 2000 kg o 15%)
+        -- Si el nivell del silo cau per sota del mínim establert (ex: 1500 kg)
         IF v_llindar_min IS NOT NULL AND NEW.valor < v_llindar_min THEN
             INSERT INTO alarmes_incidencies (id_nau, id_sensor, nivell_criticitat, titol, descripcio)
             VALUES (v_id_nau, NEW.id_sensor, 'WARNING', 'Nivell crític de pinso al silo',
@@ -128,6 +186,18 @@ BEGIN
     DECLARE v_id_nau_creada INT;
     DECLARE v_codi_nau VARCHAR(20);
 
+    -- Validació d'entrada: Comprovar que el client existeix
+    IF NOT EXISTS (SELECT 1 FROM clients WHERE id_client = p_id_client) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error sp_alta_granja_completa: El client especificat no existeix a la base de dades.';
+    END IF;
+
+    -- Validació d'entrada: Comprovar que el codi d'explotació no estigui duplicat
+    IF EXISTS (SELECT 1 FROM granges WHERE codi_explotacio = p_codi_explotacio) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error sp_alta_granja_completa: Ja existeix una granja amb aquest codi d''explotació.';
+    END IF;
+
     -- 1. Inserir la nova granja
     INSERT INTO granges (id_client, nom_granja, codi_explotacio, adreca, poblacio, activa)
     VALUES (p_id_client, p_nom_granja, p_codi_explotacio, p_adreca, p_poblacio, TRUE);
@@ -151,6 +221,10 @@ BEGIN
         -- - Sensor d'humitat (RS485): Min 45%, Max 70%
         INSERT INTO sensors (id_nau, tipus_sensor, tecnologia, model_hardware, llindar_minim, llindar_maxim)
         VALUES (v_id_nau_creada, 'humitat', 'RS485', 'Modbus-Hum-DHT', 45.00, 70.00);
+
+        -- - Sensor de CO2 (RS485): Max 3000 ppm
+        INSERT INTO sensors (id_nau, tipus_sensor, tecnologia, model_hardware, llindar_minim, llindar_maxim)
+        VALUES (v_id_nau_creada, 'co2', 'RS485', 'Modbus-CO2-SenseAir', NULL, 3000.00);
 
         -- - Sensor de silo exterior (LoRaWAN): Min 1500 kg
         INSERT INTO sensors (id_nau, tipus_sensor, tecnologia, model_hardware, llindar_minim, llindar_maxim)

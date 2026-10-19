@@ -42,7 +42,8 @@ sudo apt install -y curl git mariadb-client ufw netcat-traditional
 Pots copiar la carpeta del projecte directament des del teu Windows amb `scp`, o clonar-la si la tens a GitHub.
 *Opció A: Des del teu Windows PowerShell:*
 ```powershell
-scp -r C:\Users\jgarcia1_insmollerus\Desktop\Projecte\avigest-projecte usuari@<IP_MV1>:~/
+# Des de la carpeta arrel del projecte (ex: c:\avigest-projecte-main)
+scp -r . usuari@<IP_MV1>:~/avigest-projecte
 ```
 *Opció B: Des de la terminal de la MV 1 si clones des de Git:*
 ```bash

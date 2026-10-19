@@ -24,6 +24,7 @@ Quan s'executa `./alta_granja.sh`:
    - Provisiona els sensors per defecte a cada nau:
      - Sensor de temperatura (RS485 Modbus) amb llindars 20 ºC - 31 ºC.
      - Sensor d'humitat (RS485 Modbus) amb llindars 45% - 70%.
+     - Sensor de CO2 (RS485 Modbus) amb llindar màxim de 3000 ppm.
      - Sensor de silo de gra exterior (LoRaWAN) amb llindar mínim de 1500 kg.
    - Provisiona els actuadors industrials (ventilador d'extracció i calefactor).
 2. **Directori Centralitzat OpenLDAP:**
@@ -40,8 +41,9 @@ Quan s'executa `./alta_granja.sh`:
 
 ### Mode 1: Execució Ràpida per Línia de Comandes (Recomanat per a la prova en directe)
 ```bash
-./alta_granja.sh -c 1 -n "Granja Urgell Tàrrega" -e "ES252170004" -a "Camí Vell s/n" -p "Tàrrega" -s 3 -u "gestor_tarrega"
+./alta_granja.sh -c 1 -n "Granja Urgell Tàrrega" -e "ES252170004" -a "Camí Vell s/n" -p "Tàrrega" -s 3 -u "gestor_tarrega" -P "ClauSegura2026!"
 ```
+*(Nota: Si no s'especifica el flag `-P`, es genera automàticament una contrasenya aleatòria segura de 12 caràcters).*
 
 ### Mode 2: Assistent Interactiu per Consola
 Si s'executa sense paràmetres, l'script demana les dades pas a pas:

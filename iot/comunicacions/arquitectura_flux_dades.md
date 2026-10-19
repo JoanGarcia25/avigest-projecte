@@ -13,7 +13,7 @@ El sistema d'AviGest garanteix la recollida contínua de les mètriques ambienta
 flowchart TD
     subgraph Granja["1 & 2. Granja Remota (Camp & Gateway)"]
         direction TB
-        S_RS485["Sensors Temp/Humitat (RS485 Modbus)"] -->|Bus cablejat| ESP_Nau["ESP32 Mestre de Nau"]
+        S_RS485["Sensors Temp/Humitat/CO2 (RS485 Modbus)"] -->|Bus cablejat| ESP_Nau["ESP32 Mestre de Nau"]
         Actuador["Relés Ventiladors / Calefacció"] <--|Modbus RTU| ESP_Nau
         S_LoRa["Sensors de Silo (Pes/Nivell)"] -->|Ràdio LoRaWAN 868MHz| GwLoRa["Gateway LoRaWAN Granja"]
         ESP_Nau -->|Ethernet local| GatewayGranja["Gateway Industrial Fanless<br/>(Buffer Store-and-Forward)"]
@@ -27,7 +27,7 @@ flowchart TD
     subgraph Central["4. Seu Central AviGest (LAN Interna)"]
         DMZ_Ingesta ==>|Inserció transaccional| MariaDB["MariaDB (Taula lectures_sensors)"]
         MariaDB -->|Trigger AFTER INSERT| Trigger["tg_control_llindars_sensor"]
-        Trigger -->|Si > 31ºC| AutoVent["Actualitza estat actuador a ON<br/>+ Escriu a registre_actuacions"]
+        Trigger -->|Si > 31ºC o CO2 crític| AutoVent["Actualitza estat actuador a ON<br/>+ Escriu a registre_actuacions"]
         Trigger -->|Si crític| AutoAlarm["Insereix a alarmes_incidencies"]
     end
 ```
@@ -37,7 +37,7 @@ flowchart TD
 ## 2. Descripció de les 4 Etapes del Flux de Dades
 
 ### Etapa 1: Captura de Dades a Camp (ESP32)
-* **Dins de la nau:** Els sensors ambientals (temperatura, humitat) estan connectats a un bus RS485 diferencial amb un transceptor MAX485 o transceiver industrial aïllat galvànicament. L'ESP32 llegeix les trames Modbus periòdicament (cada 30 segons).
+* **Dins de la nau:** Els sensors ambientals (temperatura, humitat i CO2) estan connectats a un bus RS485 diferencial amb un transceptor MAX485 o transceiver industrial aïllat galvànicament. L'ESP32 llegeix les trames Modbus periòdicament (cada 30 segons).
 * **Als silos exteriors:** La cèl·lula de pesatge del silo transmet una trama LoRaWAN cap al gateway de la granja (cada 30-60 minuts).
 
 ### Etapa 2: Concentració i Processament a la Vora (Edge Computing a la Granja)

@@ -40,7 +40,7 @@ ADRECA=""
 POBLACIO=""
 NUM_NAUS="2"
 GESTOR_USER=""
-GESTOR_PASS="avigest2026"
+GESTOR_PASS=""
 BASE_DATA_DIR="/var/avigest/granges"
 
 mostrar_ajuda() {
@@ -54,12 +54,13 @@ mostrar_ajuda() {
     echo "  -p <poblacio> Població de la instal·lació"
     echo "  -s <naus>     Nombre de naus inicials a provisionar (per defecte: 2)"
     echo "  -u <gestor>   Nom d'usuari per al gestor local (ex: 'gestor_tarrega')"
+    echo "  -P <password> Contrasenya per al gestor (per defecte: generada automàticament)"
     echo "  -h            Mostra aquesta ajuda"
     echo ""
 }
 
 # Processar paràmetres CLI
-while getopts "c:n:e:a:p:s:u:h" opt; do
+while getopts "c:n:e:a:p:s:u:P:h" opt; do
     case "${opt}" in
         c) CLIENT_ID="${OPTARG}" ;;
         n) NOM_GRANJA="${OPTARG}" ;;
@@ -68,6 +69,7 @@ while getopts "c:n:e:a:p:s:u:h" opt; do
         p) POBLACIO="${OPTARG}" ;;
         s) NUM_NAUS="${OPTARG}" ;;
         u) GESTOR_USER="${OPTARG}" ;;
+        P) GESTOR_PASS="${OPTARG}" ;;
         h) mostrar_ajuda; exit 0 ;;
         *) mostrar_ajuda; exit 1 ;;
     esac
@@ -98,8 +100,10 @@ if [[ -z "${NUM_NAUS}" ]]; then
     NUM_NAUS="${NUM_NAUS:-2}"
 fi
 if [[ -z "${GESTOR_USER}" ]]; then
-    read -p "Nom d'usuari per al Gestor de la granja (ex: gestor_${POBLACIO,,}): " GESTOR_USER
-    GESTOR_USER="${GESTOR_USER:-gestor_${POBLACIO,,}}"
+    # Normalitzar el nom de la població per a un nom d'usuari segur (minúscules, sense accents ni espais)
+    POBLACIO_CLEAN=$(echo "${POBLACIO}" | tr '[:upper:]' '[:lower:]' | tr ' ' '_' | sed 'y/áàéèíïóòúüñç/aaeeiioouunc/' 2>/dev/null || echo "${POBLACIO,,}")
+    read -p "Nom d'usuari per al Gestor de la granja (ex: gestor_${POBLACIO_CLEAN}): " GESTOR_USER
+    GESTOR_USER="${GESTOR_USER:-gestor_${POBLACIO_CLEAN}}"
 fi
 
 echo ""
@@ -110,7 +114,21 @@ log_info "Iniciant el desplegament de la granja '${NOM_GRANJA}'..."
 # ------------------------------------------------------------------------------
 log_info "[1/3] Provisionant granja, naus i sensors a MariaDB..."
 
-SQL_CMD="CALL sp_alta_granja_completa(${CLIENT_ID}, '${NOM_GRANJA}', '${CODI_EXPLOTACIO}', '${ADRECA}', '${POBLACIO}', ${NUM_NAUS}, @id_creada); SELECT @id_creada;"
+# Si no s'ha especificat contrasenya, generar-ne una automàticament
+if [[ -z "${GESTOR_PASS}" ]]; then
+    if command -v openssl &> /dev/null; then
+        GESTOR_PASS=$(openssl rand -base64 12)
+    else
+        GESTOR_PASS="avigest_$(date +%s | tail -c 6)"
+    fi
+    log_info "Contrasenya generada automàticament per al gestor."
+fi
+
+# Escapar cometes simples per evitar errors SQL amb noms com "Granja de l'Urgell"
+NOM_GRANJA_ESC="${NOM_GRANJA//\'/\\\'}"
+ADRECA_ESC="${ADRECA//\'/\\\'}"
+
+SQL_CMD="CALL sp_alta_granja_completa(${CLIENT_ID}, '${NOM_GRANJA_ESC}', '${CODI_EXPLOTACIO}', '${ADRECA_ESC}', '${POBLACIO}', ${NUM_NAUS}, @id_creada); SELECT @id_creada;"
 
 if docker ps --format '{{.Names}}' | grep -q "avigest_mariadb"; then
     NOVA_GRANJA_ID=$(docker exec -i avigest_mariadb mariadb \

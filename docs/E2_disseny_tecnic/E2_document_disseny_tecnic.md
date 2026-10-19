@@ -61,16 +61,16 @@ En compliment estricte de la Norma 3 de l'enunciat, totes les decisions rellevan
 
 | Codi Fitxa | Àmbit Tècnic | Alternatives Avaluades | Decisió Presa | Document Detallat |
 | :--- | :--- | :--- | :--- | :--- |
-| **FD01** | SGBD Central | PostgreSQL vs **MariaDB 10.11 LTS** vs SQLite | **MariaDB 10.11 LTS** (Simplicitat, suport phpMyAdmin, triggers eficients) | [FD01_sgbd.md](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/docs/fitxes_decisio/FD01_sgbd.md) |
-| **FD02** | Directori Central | **OpenLDAP + phpLDAPadmin** vs Samba 4 AD vs FreeIPA | **OpenLDAP** (Lleuger, <80MB RAM, estàndard ASIX, càrrega LDIF neta) | [FD02_ldap.md](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/docs/fitxes_decisio/FD02_ldap.md) |
-| **FD03** | Seguretat Perimetral | **iptables natiu amb Whitelist** vs pfSense VM vs Appliance físic | **iptables amb Llista Blanca** (Integració neta en scripts versionables a Git) | [FD03_tallafocs_dmz.md](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/docs/fitxes_decisio/FD03_tallafocs_dmz.md) |
-| **FD04** | Còpies de Seguretat | **Scripts Bash (`mariadb-dump` + `slapcat`)** vs Borg vs Bacula | **Scripts Bash modulars + Crontab** (Model 3-2-1, independència, verificable) | [FD04_backups_prd.md](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/docs/fitxes_decisio/FD04_backups_prd.md) |
-| **FD05** | Comunicacions IoT | **RS485 Modbus a naus** vs **LoRaWAN a silos exteriors** | **Model Híbrid Especialitzat** segons distància, consum, volum i entorn | [FD05_iot_comunicacions.md](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/docs/fitxes_decisio/FD05_iot_comunicacions.md) |
+| **FD01** | SGBD Central | PostgreSQL vs **MariaDB 10.11 LTS** vs SQLite | **MariaDB 10.11 LTS** (Simplicitat, suport phpMyAdmin, triggers eficients) | [FD01_sgbd.md](../fitxes_decisio/FD01_sgbd.md) |
+| **FD02** | Directori Central | **OpenLDAP + phpLDAPadmin** vs Samba 4 AD vs FreeIPA | **OpenLDAP** (Lleuger, <80MB RAM, estàndard ASIX, càrrega LDIF neta) | [FD02_ldap.md](../fitxes_decisio/FD02_ldap.md) |
+| **FD03** | Seguretat Perimetral | **iptables natiu amb Whitelist** vs pfSense VM vs Appliance físic | **iptables amb Llista Blanca** (Integració neta en scripts versionables a Git) | [FD03_tallafocs_dmz.md](../fitxes_decisio/FD03_tallafocs_dmz.md) |
+| **FD04** | Còpies de Seguretat | **Scripts Bash (`mariadb-dump` + `slapcat`)** vs Borg vs Bacula | **Scripts Bash modulars + Crontab** (Model 3-2-1, independència, verificable) | [FD04_backups_prd.md](../fitxes_decisio/FD04_backups_prd.md) |
+| **FD05** | Comunicacions IoT | **RS485 Modbus a naus** vs **LoRaWAN a silos exteriors** | **Model Híbrid Especialitzat** segons distància, consum, volum i entorn | [FD05_iot_comunicacions.md](../fitxes_decisio/FD05_iot_comunicacions.md) |
 
 ---
 
 ## 3. Infraestructura de Maquinari i Redundància (Requeriments 4.1 i 4.6)
-*Document de referència:* [infraestructura_maquinari.md](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/infra/xarxa/infraestructura_maquinari.md)
+*Document de referència:* [infraestructura_maquinari.md](../../infra/xarxa/infraestructura_maquinari.md)
 
 ### 3.1. Seu Central (Alta Disponibilitat)
 - **Servidor:** Rack 19" (Dell PowerEdge R450 o similar) amb processador Intel Xeon Silver (16 nuclis) i 32 GB RAM DDR4 ECC Registered.
@@ -88,7 +88,7 @@ En compliment estricte de la Norma 3 de l'enunciat, totes les decisions rellevan
 ---
 
 ## 4. Seguretat Perimetral: DMZ i Tallafocs (Requeriment 4.4)
-*Documents de referència:* [disseny_dmz_seguretat.md](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/infra/dmz-tallafocs/disseny_dmz_seguretat.md) i [firewall_regles.sh](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/infra/dmz-tallafocs/firewall_regles.sh)
+*Documents de referència:* [disseny_dmz_seguretat.md](../../infra/dmz-tallafocs/disseny_dmz_seguretat.md) i [firewall_regles.sh](../../infra/dmz-tallafocs/firewall_regles.sh)
 
 - **Segmentació en 3 Zones:**
   1. **WAN:** Internet públic. Política per defecte `DROP`.
@@ -101,7 +101,7 @@ En compliment estricte de la Norma 3 de l'enunciat, totes les decisions rellevan
 ---
 
 ## 5. Directori Centralitzat d'Usuaris i Aïllament de Dades — LDAP (Requeriment 4.2)
-*Documents de referència:* [politica_permisos_ldap.md](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/infra/ldap/politica_permisos_ldap.md), [01_arbre_base.ldif](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/infra/ldap/ldif/01_arbre_base.ldif) i [02_usuaris_inicials.ldif](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/infra/ldap/ldif/02_usuaris_inicials.ldif)
+*Documents de referència:* [politica_permisos_ldap.md](../../infra/ldap/politica_permisos_ldap.md), [01_arbre_base.ldif](../../infra/ldap/ldif/01_arbre_base.ldif) i [02_usuaris_inicials.ldif](../../infra/ldap/ldif/02_usuaris_inicials.ldif)
 
 - **Base del directori (Suffix):** `dc=avigest,dc=cat`
 - **Quatre Rols Diferenciats (R2):**
@@ -117,32 +117,41 @@ En compliment estricte de la Norma 3 de l'enunciat, totes les decisions rellevan
 ---
 
 ## 6. Disseny de la Base de Dades i Triggers Automàtics (Requeriment 4.3)
-*Documents de referència:* [model_er.md](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/bd/model-er/model_er.md), [01_esquema.sql](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/bd/sql/01_esquema.sql), [02_triggers_procedures.sql](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/bd/procediments-triggers/02_triggers_procedures.sql) i [03_dades_prova.sql](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/bd/sql/03_dades_prova.sql)
+*Documents de referència:* [model_er.md](../../bd/model-er/model_er.md), [01_esquema.sql](../../bd/sql/01_esquema.sql), [02_triggers_procedures.sql](../../bd/procediments-triggers/02_triggers_procedures.sql), [03_dades_prova.sql](../../bd/sql/03_dades_prova.sql) i [04_usuaris_rols_bd.sql](../../bd/sql/04_usuaris_rols_bd.sql)
 
-- **Model Entitat-Relació (9 taules):**
+- **Model Entitat-Relació (9 taules normalitzades):**
   `clients` -> `granges` -> `naus` -> `lots_crianca`, `sensors`, `actuadors`, `lectures_sensors`, `registre_actuacions`, `alarmes_incidencies`.
-- **Automatismes mitjançant Triggers (R5 i R7):**
-  - **`tg_control_llindars_sensor`**: En cada inserció a `lectures_sensors`, si la temperatura supera el llindar màxim establert per a la nau (> 31 ºC), el trigger:
-    1. Canvia automàticament l'estat del ventilador de la nau a `ON`.
-    2. Insereix l'acció a `registre_actuacions` amb el motiu del sobreescalfament.
-    3. Genera una alarma crítica a `alarmes_incidencies` per a l'atenció del gestor.
-- **Procediment Emmagatzemat `sp_alta_granja_completa`:** Provisiona automàticament una granja sencera amb naus, sensors i actuadors en una sola crida SQL.
+- **Automatismes mitjançant Triggers (`tg_control_llindars_sensor`) (R5 i R7):**
+  En cada inserció de telemetria a `lectures_sensors`, el trigger avalua els llindars configurats a la taula `sensors` i actua de forma immediata i transaccional:
+  1. **Sobre-escalfament (> llindar màxim, ex: 31 ºC):** Activa el ventilador (`ON`), insereix traça a `registre_actuacions` i genera alarma `CRITICAL` a `alarmes_incidencies`.
+  2. **Temperatura baixa (< llindar mínim, ex: 20 ºC):** Atura ventiladors, activa calefacció (`ON`), insereix traça i genera alarma `WARNING`.
+  3. **Normalització tèrmica:** Atura automàticament tant ventiladors com calefactors si estaven actius i en registra el restabliment.
+  4. **Humitat excessiva (> 70 %):** Activa ventiladors per dissipar condensació i genera alarma `WARNING`.
+  5. **Qualitat de l'aire CO2 (> 3000 ppm):** Activa ventilació forçada d'emergència i genera alarma `CRITICAL` per prevenir asfíxia de les aus.
+  6. **Reserva de pinso al silo (< 1500 kg):** Genera alarma `WARNING` de sol·licitud immediata de recàrrega de pinso.
+- **Procediment Emmagatzemat `sp_alta_granja_completa`:**
+  - Valida prèviament l'existència del client i la no-duplicitat del codi d'explotació amb senyals d'error `SIGNAL SQLSTATE '45000'`.
+  - Provisiona atòmicament la granja, N naus, 4 sensors per nau (Temperatura, Humitat, CO2 i Silo) i 2 actuadors (Ventilador i Calefactor) retornant el nou ID de granja mitjançant paràmetre `OUT`.
+- **Vistes i Seguretat de BD:**
+  - Vistes `v_resum_granges_avigest` (quadre de comandament global) i `v_estat_actual_sensors` (darrera telemetria en temps real).
+  - 4 rols de BD segregats amb mínim privilegi: `avigest_app`, `avigest_iot` (només INSERT a lectures), `avigest_consulta` i `avigest_backup`.
 
 ---
 
 ## 7. Arquitectura IoT: LoRaWAN, RS485 i Flux de Dades (Requeriment 4.8)
-*Documents de referència:* [FD05_iot_comunicacions.md](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/docs/fitxes_decisio/FD05_iot_comunicacions.md), [arquitectura_flux_dades.md](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/iot/comunicacions/arquitectura_flux_dades.md) i [simulador_iot.py](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/iot/sensors/simulador_iot.py)
+*Documents de referència:* [FD05_iot_comunicacions.md](../fitxes_decisio/FD05_iot_comunicacions.md), [arquitectura_flux_dades.md](../../iot/comunicacions/arquitectura_flux_dades.md) i [simulador_iot.py](../../iot/sensors/simulador_iot.py)
 
 - **Justificació de tecnologies:**
-  - **Interior de les naus (RS485 Modbus RTU):** Sensors de temperatura, humitat i actuadors. Cable apantallat d'alta immunitat al soroll elèctric de grans motors, alimentat permanentment per cable i amb reacció de mil·lisegons.
+  - **Interior de les naus (RS485 Modbus RTU):** Sensors de temperatura, humitat, CO2 i actuadors. Cable apantallat d'alta immunitat al soroll elèctric de grans motors, alimentat permanentment per cable i amb reacció de mil·lisegons.
   - **Exterior i Silos de Gra (LoRaWAN 868 MHz):** Cèl·lules de pesatge de silos situades a desenes o centenars de metres de les naus. Evita rases costoses vulnerables a maquinària agrícola; l'ESP32 funciona 3-5 anys amb una bateria gràcies al mode *Deep Sleep*.
 - **Seguretat local a la vora (*Life-Safety Edge Computing*):** Si cau la connexió WAN, l'ESP32 local manté el control autònom dels ventiladors per protegir la vida dels animals.
-- **Simulador en Python:** Desenvolupat a `simulador_iot.py`, permet simular telemetria periòdica i injectar valors d'alarma en directe per comprovar l'activació dels ventiladors a la base de dades.
+- **Simulador en Python (`simulador_iot.py`):**
+  - Suporta 3 modes (`normal`, `alarma`, `interactiu`), verificació prèvia de connexió a la BD, suport per als rols `avigest_iot`/`avigest_app` i telemetria completa per a Bellpuig, Mollerussa i Alcarràs.
 
 ---
 
 ## 8. Còpies de Seguretat i Pla de Recuperació davant de Desastres — PRD (Requeriment 4.5)
-*Documents de referència:* [FD04_backups_prd.md](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/docs/fitxes_decisio/FD04_backups_prd.md), [pla_recuperacio_desastres_prd.md](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/infra/backups-prd/pla_recuperacio_desastres_prd.md), [backup_avigest.sh](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/infra/backups-prd/backup_avigest.sh), [restaurar_avigest.sh](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/infra/backups-prd/restaurar_avigest.sh) i [crontab.txt](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/infra/backups-prd/crontab.txt)
+*Documents de referència:* [FD04_backups_prd.md](../fitxes_decisio/FD04_backups_prd.md), [pla_recuperacio_desastres_prd.md](../../infra/backups-prd/pla_recuperacio_desastres_prd.md), [backup_avigest.sh](../../infra/backups-prd/backup_avigest.sh), [restaurar_avigest.sh](../../infra/backups-prd/restaurar_avigest.sh) i [crontab.txt](../../infra/backups-prd/crontab.txt)
 
 - **Estratègia 3-2-1:** 3 còpies, 2 suports, 1 còpia fora de la seu.
 - **Mètriques oficials:**
@@ -155,14 +164,14 @@ En compliment estricte de la Norma 3 de l'enunciat, totes les decisions rellevan
 ---
 
 ## 9. Automatització de Creació de Granges (Requeriment 4.7)
-*Documents de referència:* [alta_granja.sh](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/scripts/automatitzacio-granges/alta_granja.sh) i [README.md](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/scripts/automatitzacio-granges/README.md)
+*Documents de referència:* [alta_granja.sh](../../scripts/automatitzacio-granges/alta_granja.sh) i [README.md](../../scripts/automatitzacio-granges/README.md)
 
 - **Resposta a la prova presencial del professor (Requeriment 7):**
   - L'script `alta_granja.sh` permet afegir una nova explotació amb naus, sensors i usuari gestor en qüestió de segons:
   ```bash
-  ./alta_granja.sh -c 1 -n "Granja Urgell Tàrrega" -e "ES252170004" -a "Camí de Verdú s/n" -p "Tàrrega" -s 2 -u "gestor_tarrega"
+  ./alta_granja.sh -c 1 -n "Granja Urgell Tàrrega" -e "ES252170004" -a "Camí de Verdú s/n" -p "Tàrrega" -s 2 -u "gestor_tarrega" -P "PassSegura123!"
   ```
-  - Executa la creació SQL a MariaDB, dóna d'alta el gestor amb el seu grup i restriccions a OpenLDAP, i genera els directoris de treball per al gateway de camp.
+  - Executa la creació SQL a MariaDB amb protecció contra injecció per apòstrofs, dóna d'alta el gestor amb el seu grup i restriccions a OpenLDAP, i genera els directoris de treball per al gateway de camp.
 
 ---
 
