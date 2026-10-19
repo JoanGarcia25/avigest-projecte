@@ -43,4 +43,25 @@ avigest-projecte/
 - Tauler de tasques: GitHub Projects d'aquest repositori.
 
 ## Fites del projecte
-Vegeu `docs/E0_divisio_tasques_rols.md` per al Gantt inicial i la divisió de rols.
+- [E0 — Constitució i Rols](docs/E0_divisio_tasques_rols.md)
+- [E2 — Document de Disseny Tècnic](docs/E2_disseny_tecnic/E2_document_disseny_tecnic.md)
+
+## Guia de Laboratori i Desplegament en Màquines Virtuals
+> [!TIP]
+> **Consulteu la guia pas a pas:** [docs/guia_desplegament_maquines_virtuals.md](docs/guia_desplegament_maquines_virtuals.md) per a les instruccions exactes de configuració a VMware / VirtualBox i el guió per a la defensa davant del professor.
+
+### Arrencada ràpida dels serveis (Seu Central)
+```bash
+cd docker
+docker compose up -d
+```
+- **phpMyAdmin (Base de dades):** `http://localhost:8080` (Usuari: `avigest_app`, Pass: `avigest_secret_2026`)
+- **phpLDAPadmin (Directori d'usuaris):** `http://localhost:8081` (Login DN: `cn=admin,dc=avigest,dc=cat`, Pass: `admin_ldap_pass_2026`)
+
+## Fitxes de Decisió Tècnica Oficials
+1. [FD01 — Elecció del SGBD (MariaDB vs PostgreSQL)](docs/fitxes_decisio/FD01_sgbd.md)
+2. [FD02 — Servidor d'Usuaris Centralitzat (OpenLDAP vs Samba 4)](docs/fitxes_decisio/FD02_ldap.md)
+3. [FD03 — Tallafocs i DMZ (iptables amb Llista Blanca de clients)](docs/fitxes_decisio/FD03_tallafocs_dmz.md)
+4. [FD04 — Estratègia de Còpies de Seguretat i PRD](docs/fitxes_decisio/FD04_backups_prd.md)
+5. [FD05 — Comunicacions IoT (RS485 a naus vs LoRaWAN a silos)](docs/fitxes_decisio/FD05_iot_comunicacions.md)
+
