@@ -1,0 +1,18 @@
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Entorns
+.env
+*.env.local
+
+# Docker
+*.log
+
+# Editors
+.vscode/
+.idea/
+
+# Python (si s'usa per scripts)
+__pycache__/
+*.pyc

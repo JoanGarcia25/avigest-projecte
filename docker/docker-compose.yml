@@ -1,0 +1,91 @@
+services:
+  # ============================================================================
+  # 1. Base de Dades Central — MariaDB 10.11 LTS (Requeriment 4.3)
+  # ============================================================================
+  mariadb:
+    image: mariadb:10.11
+    container_name: avigest_mariadb
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_avigest_2026
+      MYSQL_DATABASE: avigest_db
+      MYSQL_USER: avigest_app
+      MYSQL_PASSWORD: avigest_secret_2026
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    networks:
+      - avigest_internal
+
+  # ============================================================================
+  # 2. Eina de Gestió Visual BD — phpMyAdmin
+  # ============================================================================
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: avigest_phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      - mariadb
+    environment:
+      PMA_HOST: mariadb
+      PMA_PORT: 3306
+      PMA_USER: avigest_app
+      PMA_PASSWORD: avigest_secret_2026
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8080:80"
+    networks:
+      - avigest_internal
+
+  # ============================================================================
+  # 3. Servidor de Directori Centralitzat — OpenLDAP (Requeriment 4.2)
+  # ============================================================================
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: avigest_openldap
+    restart: unless-stopped
+    environment:
+      LDAP_ORGANISATION: "AviGest S.L."
+      LDAP_DOMAIN: "avigest.cat"
+      LDAP_ADMIN_PASSWORD: "admin_ldap_pass_2026"
+    ports:
+      - "389:389"
+      - "636:636"
+    volumes:
+      - ldap_data:/var/lib/ldap
+      - ldap_config:/etc/ldap/slapd.d
+      - ../infra/ldap/ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom:ro
+    networks:
+      - avigest_internal
+
+  # ============================================================================
+  # 4. Eina de Gestió Visual LDAP — phpLDAPadmin
+  # ============================================================================
+  phpldapadmin:
+    image: osixia/phpldapadmin:0.9.0
+    container_name: avigest_phpldapadmin
+    restart: unless-stopped
+    depends_on:
+      - openldap
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: "openldap"
+      PHPLDAPADMIN_HTTPS: "false"
+    ports:
+      - "8081:80"
+    networks:
+      - avigest_internal
+
+volumes:
+  mariadb_data:
+    name: avigest_mariadb_data
+  ldap_data:
+    name: avigest_ldap_data
+  ldap_config:
+    name: avigest_ldap_config
+
+networks:
+  avigest_internal:
+    name: avigest_network
+    driver: bridge

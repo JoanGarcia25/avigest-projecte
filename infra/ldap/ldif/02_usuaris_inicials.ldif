@@ -1,0 +1,126 @@
+# =============================================================================
+# AviGest S.L. — Usuaris Inicials de Prova per a cada Rol
+# Fitxer: infra/ldap/ldif/02_usuaris_inicials.ldif
+# Domini: dc=avigest,dc=cat
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Usuaris de la Seu Central AviGest
+# -----------------------------------------------------------------------------
+
+# Admin global AviGest
+dn: uid=admin_avigest,ou=avigest,ou=users,dc=avigest,dc=cat
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: admin_avigest
+cn: Administrador AviGest
+sn: AviGest
+mail: admin@avigest.cat
+userPassword: {SSHA}5j0XjXoD6B6b7VjS+examplePassHash1
+# Contrasenya en text pla de prova: avigest2026
+description: Administrador global del sistema
+
+# Tècnic de suport AviGest
+dn: uid=tecnic_suport,ou=avigest,ou=users,dc=avigest,dc=cat
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: tecnic_suport
+cn: Marc Sole
+sn: Sole
+mail: msole@avigest.cat
+userPassword: {SSHA}5j0XjXoD6B6b7VjS+examplePassHash2
+description: Tècnic de suport de camp i manteniment IoT
+
+# -----------------------------------------------------------------------------
+# 2. Usuaris del Client 1: AgroPonent S.L. (id_client = 1)
+# -----------------------------------------------------------------------------
+dn: ou=client_agroponent,ou=clients,ou=users,dc=avigest,dc=cat
+objectClass: top
+objectClass: organizationalUnit
+ou: client_agroponent
+description: Empresa client AgroPonent S.L.
+
+# Propietari / Admin Client (veu Granja Bellpuig i Granja Mollerussa)
+dn: uid=jaume_admin,ou=client_agroponent,ou=clients,ou=users,dc=avigest,dc=cat
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: jaume_admin
+cn: Jaume Balaguer
+sn: Balaguer
+mail: jbalaguer@agroponent.cat
+businessCategory: CLIENT_1
+userPassword: {SSHA}5j0XjXoD6B6b7VjS+examplePassHash3
+description: Administrador de client AgroPonent (gestiona N granges)
+
+# Gestor exclusiu de la Granja Bellpuig (id_granja = 1)
+dn: uid=gestor_bellpuig,ou=client_agroponent,ou=clients,ou=users,dc=avigest,dc=cat
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: gestor_bellpuig
+cn: Jordi Pons
+sn: Pons
+mail: jpons@agroponent.cat
+businessCategory: CLIENT_1
+departmentNumber: GRANJA_1
+userPassword: {SSHA}5j0XjXoD6B6b7VjS+examplePassHash4
+description: Responsable operatiu de Granja Ponent Bellpuig
+
+# Usuari de consulta (veterinari d'AgroPonent)
+dn: uid=veterinari_ponent,ou=client_agroponent,ou=clients,ou=users,dc=avigest,dc=cat
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: veterinari_ponent
+cn: Anna Rovira
+sn: Rovira
+mail: arovira@vetponent.cat
+businessCategory: CLIENT_1
+userPassword: {SSHA}5j0XjXoD6B6b7VjS+examplePassHash5
+description: Veterinària consultora (accés de només lectura)
+
+# -----------------------------------------------------------------------------
+# 3. Usuaris del Client 2: Avícola del Segrià S.A. (id_client = 2)
+# -----------------------------------------------------------------------------
+dn: ou=client_segria,ou=clients,ou=users,dc=avigest,dc=cat
+objectClass: top
+objectClass: organizationalUnit
+ou: client_segria
+description: Empresa client Avícola del Segrià S.A.
+
+# Admin Client Segrià (veu Granja Alcarràs)
+dn: uid=laura_admin,ou=client_segria,ou=clients,ou=users,dc=avigest,dc=cat
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: laura_admin
+cn: Laura Vidal
+sn: Vidal
+mail: lvidal@avicolasegria.cat
+businessCategory: CLIENT_2
+userPassword: {SSHA}5j0XjXoD6B6b7VjS+examplePassHash6
+description: Administradora de client Avícola del Segrià
+
+# Gestor de Granja Alcarràs (id_granja = 3)
+dn: uid=gestor_alcarras,ou=client_segria,ou=clients,ou=users,dc=avigest,dc=cat
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: gestor_alcarras
+cn: Pere Roca
+sn: Roca
+mail: proca@avicolasegria.cat
+businessCategory: CLIENT_2
+departmentNumber: GRANJA_3
+userPassword: {SSHA}5j0XjXoD6B6b7VjS+examplePassHash7
+description: Responsable operatiu de Granja Segrià Alcarràs
