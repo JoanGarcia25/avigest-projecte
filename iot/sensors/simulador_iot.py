@@ -29,6 +29,10 @@ import subprocess
 from datetime import datetime
 
 # Configuració per defecte de connexió a la BD
+# Nota: Per a ingesta real de camp (mode normal), l'usuari recomanat és
+# 'avigest_iot' amb permisos mínims (només INSERT a lectures_sensors).
+# Es fa servir 'avigest_app' per defecte perquè els modes 'alarma' i
+# 'interactiu' necessiten consultar actuadors i alarmes per verificar.
 CONFIG_CONN = {
     "host": "127.0.0.1",
     "port": 3306,
@@ -93,6 +97,72 @@ SENSORS_CONFIG = [
         "min": 19.0,
         "max": 30.0,
         "normal_range": (21.0, 24.5)
+    },
+    {
+        "id_sensor": 11,
+        "granja": "Granja Ponent Bellpuig",
+        "nau": "NAU-01",
+        "tipus": "co2",
+        "tecnologia": "RS485",
+        "unitat": "ppm",
+        "min": 400.0,
+        "max": 3000.0,
+        "normal_range": (600.0, 1800.0)
+    },
+    {
+        "id_sensor": 12,
+        "granja": "Granja Ponent Mollerussa",
+        "nau": "NAU-01",
+        "tipus": "co2",
+        "tecnologia": "RS485",
+        "unitat": "ppm",
+        "min": 400.0,
+        "max": 3000.0,
+        "normal_range": (550.0, 1600.0)
+    },
+    {
+        "id_sensor": 13,
+        "granja": "Granja Segrià Alcarràs",
+        "nau": "NAU-01",
+        "tipus": "temperatura",
+        "tecnologia": "RS485",
+        "unitat": "ºC",
+        "min": 20.0,
+        "max": 31.0,
+        "normal_range": (23.0, 27.0)
+    },
+    {
+        "id_sensor": 14,
+        "granja": "Granja Segrià Alcarràs",
+        "nau": "NAU-01",
+        "tipus": "humitat",
+        "tecnologia": "RS485",
+        "unitat": "%",
+        "min": 45.0,
+        "max": 70.0,
+        "normal_range": (50.0, 65.0)
+    },
+    {
+        "id_sensor": 15,
+        "granja": "Granja Segrià Alcarràs",
+        "nau": "NAU-01",
+        "tipus": "silo_gra",
+        "tecnologia": "LoRaWAN",
+        "unitat": "kg",
+        "min": 1500.0,
+        "max": 15000.0,
+        "normal_range": (6000.0, 11000.0)
+    },
+    {
+        "id_sensor": 16,
+        "granja": "Granja Segrià Alcarràs",
+        "nau": "NAU-01",
+        "tipus": "co2",
+        "tecnologia": "RS485",
+        "unitat": "ppm",
+        "min": 400.0,
+        "max": 3000.0,
+        "normal_range": (650.0, 1900.0)
     }
 ]
 
@@ -147,6 +217,10 @@ def executar_sql(sql):
     return False, f"SQL preparat: {sql}"
 
 def executar_sql_insercio(id_sensor, valor, unitat):
+    # NOTA DE SEGURETAT: En un entorn de producció real, s'hauria d'utilitzar
+    # un connector Python (mysql-connector o PyMySQL) amb prepared statements
+    # per evitar riscos d'injecció SQL. En aquest projecte didàctic els valors
+    # provenen exclusivament del codi intern del simulador, no de l'usuari extern.
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     sql = f"INSERT INTO lectures_sensors (id_sensor, data_hora, valor, unitat) VALUES ({id_sensor}, '{ts}', {valor:.2f}, '{unitat}');"
     ok, out = executar_sql(sql)
@@ -169,11 +243,27 @@ def comprovar_ultimes_alarmes():
         return out
     return None
 
+def test_connexio():
+    """Verifica la connexió a MariaDB abans de començar la simulació."""
+    print(f"  Verificant connexió a MariaDB ({CONFIG_CONN['host']}:{CONFIG_CONN['port']})...")
+    ok, out = executar_sql("SELECT 1;")
+    if ok:
+        print(f"  ✔ Connexió establerta correctament amb usuari '{CONFIG_CONN['user']}'.\n")
+        return True
+    else:
+        print(f"  ✘ ERROR: No s'ha pogut connectar a MariaDB.")
+        print(f"    Detall: {out}")
+        print(f"    Comproveu que el contenidor 'avigest_mariadb' estigui actiu")
+        print(f"    o que MariaDB accepti connexions a {CONFIG_CONN['host']}:{CONFIG_CONN['port']}.\n")
+        return False
+
 def mode_normal():
     print("\n=======================================================")
     print(f"  AviGest S.L. — Telemetria en Temps Real -> {CONFIG_CONN['host']}")
     print("  (Premeu Ctrl+C per aturar la simulació)             ")
     print("=======================================================\n")
+    if not test_connexio():
+        sys.exit(1)
     try:
         cicle = 1
         while True:
@@ -194,6 +284,9 @@ def mode_alarma():
     print("\n=======================================================")
     print(f"  AviGest S.L. — Simulació d'Incidència -> {CONFIG_CONN['host']}")
     print("=======================================================\n")
+    if not test_connexio():
+        sys.exit(1)
+
     print("1. Injectant TEMPERATURA CRÍTICA (34.8 ºC) al Sensor #1 (Bellpuig NAU-01)...")
     print("   -> Llindar màxim de la nau: 31.0 ºC")
     success, msg = executar_sql_insercio(1, 34.80, "ºC")
@@ -204,7 +297,12 @@ def mode_alarma():
     success, msg = executar_sql_insercio(3, 980.00, "kg")
     print(f"   Estat: {msg}")
 
-    print("\n3. Comprovant efecte del TRIGGER a MariaDB (Taula Actuadors):")
+    print("\n3. Injectant CO2 PERILLÓS (3500 ppm) al Sensor #11 (CO2 Bellpuig NAU-01)...")
+    print("   -> Llindar màxim: 3000.0 ppm")
+    success, msg = executar_sql_insercio(11, 3500.00, "ppm")
+    print(f"   Estat: {msg}")
+
+    print("\n4. Comprovant efecte del TRIGGER a MariaDB (Taula Actuadors):")
     estat = comprovar_estat_actuadors()
     if estat:
         print(estat)
@@ -212,7 +310,7 @@ def mode_alarma():
     else:
         print("  -> Comproveu la taula 'actuadors' a phpMyAdmin per veure l'estat 'ON'.")
 
-    print("\n4. Comprovant efecte del TRIGGER a MariaDB (Taula Alarmes):")
+    print("\n5. Comprovant efecte del TRIGGER a MariaDB (Taula Alarmes):")
     alarmes = comprovar_ultimes_alarmes()
     if alarmes:
         print(alarmes)
@@ -221,6 +319,9 @@ def mode_interactiu():
     print("\n=======================================================")
     print(f"  AviGest S.L. — Simulador Interactiu -> {CONFIG_CONN['host']}")
     print("=======================================================\n")
+    if not test_connexio():
+        sys.exit(1)
+
     for s in SENSORS_CONFIG:
         print(f"  [{s['id_sensor']}] {s['granja']} | {s['nau']} | {s['tipus']} ({s['unitat']}) [Llindars: {s['min']}-{s['max']}]")
     
@@ -239,14 +340,18 @@ def mode_interactiu():
 
 def main():
     parser = argparse.ArgumentParser(description="Simulador IoT per a AviGest S.L.")
-    parser.add_argument("--mode", choices=["normal", "alarma", "interactiu"], default="normal")
+    parser.add_argument("--mode", choices=["normal", "alarma", "interactiu"], default="normal",
+                        help="Mode d'execució: normal (telemetria contínua), alarma (injecció d'incidències), interactiu (manual)")
     parser.add_argument("--host", default="127.0.0.1", help="Adreça IP de la MV1 (Seu Central)")
-    parser.add_argument("--user", default="avigest_app", help="Usuari de MariaDB")
+    parser.add_argument("--port", type=int, default=3306, help="Port de MariaDB")
+    parser.add_argument("--user", default="avigest_app",
+                        help="Usuari de MariaDB (per a ingesta real de camp usar 'avigest_iot')")
     parser.add_argument("--password", default="avigest_secret_2026", help="Contrasenya de MariaDB")
     parser.add_argument("--database", default="avigest_db", help="Base de dades")
     args = parser.parse_args()
 
     CONFIG_CONN["host"] = args.host
+    CONFIG_CONN["port"] = args.port
     CONFIG_CONN["user"] = args.user
     CONFIG_CONN["password"] = args.password
     CONFIG_CONN["database"] = args.database

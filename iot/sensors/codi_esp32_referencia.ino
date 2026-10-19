@@ -32,6 +32,7 @@ const char* GATEWAY_URL = "http://192.168.1.10:8000/api/telemetria";
 const int ID_GRANJA = 1;
 const int ID_NAU = 1;
 const int ID_SENSOR_TEMP = 1;
+const int ID_SENSOR_HUM = 2;
 const float LLINDAR_MAX_TEMP = 31.0; // ºC
 
 unsigned long darrera_lectura = 0;
@@ -74,6 +75,7 @@ void loop() {
 
     // 3. Enviament de telemetria al Gateway de granja
     enviarLecturaGateway(ID_SENSOR_TEMP, "temperatura", temperatura, "ºC");
+    enviarLecturaGateway(ID_SENSOR_HUM, "humitat", humitat, "%");
   }
 }
 

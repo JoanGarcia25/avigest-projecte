@@ -45,6 +45,7 @@ avigest-projecte/
 ## Fites del projecte
 - [E0 — Constitució i Rols](docs/E0_divisio_tasques_rols.md)
 - [E2 — Document de Disseny Tècnic](docs/E2_disseny_tecnic/E2_document_disseny_tecnic.md)
+- [Diari de Treball (Actualització quinzenal)](docs/diari_treball/diari_treball.md)
 
 ## Guia de Laboratori i Desplegament en Màquines Virtuals
 > [!TIP]

@@ -61,7 +61,22 @@ INSERT INTO sensors (id_sensor, id_nau, tipus_sensor, tecnologia, model_hardware
 -- Nau 1 Mollerussa
 (8, 3, 'temperatura', 'RS485', 'Modbus-DHT22-Ind', 19.00, 30.00, TRUE),
 (9, 3, 'humitat', 'RS485', 'Modbus-DHT22-Ind', 45.00, 70.00, TRUE),
-(10, 3, 'silo_gra', 'LoRaWAN', 'LoRa-WeightScale-Silo', 1500.00, 15000.00, TRUE);
+(10, 3, 'silo_gra', 'LoRaWAN', 'LoRa-WeightScale-Silo', 1500.00, 15000.00, TRUE),
+
+-- Sensors de CO2 (Qualitat de l'aire — Millora del trigger)
+(11, 1, 'co2', 'RS485', 'Modbus-CO2-SCD30', 400.00, 3000.00, TRUE),
+(12, 3, 'co2', 'RS485', 'Modbus-CO2-SCD30', 400.00, 3000.00, TRUE),
+
+-- Nau 1 Alcarràs (Client 2 — Per demostrar multiclient)
+(13, 4, 'temperatura', 'RS485', 'Modbus-DHT22-Ind', 20.00, 31.00, TRUE),
+(14, 4, 'humitat', 'RS485', 'Modbus-DHT22-Ind', 45.00, 70.00, TRUE),
+(15, 4, 'silo_gra', 'LoRaWAN', 'LoRa-WeightScale-Silo', 1500.00, 15000.00, TRUE),
+(16, 4, 'co2', 'RS485', 'Modbus-CO2-SCD30', 400.00, 3000.00, TRUE),
+
+-- Nau 2 Alcarràs
+(17, 5, 'temperatura', 'RS485', 'Modbus-DHT22-Ind', 20.00, 31.00, TRUE),
+(18, 5, 'humitat', 'RS485', 'Modbus-DHT22-Ind', 45.00, 70.00, TRUE),
+(19, 5, 'silo_gra', 'LoRaWAN', 'LoRa-WeightScale-Silo', 1500.00, 15000.00, TRUE);
 
 -- -----------------------------------------------------------------------------
 -- 6. Inserció d'ACTUADORS (Requeriment R5)
@@ -79,7 +94,15 @@ INSERT INTO actuadors (id_actuador, id_nau, tipus_actuador, estat_actual, ubicac
 
 -- Nau 1 Mollerussa
 (7, 3, 'ventilador', 'OFF', 'Extractor de túnel', TRUE),
-(8, 3, 'calefactor', 'OFF', 'Canó radiant', TRUE);
+(8, 3, 'calefactor', 'OFF', 'Canó radiant', TRUE),
+
+-- Nau 1 Alcarràs (Client 2)
+(9, 4, 'ventilador', 'OFF', 'Bateria Ventiladors Façana Sud', TRUE),
+(10, 4, 'calefactor', 'OFF', 'Aeroterm radiant industrial', TRUE),
+
+-- Nau 2 Alcarràs (Client 2)
+(11, 5, 'ventilador', 'OFF', 'Extractors laterals x2', TRUE),
+(12, 5, 'calefactor', 'OFF', 'Canonada radiant central', TRUE);
 
 -- -----------------------------------------------------------------------------
 -- 7. Inserció de LECTURES DE SENSORS (Simulació de dades normals)
@@ -90,6 +113,7 @@ INSERT INTO lectures_sensors (id_sensor, data_hora, valor, unitat) VALUES
 (2, '2026-10-19 08:00:00', 58.20, '%'),
 (3, '2026-10-19 08:00:00', 8400.00, 'kg'),
 (4, '2026-10-19 08:00:00', 850.00, 'L'),
+(11, '2026-10-19 08:00:00', 1850.00, 'ppm'),
 
 (1, '2026-10-19 08:30:00', 24.10, 'ºC'),
 (2, '2026-10-19 08:30:00', 57.50, '%'),
@@ -106,4 +130,44 @@ INSERT INTO lectures_sensors (id_sensor, data_hora, valor, unitat) VALUES
 -- Mollerussa Nau 1
 (8, '2026-10-19 09:00:00', 22.80, 'ºC'),
 (9, '2026-10-19 09:00:00', 54.00, '%'),
-(10, '2026-10-19 09:00:00', 5200.00, 'kg');
+(10, '2026-10-19 09:00:00', 5200.00, 'kg'),
+(12, '2026-10-19 09:00:00', 1420.00, 'ppm'),
+
+-- Alcarràs Nau 1 (Client 2 — multiclient)
+(13, '2026-10-19 09:00:00', 24.50, 'ºC'),
+(14, '2026-10-19 09:00:00', 55.30, '%'),
+(15, '2026-10-19 09:00:00', 6800.00, 'kg'),
+(16, '2026-10-19 09:00:00', 1200.00, 'ppm');
+
+-- =============================================================================
+-- 8. INSERCIONS CRÍTIQUES PER A DEMOSTRACIÓ DEL TRIGGER (DEFENSA ORAL)
+-- =============================================================================
+-- INSTRUCCIONS: Descomenteu les línies següents per veure en directe com
+-- el trigger tg_control_llindars_sensor activa automàticament els ventiladors,
+-- registra l'actuació i genera alarmes a la base de dades.
+--
+-- >>> TEST 1: Sobreescalfament (34.8 ºC > llindar 31.0 ºC a Bellpuig NAU-01)
+-- INSERT INTO lectures_sensors (id_sensor, data_hora, valor, unitat)
+-- VALUES (1, NOW(), 34.80, 'ºC');
+-- -> Efecte esperat: Ventilador #1 passa a ON, registre_actuacions +1, alarmes +1 CRITICAL
+--
+-- >>> TEST 2: Nivell crític del silo (980 kg < llindar 1500 kg)
+-- INSERT INTO lectures_sensors (id_sensor, data_hora, valor, unitat)
+-- VALUES (3, NOW(), 980.00, 'kg');
+-- -> Efecte esperat: alarmes_incidencies +1 WARNING "Nivell crític de pinso"
+--
+-- >>> TEST 3: CO2 perillós (3500 ppm > llindar 3000 ppm)
+-- INSERT INTO lectures_sensors (id_sensor, data_hora, valor, unitat)
+-- VALUES (11, NOW(), 3500.00, 'ppm');
+-- -> Efecte esperat: Ventilador #1 passa a ON, alarmes +1 CRITICAL "CO2 perillós"
+--
+-- >>> TEST 4: Humitat excessiva (78% > llindar 70%)
+-- INSERT INTO lectures_sensors (id_sensor, data_hora, valor, unitat)
+-- VALUES (2, NOW(), 78.00, '%');
+-- -> Efecte esperat: Ventilador #1 passa a ON, alarmes +1 WARNING "Humitat excessiva"
+--
+-- Comprovació ràpida després dels tests:
+-- SELECT * FROM actuadors WHERE tipus_actuador = 'ventilador';
+-- SELECT * FROM registre_actuacions ORDER BY id_actuacio DESC LIMIT 5;
+-- SELECT * FROM alarmes_incidencies ORDER BY id_alarma DESC LIMIT 5;
+
