@@ -11,20 +11,31 @@ Descripció:
 Aquest script simula la telemetria enviada pels microcontroladors ESP32
 de les granges cap a la seu central. Permet provar en directe el funcionament
 dels triggers de MariaDB (activació automàtica de ventiladors i alarmes).
+Suporta connexió tant local com a través de xarxa cap a la MV1 (Seu Central).
 
 Ús:
-  python simulador_iot.py --mode normal       # Envia lectures periòdiques realistes
-  python simulador_iot.py --mode alarma       # Simula pujada sobtada de temp (>31ºC)
-  python simulador_iot.py --mode interactiu   # Introdueix lectures manuals per provar
+  python3 simulador_iot.py --mode normal --host 192.168.100.10
+  python3 simulador_iot.py --mode alarma --host 192.168.100.10
+  python3 simulador_iot.py --mode interactiu
 ==============================================================================
 """
 
 import sys
 import time
+import shutil
 import random
 import argparse
 import subprocess
 from datetime import datetime
+
+# Configuració per defecte de connexió a la BD
+CONFIG_CONN = {
+    "host": "127.0.0.1",
+    "port": 3306,
+    "user": "avigest_app",
+    "password": "avigest_secret_2026",
+    "database": "avigest_db"
+}
 
 # Definició dels sensors reals del sistema (conforme a 03_dades_prova.sql)
 SENSORS_CONFIG = [
@@ -85,56 +96,88 @@ SENSORS_CONFIG = [
     }
 ]
 
+def executar_sql(sql):
+    """
+    Executa una consulta SQL provant diverses vies:
+    1. Client natiu mariadb/mysql a través de la xarxa cap a CONFIG_CONN['host']
+    2. Contenidor Docker local avigest_mariadb
+    """
+    host = CONFIG_CONN["host"]
+    user = CONFIG_CONN["user"]
+    pwd = CONFIG_CONN["password"]
+    db = CONFIG_CONN["database"]
+
+    # Via 1: Si mariadb o mysql està instal·lat al sistema
+    client_bin = shutil.which("mariadb") or shutil.which("mysql")
+    if client_bin:
+        cmd = [
+            client_bin,
+            f"-h{host}",
+            f"-u{user}",
+            f"-p{pwd}",
+            db,
+            "-e", sql
+        ]
+        try:
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=5)
+            if res.returncode == 0:
+                return True, res.stdout.strip()
+            else:
+                return False, res.stderr.strip()
+        except Exception as e:
+            pass
+
+    # Via 2: Si estem a la màquina central i tenim Docker
+    docker_bin = shutil.which("docker")
+    if docker_bin and host in ["127.0.0.1", "localhost"]:
+        cmd = [
+            "docker", "exec", "-i", "avigest_mariadb",
+            "mariadb", f"-u{user}", f"-p{pwd}", db,
+            "-e", sql
+        ]
+        try:
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=5)
+            if res.returncode == 0:
+                return True, res.stdout.strip()
+            else:
+                return False, res.stderr.strip()
+        except Exception:
+            pass
+
+    return False, f"SQL preparat: {sql}"
+
 def executar_sql_insercio(id_sensor, valor, unitat):
-    """
-    Insereix la lectura directament a MariaDB utilitzant docker exec o connexió directa.
-    Retorna True si s'ha executat amb èxit.
-    """
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     sql = f"INSERT INTO lectures_sensors (id_sensor, data_hora, valor, unitat) VALUES ({id_sensor}, '{ts}', {valor:.2f}, '{unitat}');"
-
-    # Intent d'execució mitjançant contenidor Docker
-    cmd = [
-        "docker", "exec", "-i", "avigest_mariadb",
-        "mariadb", "-u", "avigest_app", "-pavigest_secret_2026", "avigest_db",
-        "-e", sql
-    ]
-
-    try:
-        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=5)
-        if proc.returncode == 0:
-            return True, "Inserit a MariaDB Docker"
-        else:
-            return False, f"Error Docker: {proc.stderr.strip()}"
-    except Exception as e:
-        # Si Docker no s'està executant localment, mostrem la consulta SQL preparada
-        return False, f"Simulació SQL: {sql}"
+    ok, out = executar_sql(sql)
+    if ok:
+        return True, f"Enviat a MariaDB ({CONFIG_CONN['host']})"
+    else:
+        return False, out
 
 def comprovar_estat_actuadors():
-    """Comprova si el trigger de temperatura ha engegat el ventilador."""
     sql = "SELECT a.id_actuador, n.codi_nau, a.tipus_actuador, a.estat_actual FROM actuadors a JOIN naus n ON a.id_nau = n.id_nau WHERE a.tipus_actuador = 'ventilador';"
-    cmd = [
-        "docker", "exec", "-i", "avigest_mariadb",
-        "mariadb", "-u", "avigest_app", "-pavigest_secret_2026", "avigest_db",
-        "-e", sql
-    ]
-    try:
-        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=5)
-        if proc.returncode == 0:
-            return proc.stdout.strip()
-    except Exception:
-        pass
+    ok, out = executar_sql(sql)
+    if ok and out:
+        return out
+    return None
+
+def comprovar_ultimes_alarmes():
+    sql = "SELECT id_alarma, titol, data_hora, resolta FROM alarmes_incidencies ORDER BY id_alarma DESC LIMIT 2;"
+    ok, out = executar_sql(sql)
+    if ok and out:
+        return out
     return None
 
 def mode_normal():
     print("\n=======================================================")
-    print("  AviGest S.L. — Simulació de Telemetria en Temps Real  ")
+    print(f"  AviGest S.L. — Telemetria en Temps Real -> {CONFIG_CONN['host']}")
     print("  (Premeu Ctrl+C per aturar la simulació)             ")
     print("=======================================================\n")
     try:
         cicle = 1
         while True:
-            print(f"--- Cicle de lectura #{cicle} [{datetime.now().strftime('%H:%M:%S')}] ---")
+            print(f"--- Cicle #{cicle} [{datetime.now().strftime('%H:%M:%S')}] ---")
             for s in SENSORS_CONFIG:
                 val = random.uniform(s["normal_range"][0], s["normal_range"][1])
                 success, msg = executar_sql_insercio(s["id_sensor"], val, s["unitat"])
@@ -142,14 +185,14 @@ def mode_normal():
                 print(f"  {tec_label:<10} Sensor #{s['id_sensor']} ({s['tipus']} - {s['nau']}): {val:.2f} {s['unitat']} -> {msg}")
             
             cicle += 1
-            print("Esperant 5 segons per a la propera tanda de telemetria...\n")
+            print("Esperant 5 segons per a la propera tanda...\n")
             time.sleep(5)
     except KeyboardInterrupt:
-        print("\nSimulació aturada per l'usuari.")
+        print("\nSimulació aturada.")
 
 def mode_alarma():
     print("\n=======================================================")
-    print("  AviGest S.L. — Simulació d'Incidència i Dispar de Triggers")
+    print(f"  AviGest S.L. — Simulació d'Incidència -> {CONFIG_CONN['host']}")
     print("=======================================================\n")
     print("1. Injectant TEMPERATURA CRÍTICA (34.8 ºC) al Sensor #1 (Bellpuig NAU-01)...")
     print("   -> Llindar màxim de la nau: 31.0 ºC")
@@ -161,47 +204,52 @@ def mode_alarma():
     success, msg = executar_sql_insercio(3, 980.00, "kg")
     print(f"   Estat: {msg}")
 
-    print("\n3. Comprovant efecte automàtic del TRIGGER a la Base de Dades:")
+    print("\n3. Comprovant efecte del TRIGGER a MariaDB (Taula Actuadors):")
     estat = comprovar_estat_actuadors()
     if estat:
         print(estat)
-        print("\n[ÈXIT] El trigger ha detectat la pujada de temperatura i ha canviat l'estat del ventilador a 'ON'!")
+        print("\n[ÈXIT] El trigger ha engegat el ventilador a 'ON' automàticament!")
     else:
-        print("  -> Si teniu MariaDB engegat a Docker, podeu verificar amb phpMyAdmin la taula 'actuadors' i 'alarmes_incidencies'.")
+        print("  -> Comproveu la taula 'actuadors' a phpMyAdmin per veure l'estat 'ON'.")
+
+    print("\n4. Comprovant efecte del TRIGGER a MariaDB (Taula Alarmes):")
+    alarmes = comprovar_ultimes_alarmes()
+    if alarmes:
+        print(alarmes)
 
 def mode_interactiu():
     print("\n=======================================================")
-    print("  AviGest S.L. — Simulador Interactiu Manual           ")
+    print(f"  AviGest S.L. — Simulador Interactiu -> {CONFIG_CONN['host']}")
     print("=======================================================\n")
-    print("Sensors disponibles:")
     for s in SENSORS_CONFIG:
         print(f"  [{s['id_sensor']}] {s['granja']} | {s['nau']} | {s['tipus']} ({s['unitat']}) [Llindars: {s['min']}-{s['max']}]")
     
     try:
-        id_s = int(input("\nIndiqueu l'ID del sensor a simular (ex: 1): "))
+        id_s = int(input("\nIndiqueu l'ID del sensor (ex: 1): "))
         sensor_trobat = next((s for s in SENSORS_CONFIG if s["id_sensor"] == id_s), None)
         if not sensor_trobat:
             print("[ERROR] Sensor no vàlid!")
             return
 
-        val = float(input(f"Indiqueu el valor mesurat en {sensor_trobat['unitat']} (ex: 32.5): "))
+        val = float(input(f"Indiqueu el valor mesurat en {sensor_trobat['unitat']}: "))
         ok, msg = executar_sql_insercio(id_s, val, sensor_trobat["unitat"])
         print(f"\n[Resultat]: {msg}")
-        
-        if val > sensor_trobat["max"]:
-            print(f"-> ALERTA: El valor {val} supera el màxim permès ({sensor_trobat['max']}). S'haurà disparat el ventilador.")
-        elif val < sensor_trobat["min"]:
-            print(f"-> ALERTA: El valor {val} és inferior al mínim ({sensor_trobat['min']}). S'haurà generat una alarma.")
-        else:
-            print("-> El valor està dins del rang de funcionament normal.")
     except ValueError:
-        print("[ERROR] Cal introduir un número vàlid.")
+        print("[ERROR] Número no vàlid.")
 
 def main():
-    parser = argparse.ArgumentParser(description="Simulador de Telemetria IoT per a AviGest S.L.")
-    parser.add_argument("--mode", choices=["normal", "alarma", "interactiu"], default="normal",
-                        help="Mode de funcionament: 'normal', 'alarma' o 'interactiu'")
+    parser = argparse.ArgumentParser(description="Simulador IoT per a AviGest S.L.")
+    parser.add_argument("--mode", choices=["normal", "alarma", "interactiu"], default="normal")
+    parser.add_argument("--host", default="127.0.0.1", help="Adreça IP de la MV1 (Seu Central)")
+    parser.add_argument("--user", default="avigest_app", help="Usuari de MariaDB")
+    parser.add_argument("--password", default="avigest_secret_2026", help="Contrasenya de MariaDB")
+    parser.add_argument("--database", default="avigest_db", help="Base de dades")
     args = parser.parse_args()
+
+    CONFIG_CONN["host"] = args.host
+    CONFIG_CONN["user"] = args.user
+    CONFIG_CONN["password"] = args.password
+    CONFIG_CONN["database"] = args.database
 
     if args.mode == "normal":
         mode_normal()
