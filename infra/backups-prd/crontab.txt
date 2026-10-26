@@ -1,19 +1,17 @@
 # ==============================================================================
-# AviGest S.L. — Configuració de Crontab per a Còpies de Seguretat
+# AviGest S.L. — Configuració de Crontab a la Màquina Virtual srv-backup
 # Fitxer: infra/backups-prd/crontab.txt
-# Mòdul: ASIX - Projecte (Requeriment 4.5)
+# Mòdul: ASIX - Projecte (Requeriment 4.5: Còpies i PRD)
 # ==============================================================================
 #
-# Per instal·lar aquestes tasques al crontab de l'usuari root:
+# Per instal·lar aquestes tasques al crontab de srv-backup (10.0.20.20):
 #   sudo crontab infra/backups-prd/crontab.txt
-# O editar interactivament amb:
-#   sudo crontab -e
 #
 # Format:
 # Minut (0-59) | Hora (0-23) | Dia del mes (1-31) | Mes (1-12) | Dia de la setmana (0-7) | Comanda
 
-# 1. Còpia de seguretat diària completa a les 02:00 AM (MariaDB + OpenLDAP)
+# 1. Còpia de seguretat diària completa a les 02:00 AM (PostgreSQL + OpenLDAP cap al 2n disc)
 0 2 * * * /opt/avigest-projecte/infra/backups-prd/backup_avigest.sh >> /var/backups/avigest/cron_backup.log 2>&1
 
-# 2. Comprovació de salut d'espai de disc de còpies de seguretat cada diumenge a les 04:00 AM
-0 4 * * 0 df -h /var/backups/avigest >> /var/backups/avigest/disk_health.log 2>&1
+# 2. Comprovació d'espai de disc del segon disc simulat cada diumenge a les 04:00 AM
+0 4 * * 0 df -h /mnt/disc-extern-backup >> /var/backups/avigest/disk_health.log 2>&1

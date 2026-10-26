@@ -1,63 +1,62 @@
 # Fitxa de Decisió Tècnica — FD01: Sistema Gestor de Base de Dades (SGBD)
 
 **Projecte:** AviGest S.L. — Sistema de gestió centralitzada de granges avícoles  
-**Mòdul:** ASIX - Projecte (Requeriment 4.3)  
-**Data:** 19 d'octubre de 2026  
+**Mòdul:** ASIX - Projecte (Requeriment 4.3 i 4.6)  
+**Data:** Actualitzat a 26 d'octubre de 2026  
 **Responsable:** Mariam / Joan  
 
 ---
 
 ## 1. Descripció de la necessitat
-El sistema centralitzat d'AviGest requereix un SGBD relacional per emmagatzemar:
-- Dades de múltiples clients i les seves granges (model multitenant).
-- Dades estructurades de naus, lots de criança de pollastres, inventari de sensors i actuadors.
-- Lectures de sensors IoT en temps real (sèries temporals de temperatura, humitat, nivell de silos).
-- Regles automàtiques mitjançant triggers (activació de ventiladors/calefactors quan se superen llindars).
-- Registre d'auditoria, actuacions i alarmes d'incidències.
+El sistema centralitzat d'AviGest a `srv-serveis` requereix un SGBD relacional robust per emmagatzemar:
+- Dades estructurades de clients, granges, naus i cicles de criança (model multitenant).
+- Sèries temporals de lectures IoT d'alta freqüència (temperatura, humitat, CO2, nivell de silos).
+- Triggers procedimentals per a control automàtic d'actuadors i generació d'alarmes.
+- Suport natiu de **rèplica de dades** per garantir la redundància i alta disponibilitat (Requeriment 4.6).
 
 ---
 
 ## 2. Alternatives avaluades
 
-### Alternativa 1: MariaDB (10.11 LTS) / MySQL
-* **Descripció:** Sistema de gestió de bases de dades relacional de codi obert derivat de MySQL, estàndard en entorns Linux i administració de sistemes.
+### Alternativa 1: PostgreSQL 16 (Escollida)
+* **Descripció:** SGBD relacional i d'objectes avançat de codi obert, de referència en entorns empresarials i projectes IoT.
 * **Pros:**
-  - Desplegament senzillíssim i lleuger en contenidor Docker (`mariadb:10.11`).
-  - Totalment compatible amb eines d'administració visual com **phpMyAdmin**, ideal per a demostracions i defensa en directe.
-  - Curba d'aprenentatge molt baixa i domini previ assolit en el currículum del cicle ASIX.
-  - Rendiment excel·lent per a operacions de lectura i escriptura transaccional estàndard.
-  - Gran quantitat de documentació i facilitat per a còpies de seguretat amb `mariadb-dump`.
+  - **Llenguatge procedural avançat (PL/pgSQL):** Permet escriure triggers rics i procediments d'automatització i auditoria d'accessos sense limitacions.
+  - **Suport excel·lent per a telemetria:** Extensions natives com TimescaleDB per a sèries temporals de sensors i tipus de dades JSON/JSONB.
+  - **Seguretat a nivell de fila (Row-Level Security - RLS):** Aïllament natiu multitenant per motor de dades, ideal per separar granges i clients.
+  - **Mecanisme de rèplica nadiu (Streaming Replication):** Permet configurar rèpliques calentes (*Hot Standby*) amb sincronització basada en fitxers WAL (*Write-Ahead Logging*).
 * **Contres:**
-  - La sintaxi dels triggers i procediments emmagatzemats és més estricta i té menys opcions de llenguatge que PL/pgSQL.
-  - No disposa de Row-Level Security (RLS) natiu directe com PostgreSQL; l'aïllament per granja/client s'implementa mitjançant vistes, procediments o consultes filtrades per `client_id` / `granja_id`.
+  - Administració de configuració inicial més estricta (`pg_hba.conf`, `postgresql.conf`).
 
-### Alternativa 2: PostgreSQL (16)
-* **Descripció:** SGBD objecte-relacional avançat amb suport natiu per a tipus complexos, JSON i extensions temporals.
+### Alternativa 2: MariaDB (10.11 LTS) / MySQL
+* **Descripció:** SGBD relacional clàssic derivat de MySQL.
 * **Pros:**
-  - Suport natiu de *Row-Level Security* (RLS) per a aïllament multitenant transparent.
-  - Llenguatge de procediments (PL/pgSQL) molt ric per a triggers complexos.
+  - Desplegament ràpid i eina web senzilla (phpMyAdmin).
 * **Contres:**
-  - Configuració d'usuaris, rols i permisos inicials més complexa (`pg_hba.conf`).
-  - Eines web d'administració (pgAdmin4) més pesades en recursos i menys àgils per a la defensa en directe que phpMyAdmin.
-  - Corba de depuració superior davant de fallades durant la presentació presencial.
+  - Menor potència en procediments emmagatzemats i triggers complexos en comparació amb PL/pgSQL.
+  - No disposa de Row-Level Security natiu directe; l'aïllament requereix vistes manuals.
 
 ### Alternativa 3: SQLite3 (Descartada)
 * **Descripció:** Base de dades embeguda en fitxer local.
-* **Motiu de descart:** No és un servei client-servidor adequat per a una seu central que rep connexions concurrents de múltiples granges, sensors IoT i usuaris simultanis.
+* **Motiu de descart:** Inadequada per a la seu central amb múltiples connexions concurrents d'ingesta IoT i usuaris de consulta.
 
 ---
 
 ## 3. Decisió presa
-**S'escull MariaDB 10.11 LTS**.
+**S'escull PostgreSQL 16 amb suport de rèplica.**
 
 ### Justificació:
-1. **Simplicitat operativa i fiabilitat:** Compleix el principi fonamental del projecte d'aconseguir una solució 100% funcional, fàcil d'entendre i fàcil de defensar davant del tribunal docent.
-2. **Eines visuals integrades:** L'acompanyament amb un contenidor de **phpMyAdmin** permet als administradors i al tribunal visualitzar les dades en temps real, comprovar les alertes i verificar els triggers a l'instant.
-3. **Optimització per a contenidors:** Estabilitat demostrada i arrencada immediata a través de Docker Compose.
+1. **Lògica de negoci potent:** PL/pgSQL permet implementar la lògica d'actuació automàtica i validació de llindars de forma elegant i segura.
+2. **Capacitat d'ingesta IoT:** Estructura òptima per rebre les lectures del broker MQTT a `srv-serveis`.
+3. **Redundància i Rèplica (Fitxa de Decisió / Avaluació):**
+   > **Nota d'arquitectura sobre la Rèplica de Base de Dades:**  
+   > En el desplegament del laboratori acadèmic, la rèplica de PostgreSQL està allotjada com a contenidor secundari dins de la mateixa màquina virtual `srv-serveis`.  
+   > **Limitació de disseny documentada i defensada davant del tribunal:** Som plenament conscients que tenir la rèplica en un contenidor dins de la mateixa VM **no és una redundància real de maquinari si cau la VM sencera o si falla el disc virtual de `srv-serveis`**. En aquesta topologia de laboratori, la rèplica serveix per protegir el servei davant de fallades del procés PostgreSQL, errors de memòria cau o corrupcions de dades de l'aplicació, i per demostrar la configuració de *Streaming Replication*.  
+   > Si cau la VM `srv-serveis` per complet, la continuïtat del servei està garantida per la màquina virtual dedicada independent **`srv-backup`** (`10.0.20.20`), la qual fa còpies transaccionals diàries i les emmagatzema en un segon disc virtual extern (RTO < 30 minuts). En una arquitectura de producció empresarial amb recursos de maquinari suficients, la rèplica de la BD s'allotjaria en una VM pròpia o en un servidor físic separat en un altre rack/CPD.
 
 ---
 
 ## 4. Mètode de verificació
-- **Prova realitzada:** Desplegament de la imatge oficial `mariadb:10.11` a l'orquestrador Docker local amb persistència de dades en volum.
-- **Validació de triggers:** Execució d'un script SQL de prova (`02_triggers_procedures.sql`) verificant que la inserció d'una lectura de temperatura per sobre del llindar dispara automàticament la inserció a `registre_actuacions` i `alarmes_incidencies`.
-- **Eines validades:** Connexió reeixida de `phpMyAdmin` sobre la xarxa interna de Docker.
+- **Desplegament en Docker:** Contenidor `postgres:16-alpine` a la màquina `srv-serveis` (LAN: `10.0.20.0/24`).
+- **Validació de triggers:** Execució de lectures de temperatura disparant l'activació de l'actuador i la inserció d'alarma.
+- **Rèplica:** Verificació de l'estat de connexió del procés `walreceiver` i comprovació de lectura a la instància standby.

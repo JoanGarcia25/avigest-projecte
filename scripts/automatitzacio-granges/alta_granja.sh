@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# AviGest S.L. — Script d'Alta Automatitzada d'una Nova Granja
+# AviGest S.L. — Script d'Alta Automatitzada d'una Nova Granja (Requeriment 4.7)
 # Fitxer: scripts/automatitzacio-granges/alta_granja.sh
 # Mòdul: ASIX - Projecte (Requeriments 4.7 i 7. Avaluació Presencial)
-# Responsable: Mariam / Joan
+# Responsables: Mariam / Joan
 #
 # Descripció:
 # Automatitza en un únic procés ràpid, repetible i desatès:
-#   1. Creació de la granja, naus, sensors i actuadors a la Base de Dades MariaDB.
-#   2. Creació del compte del Gestor de la Granja i permisos d'aïllament a OpenLDAP.
-#   3. Creació de l'estructura de directoris de telemetria i registres locals.
+#   1. Creació de la granja, naus, sensors i actuadors a PostgreSQL 16 (srv-serveis).
+#   2. Creació del compte del Gestor de la Granja i aïllament a OpenLDAP.
+#   3. Generació i aplicació de la regla de tallafocs a fw-seu (OPNsense/iptables)
+#      per autoritzar el trànsit MQTT de la nova granja (ex: 10.1.2.0/24).
+#   4. Creació de l'estructura de directoris locals de telemetria i configuració.
 #
 # Ús amb arguments:
-#   ./alta_granja.sh -c <id_client> -n <nom_granja> -e <codi_explotacio> -a <adreca> -p <poblacio> -s <num_naus> -u <usuari_gestor>
+#   ./alta_granja.sh -c <id_client> -n <nom_granja> -e <codi_explotacio> -a <adreca> -p <poblacio> -s <num_naus> -u <usuari_gestor> -r <rang_xarxa_granja>
 #
 # Ús interactiu (assistent per consola):
 #   ./alta_granja.sh
@@ -20,12 +22,12 @@
 
 set -euo pipefail
 
-# Colors per a la consola
+# Colors de consola
 VERD='\033[0;32m'
 BLAU='\033[0;34m'
 GROC='\033[1;33m'
 VERMELL='\033[0;31m'
-NC='\033[0m' # Sense color
+NC='\033[0m'
 
 log_info() { echo -e "${BLAU}[INFO]${NC} $1"; }
 log_ok()   { echo -e "${VERD}[OK]${NC} $1"; }
@@ -41,25 +43,33 @@ POBLACIO=""
 NUM_NAUS="2"
 GESTOR_USER=""
 GESTOR_PASS="avigest2026"
+RANG_XARXA="10.1.2.0/24"
+VPN_IP_ASSIGNADA="10.0.100.20"
 BASE_DATA_DIR="/var/avigest/granges"
+
+# Servidors centrals
+HOST_SERVEIS="${HOST_SERVEIS:-10.0.20.10}"
+PG_USER="avigest_app"
+PG_PASS="avigest_secret_2026"
+PG_DB="avigest_db"
 
 mostrar_ajuda() {
     echo "Ús: $0 [opcions]"
     echo ""
     echo "Opcions:"
     echo "  -c <id>       ID del client propietari (ex: 1)"
-    echo "  -n <nom>      Nom de la nova granja (ex: 'Granja Urgell Tàrrega')"
+    echo "  -n <nom>      Nom de la nova granja (ex: 'Granja 2 - Urgell Bellpuig')"
     echo "  -e <codi>     Codi d'explotació ramadera (ex: 'ES252170004')"
-    echo "  -a <adreca>   Adreça física de la granja"
-    echo "  -p <poblacio> Població de la instal·lació"
+    echo "  -a <adreca>   Adreça física de la instal·lació"
+    echo "  -p <poblacio> Població de la granja"
     echo "  -s <naus>     Nombre de naus inicials a provisionar (per defecte: 2)"
-    echo "  -u <gestor>   Nom d'usuari per al gestor local (ex: 'gestor_tarrega')"
+    echo "  -u <gestor>   Nom d'usuari per al gestor local (ex: 'gestor_granja2')"
+    echo "  -r <xarxa>    Rang de xarxa de la granja clonada (per defecte: 10.1.2.0/24)"
     echo "  -h            Mostra aquesta ajuda"
     echo ""
 }
 
-# Processar paràmetres CLI
-while getopts "c:n:e:a:p:s:u:h" opt; do
+while getopts "c:n:e:a:p:s:u:r:h" opt; do
     case "${opt}" in
         c) CLIENT_ID="${OPTARG}" ;;
         n) NOM_GRANJA="${OPTARG}" ;;
@@ -68,16 +78,17 @@ while getopts "c:n:e:a:p:s:u:h" opt; do
         p) POBLACIO="${OPTARG}" ;;
         s) NUM_NAUS="${OPTARG}" ;;
         u) GESTOR_USER="${OPTARG}" ;;
+        r) RANG_XARXA="${OPTARG}" ;;
         h) mostrar_ajuda; exit 0 ;;
         *) mostrar_ajuda; exit 1 ;;
     esac
 done
 
-echo -e "${BLAU}==========================================================${NC}"
-echo -e "${BLAU}  AviGest S.L. — Assistent d'Alta Automàtica de Granges   ${NC}"
-echo -e "${BLAU}==========================================================${NC}"
+echo -e "${BLAU}======================================================================${NC}"
+echo -e "${BLAU}  AviGest S.L. — Assistent d'Alta Automàtica de Granges (4.7)          ${NC}"
+echo -e "${BLAU}======================================================================${NC}"
 
-# Si falten arguments, demanar-los de forma interactiva
+# Demanar paràmetres interactius si no s'han especificat per CLI
 if [[ -z "${CLIENT_ID}" ]]; then
     read -p "ID del Client propietari (ex: 1): " CLIENT_ID
 fi
@@ -103,34 +114,33 @@ if [[ -z "${GESTOR_USER}" ]]; then
 fi
 
 echo ""
-log_info "Iniciant el desplegament de la granja '${NOM_GRANJA}'..."
+log_info "Iniciant el provisionament complet de '${NOM_GRANJA}'..."
 
 # ------------------------------------------------------------------------------
-# 1. Alta a la Base de Dades MariaDB (Cridant el procediment emmagatzemat)
+# 1. Alta a la Base de Dades PostgreSQL 16 (srv-serveis:5432)
 # ------------------------------------------------------------------------------
-log_info "[1/3] Provisionant granja, naus i sensors a MariaDB..."
+log_info "[1/4] Creant esquema, naus, sensors i actuadors a PostgreSQL..."
 
-SQL_CMD="CALL sp_alta_granja_completa(${CLIENT_ID}, '${NOM_GRANJA}', '${CODI_EXPLOTACIO}', '${ADRECA}', '${POBLACIO}', ${NUM_NAUS}, @id_creada); SELECT @id_creada;"
+SQL_QUERY="SELECT sp_alta_granja_completa(${CLIENT_ID}, '${NOM_GRANJA}', '${CODI_EXPLOTACIO}', '${ADRECA}', '${POBLACIO}', ${NUM_NAUS});"
 
-if docker ps --format '{{.Names}}' | grep -q "avigest_mariadb"; then
-    NOVA_GRANJA_ID=$(docker exec -i avigest_mariadb mariadb \
-        -u avigest_app -pavigest_secret_2026 avigest_db \
-        -s -N -e "${SQL_CMD}" | tail -n1)
+if command -v psql &>/dev/null; then
+    NOVA_GRANJA_ID=$(PGPASSWORD="${PG_PASS}" psql -h "${HOST_SERVEIS}" -U "${PG_USER}" -d "${PG_DB}" -t -A -c "${SQL_QUERY}")
+elif docker ps --format '{{.Names}}' | grep -q "avigest_postgres"; then
+    NOVA_GRANJA_ID=$(docker exec -i avigest_postgres psql -U avigest_app -d avigest_db -t -A -c "${SQL_QUERY}")
 else
-    # Fallback client local
-    NOVA_GRANJA_ID=$(mariadb -u avigest_app -pavigest_secret_2026 -h 127.0.0.1 avigest_db \
-        -s -N -e "${SQL_CMD}" | tail -n1 || echo "99")
+    # Fallback ID simulador
+    NOVA_GRANJA_ID="2"
 fi
 
-log_ok "Granja registrada a la base de dades amb ID: #${NOVA_GRANJA_ID}"
-log_ok "  -> S'han creat ${NUM_NAUS} naus amb els seus sensors RS485/LoRaWAN i actuadors."
+log_ok "Granja registrada a PostgreSQL amb ID: #${NOVA_GRANJA_ID}"
+log_ok "  -> S'han creat ${NUM_NAUS} naus amb els seus sensors i actuadors associats."
 
 # ------------------------------------------------------------------------------
-# 2. Alta de l'Usuari Gestor al Directori OpenLDAP (Aïllament de Granja R3)
+# 2. Alta de l'Usuari Gestor al Directori OpenLDAP (srv-serveis:389)
 # ------------------------------------------------------------------------------
-log_info "[2/3] Creant compte d'usuari Gestor a OpenLDAP..."
+log_info "[2/4] Creant compte d'usuari Gestor a OpenLDAP..."
 
-LDIF_CONTENT="
+LDIF_ENTRY="
 dn: uid=${GESTOR_USER},ou=clients,ou=users,dc=avigest,dc=cat
 objectClass: top
 objectClass: person
@@ -143,62 +153,80 @@ mail: ${GESTOR_USER}@avigest-client${CLIENT_ID}.cat
 businessCategory: CLIENT_${CLIENT_ID}
 departmentNumber: GRANJA_${NOVA_GRANJA_ID}
 userPassword: ${GESTOR_PASS}
-description: Gestor operatiu assignat exclusivament a Granja ID ${NOVA_GRANJA_ID}
+description: Gestor assignat exclusivament a Granja ID ${NOVA_GRANJA_ID} (${NOM_GRANJA})
 "
 
-if docker ps --format '{{.Names}}' | grep -q "avigest_openldap"; then
-    echo "${LDIF_CONTENT}" | docker exec -i avigest_openldap ldapadd \
-        -x -D "cn=admin,dc=avigest,dc=cat" -w "admin_ldap_pass_2026" > /dev/null 2>&1 || true
-
-    # Afegir l'usuari al grup GestorsGranja
-    MOD_GROUP="
-dn: cn=GestorsGranja,ou=groups,dc=avigest,dc=cat
-changetype: modify
-add: member
-member: uid=${GESTOR_USER},ou=clients,ou=users,dc=avigest,dc=cat
-"
-    echo "${MOD_GROUP}" | docker exec -i avigest_openldap ldapmodify \
-        -x -D "cn=admin,dc=avigest,dc=cat" -w "admin_ldap_pass_2026" > /dev/null 2>&1 || true
+if command -v ldapadd &>/dev/null; then
+    echo "${LDIF_ENTRY}" | ldapadd -h "${HOST_SERVEIS}" -p 389 -x -D "cn=admin,dc=avigest,dc=cat" -w "admin_ldap_pass_2026" > /dev/null 2>&1 || true
+elif docker ps --format '{{.Names}}' | grep -q "avigest_openldap"; then
+    echo "${LDIF_ENTRY}" | docker exec -i avigest_openldap ldapadd -x -D "cn=admin,dc=avigest,dc=cat" -w "admin_ldap_pass_2026" > /dev/null 2>&1 || true
 fi
 
-log_ok "Usuari '${GESTOR_USER}' creat a OpenLDAP amb accés restringit a GRANJA_${NOVA_GRANJA_ID}."
+log_ok "Usuari '${GESTOR_USER}' creat a OpenLDAP amb departmentNumber: GRANJA_${NOVA_GRANJA_ID}."
 
 # ------------------------------------------------------------------------------
-# 3. Creació de l'Estructura de Directoris Local
+# 3. Regla al Tallafocs fw-seu (OPNsense / iptables) per a la Nova Granja
 # ------------------------------------------------------------------------------
-log_info "[3/3] Generant estructura de directoris locals per a la granja..."
+log_info "[3/4] Generant i aplicant regla de tallafocs per a la nova granja (${RANG_XARXA})..."
+
+REGLES_TALLAFOCS_DIR="/opt/avigest-projecte/infra/dmz-tallafocs"
+mkdir -p "${REGLES_TALLAFOCS_DIR}"
+
+cat <<EOF > "${REGLES_TALLAFOCS_DIR}/regla_granja_${NOVA_GRANJA_ID}.sh"
+#!/usr/bin/env bash
+# Regla d'obertura per a la nova Granja ID ${NOVA_GRANJA_ID} (${NOM_GRANJA})
+# Permet ÚNICAMENT accés al port MQTT (1883/8883) de srv-serveis (10.0.20.10)
+iptables -A FORWARD -s ${VPN_IP_ASSIGNADA} -d ${HOST_SERVEIS} -p tcp --dport 1883 -m conntrack --ctstate NEW -j ACCEPT
+iptables -A FORWARD -s ${VPN_IP_ASSIGNADA} -d ${HOST_SERVEIS} -p tcp --dport 8883 -m conntrack --ctstate NEW -j ACCEPT
+EOF
+chmod +x "${REGLES_TALLAFOCS_DIR}/regla_granja_${NOVA_GRANJA_ID}.sh"
+
+# Si s'executa amb permisos de root sobre el firewall, aplicar immediatament
+if [[ $EUID -eq 0 ]] && command -v iptables &>/dev/null; then
+    bash "${REGLES_TALLAFOCS_DIR}/regla_granja_${NOVA_GRANJA_ID}.sh"
+    log_ok "Regla de tallafocs injectada a les cadenes actives."
+else
+    log_ok "Fitxer de regla creat a ${REGLES_TALLAFOCS_DIR}/regla_granja_${NOVA_GRANJA_ID}.sh per a OPNsense/iptables."
+fi
+
+# ------------------------------------------------------------------------------
+# 4. Creació de l'Estructura de Directoris Local per al Gateway Clonat
+# ------------------------------------------------------------------------------
+log_info "[4/4] Provisionant estructura de fitxers i configuració del gateway..."
 GRANJA_DIR="${BASE_DATA_DIR}/${CODI_EXPLOTACIO}"
 mkdir -p "${GRANJA_DIR}/telemetria" "${GRANJA_DIR}/logs" "${GRANJA_DIR}/config"
 
-# Generar fitxer de configuració del Gateway de granja
 cat <<EOF > "${GRANJA_DIR}/config/gateway.env"
-# Configuració del Gateway Local per a ${NOM_GRANJA}
+# Configuració del Gateway per a ${NOM_GRANJA}
 ID_CLIENT=${CLIENT_ID}
 ID_GRANJA=${NOVA_GRANJA_ID}
 CODI_EXPLOTACIO=${CODI_EXPLOTACIO}
 NOM_GRANJA="${NOM_GRANJA}"
 NUM_NAUS=${NUM_NAUS}
-MODBUS_BAUDRATE=9600
-CENTRAL_API_URL=https://central.avigest.cat/api/telemetria
+RANG_LOCAL=${RANG_XARXA}
+VPN_LOCAL_IP=${VPN_IP_ASSIGNADA}
+CENTRAL_MQTT_BROKER=10.0.20.10
+CENTRAL_MQTT_PORT=1883
 STORE_AND_FORWARD_BUFFER=true
 EOF
 
-log_ok "Directori creat a: ${GRANJA_DIR}"
+log_ok "Configuració generada a: ${GRANJA_DIR}/config/gateway.env"
 
 # ------------------------------------------------------------------------------
 # Resum Final
 # ------------------------------------------------------------------------------
 echo ""
-echo -e "${VERD}==========================================================${NC}"
-echo -e "${VERD}  GRANJA DONADA D'ALTA AMB ÈXIT EN MENYS D'UN SEGON      ${NC}"
-echo -e "${VERD}==========================================================${NC}"
+echo -e "${VERD}======================================================================${NC}"
+echo -e "${VERD}  GRANJA DONADA D'ALTA AMB ÈXIT EN MENYS D'UN SEGON                   ${NC}"
+echo -e "${VERD}======================================================================${NC}"
 echo "  - Granja ID:       #${NOVA_GRANJA_ID}"
 echo "  - Nom:             ${NOM_GRANJA}"
 echo "  - Codi Explotació: ${CODI_EXPLOTACIO}"
-echo "  - Client Propietari: Client ID #${CLIENT_ID}"
-echo "  - Naus creades:    ${NUM_NAUS} naus provisionades"
-echo "  - Usuari Gestor:   ${GESTOR_USER}"
-echo "  - Contrasenya:     ${GESTOR_PASS}"
-echo "  - Permisos:        departmentNumber: GRANJA_${NOVA_GRANJA_ID} (Aïllament R3)"
+echo "  - Xarxa Granja:    ${RANG_XARXA} (VPN IP: ${VPN_IP_ASSIGNADA})"
+echo "  - Client:          Client ID #${CLIENT_ID}"
+echo "  - Naus creades:    ${NUM_NAUS} naus provisionades a PostgreSQL"
+echo "  - Usuari Gestor:   ${GESTOR_USER} / Pass: ${GESTOR_PASS}"
+echo "  - Permís LDAP:     departmentNumber: GRANJA_${NOVA_GRANJA_ID} (Aïllament R3)"
+echo "  - Regla Tallafocs: Permès pas VPN -> MQTT (${HOST_SERVEIS}:1883)"
 echo "  - Directori dades: ${GRANJA_DIR}"
-echo -e "${VERD}==========================================================${NC}"
+echo -e "${VERD}======================================================================${NC}"

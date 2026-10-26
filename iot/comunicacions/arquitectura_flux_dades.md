@@ -2,74 +2,67 @@
 
 **Mòdul:** ASIX - Projecte (Requeriment 4.8)  
 **Responsable:** Mariam (Base de Dades, IoT i Automatització)  
+**Entorn:** Topologia de 7 Màquines Virtuals interconnectades  
 
 ---
 
 ## 1. Visió General del Flux d'Ingesta de Dades
 
-El sistema d'AviGest garanteix la recollida contínua de les mètriques ambientals de les naus i dels dipòsits de gra des de les explotacions remotes fins a la seu central.
+El sistema d'AviGest garanteix la recollida contínua de les lectures ambientals de les naus i dipòsits de gra des de les explotacions remotes fins a la seu central, seguint el recorregut estricte definit en la nova arquitectura de màquines virtuals:
 
 ```mermaid
 flowchart TD
-    subgraph Granja["1 & 2. Granja Remota (Camp & Gateway)"]
-        direction TB
-        S_RS485["Sensors Temp/Humitat (RS485 Modbus)"] -->|Bus cablejat| ESP_Nau["ESP32 Mestre de Nau"]
-        Actuador["Relés Ventiladors / Calefacció"] <--|Modbus RTU| ESP_Nau
-        S_LoRa["Sensors de Silo (Pes/Nivell)"] -->|Ràdio LoRaWAN 868MHz| GwLoRa["Gateway LoRaWAN Granja"]
-        ESP_Nau -->|Ethernet local| GatewayGranja["Gateway Industrial Fanless<br/>(Buffer Store-and-Forward)"]
-        GwLoRa -->|Ethernet local| GatewayGranja
+    subgraph Granja["Granja 1 (10.1.1.0/24)"]
+        direction LR
+        Sim["granja1-sim<br/>• ESP32 simulats (RS485 Modbus)<br/>• Silos LoRaWAN (ChirpStack)"]
+        -->|Trames Modbus / LoRa|
+        Srv["granja1-srv (Edge)<br/>• MQTT local<br/>• Regles locals (Ventilador >31ºC)<br/>• Buffer Store-and-Forward<br/>• Client VPN (10.0.100.10)"]
     end
 
-    subgraph WAN_Internet["3. Xarxa WAN / Internet Segura"]
-        GatewayGranja ==>|Payloads JSON xifrats sobre TLS/HTTPS| DMZ_Ingesta["Proxy Nginx / API d'Ingesta (DMZ)"]
+    subgraph Perimetre["fw-seu (OPNsense)"]
+        VPN_In["Punt d'Entrada VPN (10.0.100.1)<br/>Regles 4.4: Només permet pas<br/>al port MQTT 1883/8883 de la LAN"]
     end
 
-    subgraph Central["4. Seu Central AviGest (LAN Interna)"]
-        DMZ_Ingesta ==>|Inserció transaccional| MariaDB["MariaDB (Taula lectures_sensors)"]
-        MariaDB -->|Trigger AFTER INSERT| Trigger["tg_control_llindars_sensor"]
-        Trigger -->|Si > 31ºC| AutoVent["Actualitza estat actuador a ON<br/>+ Escriu a registre_actuacions"]
-        Trigger -->|Si crític| AutoAlarm["Insereix a alarmes_incidencies"]
+    subgraph Nucli["LAN seu (10.0.20.0/24)"]
+        MQTT_Central["srv-serveis (10.0.20.10)<br/>Broker MQTT Mosquitto"]
+        -->|Ingesta de lectures|
+        PG["PostgreSQL 16 (avigest_db)<br/>+ Rèplica de BD"]
+        PG -->|Trigger PL/pgSQL| Triggers["fn_control_llindars_sensor()<br/>• Actualitza actuador a ON<br/>• Insereix registre_actuacions<br/>• Insereix alarmes_incidencies"]
     end
+
+    Srv ==>|Túnel xifrat VPN| VPN_In
+    VPN_In ==>|NOMÉS MQTT:1883| MQTT_Central
 ```
 
 ---
 
-## 2. Descripció de les 4 Etapes del Flux de Dades
+## 2. Recorregut Detallat Pas a Pas d'una Lectura
 
-### Etapa 1: Captura de Dades a Camp (ESP32)
-* **Dins de la nau:** Els sensors ambientals (temperatura, humitat) estan connectats a un bus RS485 diferencial amb un transceptor MAX485 o transceiver industrial aïllat galvànicament. L'ESP32 llegeix les trames Modbus periòdicament (cada 30 segons).
-* **Als silos exteriors:** La cèl·lula de pesatge del silo transmet una trama LoRaWAN cap al gateway de la granja (cada 30-60 minuts).
+### Pas 1: `granja1-sim` (Simulació de camp)
+* Simula els microcontroladors ESP32 llegint sensors ambientals per bus sèrie **RS485 (Modbus RTU)** i les cèl·lules de pesatge dels silos exteriors per xarxa **LoRaWAN (ChirpStack)**.
+* Publica les lectures en format JSON cap al servei local de `granja1-srv`.
 
-### Etapa 2: Concentració i Processament a la Vora (Edge Computing a la Granja)
-* El **Gateway Industrial de la Granja** recull totes les trames de la instal·lació.
-* **Seguretat local de suport a la vida (Life-Safety):**
-  - Si es perd la connexió a Internet amb la seu central, la nau **no queda indefensa**.
-  - L'ESP32 local conté un bucle de control bàsic autònom: si la temperatura mesurada supera el llindar crític de 31 ºC, el relé de sortida commuta directament els ventiladors de forma d'emergència.
-* **Mecanisme Store-and-Forward:** Si la connexió WAN cau, el gateway desa les lectures en una base de dades local de cua (SQLite o búfer en memòria cau). Quan el router 4G/fibra es restableix, envia totes les lectures acumulades amb la seva marca horària original (*timestamp*), evitant forats en les gràfiques d'històric.
+### Pas 2: `granja1-srv` (Edge Computing i Buffer Local)
+* Rep la lectura al broker MQTT local de la granja.
+* **Execució de regles locals (Seguretat de suport a la vida / Life-Safety):**
+  - Si la temperatura mesurada supera el llindar crític (> 31 ºC), activa immediatament el ventilador localment sense dependre d'Internet ni de la seu central.
+* **Store-and-Forward:** Desa la lectura al búfer d'històrics local per si hi ha talls de xarxa rurals.
+* Transmet el missatge telemètric pel túnel xifrat VPN cap a la seu central.
 
-### Etapa 3: Transport Segur fins a la Seu Central
-* Les lectures s'empaqueten en trames lleugeres en format **JSON**:
-  ```json
-  {
-    "codi_granja": "ES250480001",
-    "codi_nau": "NAU-01",
-    "sensor_id": 1,
-    "tipus": "temperatura",
-    "valor": 32.40,
-    "unitat": "ºC",
-    "timestamp": "2026-10-19T10:15:30Z"
-  }
-  ```
-* El transport es realitza a través d'una connexió segura (HTTPS POST cap a l'endpoint de la DMZ o broker MQTT sobre TLS `port 8883`). Només els gateways de les granges autoritzades poden enviar informació (filtratge per certificat de client o token d'autenticació API).
+### Pas 3: `fw-seu` (Tallafocs OPNsense)
+* És l'únic punt d'entrada des de la VPN (`10.0.100.0/24`).
+* Aplica les regles de tallafocs documentades (4.4):
+  - **Filtre estricte:** Només deixa passar el tràfic provinent de la granja amb destí al port del Broker MQTT de `srv-serveis` (`10.0.20.10:1883/8883`).
+  - Qualsevol intent d'accedir directament a PostgreSQL (5432) o LDAP (389) és descartat immediatament (`DROP`).
 
-### Etapa 4: Ingesta, Triggers i Automatismes a MariaDB
-* El servei d'ingesta de la seu central valida la informació i executa la inserció SQL a la taula transaccional:
-  ```sql
-  INSERT INTO lectures_sensors (id_sensor, data_hora, valor, unitat)
-  VALUES (1, '2026-10-19 10:15:30', 32.40, 'ºC');
-  ```
-* En el mateix mil·lisegon d'inserció, es dispara el trigger **`tg_control_llindars_sensor`**:
-  1. Comprova que `32.40 > 31.00` (llindar màxim).
-  2. Actualitza automàticament la taula `actuadors` posant el ventilador a `ON`.
-  3. Apunta l'activació a la taula d'auditoria `registre_actuacions` amb el motiu del sobreescalfament.
-  4. Genera una entrada crítica a `alarmes_incidencies` per avisar el gestor de la granja.
+### Pas 4: `srv-serveis` (Broker MQTT, PostgreSQL 16 i Rèplica)
+* El broker **Eclipse Mosquitto** rep la lectura.
+* El servei d'ingesta desa el valor a la taula `lectures_sensors` de **PostgreSQL 16**.
+* Es dispara el trigger PL/pgSQL **`tg_control_llindars_sensor`**, auditant actuacions i generant alarmes si és procedent.
+* La instància secundària de rèplica manté el registre duplicat per a alta disponibilitat d'aplicació.
+
+### Pas 5: `srv-backup` (Còpies de seguretat)
+* Cada nit a les 02:00 AM, `srv-backup` extreu els buidatges transaccionals i els desa al segon disc virtual extern.
+
+### Pas 6: `dmz-web` (Accés client)
+* El client (`pc-client`) consulta el portal web passant pel tallafocs i el proxy invers Nginx de la DMZ (`10.0.10.10`).

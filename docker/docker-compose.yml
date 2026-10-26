@@ -1,46 +1,66 @@
 services:
   # ============================================================================
-  # 1. Base de Dades Central — MariaDB 10.11 LTS (Requeriment 4.3)
+  # 1. Base de Dades Central — PostgreSQL 16 LTS (Requeriment 4.3)
+  # Allotjada a srv-serveis (LAN seu: 10.0.20.10)
   # ============================================================================
-  mariadb:
-    image: mariadb:10.11
-    container_name: avigest_mariadb
+  postgres:
+    image: postgres:16-alpine
+    container_name: avigest_postgres
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root_avigest_2026
-      MYSQL_DATABASE: avigest_db
-      MYSQL_USER: avigest_app
-      MYSQL_PASSWORD: avigest_secret_2026
+      POSTGRES_DB: avigest_db
+      POSTGRES_USER: avigest_app
+      POSTGRES_PASSWORD: avigest_secret_2026
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - mariadb_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
       - ./initdb:/docker-entrypoint-initdb.d:ro
     networks:
       - avigest_internal
 
   # ============================================================================
-  # 2. Eina de Gestió Visual BD — phpMyAdmin
+  # 2. Rèplica de la Base de Dades — PostgreSQL 16 Replica (Requeriment 4.6)
+  # Simulació de rèplica en contenidor dins de srv-serveis per al laboratori.
+  # Nota de disseny: Si cau la VM sencer, la redundància s'assumeix amb srv-backup.
   # ============================================================================
-  phpmyadmin:
-    image: phpmyadmin:latest
-    container_name: avigest_phpmyadmin
+  postgres_replica:
+    image: postgres:16-alpine
+    container_name: avigest_postgres_replica
     restart: unless-stopped
     depends_on:
-      - mariadb
+      - postgres
     environment:
-      PMA_HOST: mariadb
-      PMA_PORT: 3306
-      PMA_USER: avigest_app
-      PMA_PASSWORD: avigest_secret_2026
-      UPLOAD_LIMIT: 64M
+      POSTGRES_DB: avigest_db
+      POSTGRES_USER: avigest_app
+      POSTGRES_PASSWORD: avigest_secret_2026
     ports:
-      - "8080:80"
+      - "5433:5432"
+    volumes:
+      - postgres_replica_data:/var/lib/postgresql/data
     networks:
       - avigest_internal
 
   # ============================================================================
-  # 3. Servidor de Directori Centralitzat — OpenLDAP (Requeriment 4.2)
+  # 3. Broker de Missatgeria IoT — Eclipse Mosquitto (MQTT)
+  # Rep lectures de granja1-srv que arriben a través de fw-seu (VPN)
+  # ============================================================================
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: avigest_mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    networks:
+      - avigest_internal
+
+  # ============================================================================
+  # 4. Servidor de Directori Centralitzat — OpenLDAP (Requeriment 4.2)
+  # Autentica usuaris de la seu i de les granges remotes
   # ============================================================================
   openldap:
     image: osixia/openldap:1.5.0
@@ -61,7 +81,8 @@ services:
       - avigest_internal
 
   # ============================================================================
-  # 4. Eina de Gestió Visual LDAP — phpLDAPadmin
+  # 5. Eina de Gestió Visual LDAP — phpLDAPadmin
+  # Accés administratiu intern: http://localhost:8081
   # ============================================================================
   phpldapadmin:
     image: osixia/phpldapadmin:0.9.0
@@ -78,8 +99,14 @@ services:
       - avigest_internal
 
 volumes:
-  mariadb_data:
-    name: avigest_mariadb_data
+  postgres_data:
+    name: avigest_postgres_data
+  postgres_replica_data:
+    name: avigest_postgres_replica_data
+  mosquitto_data:
+    name: avigest_mosquitto_data
+  mosquitto_log:
+    name: avigest_mosquitto_log
   ldap_data:
     name: avigest_ldap_data
   ldap_config:

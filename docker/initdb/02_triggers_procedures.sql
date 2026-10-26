@@ -1,33 +1,26 @@
 -- =============================================================================
--- AviGest S.L. — Triggers, Procediments Emmagatzemats i Vistes
--- Fitxer: bd/procediments-triggers/02_triggers_procedures.sql
--- Descripció: Automatització de llindars (R5), alertes (R7) i procediments.
+-- AviGest S.L. — Triggers, Procediments Emmagatzemats i Vistes (PostgreSQL 16)
+-- Fitxer: bd/procediments-triggers/02_triggers_procedures.sql / docker/initdb/02_triggers_procedures.sql
+-- Descripció: Automatització de llindars (R5), alertes (R7) i procediments PL/pgSQL.
 -- =============================================================================
 
-USE avigest_db;
-
-DELIMITER $$
-
 -- -----------------------------------------------------------------------------
--- 1. TRIGGER: Control automàtic de llindars i activació d'actuadors (R5 i R7)
--- Es dispara immediatament després d'inserir qualsevol lectura d'un sensor.
+-- 1. FUNCIÓ I TRIGGER: Control automàtic de llindars i actuadors (R5 i R7)
+-- Executat automàticament en cada INSERT a lectures_sensors.
 -- -----------------------------------------------------------------------------
-DROP TRIGGER IF EXISTS tg_control_llindars_sensor$$
-
-CREATE TRIGGER tg_control_llindars_sensor
-AFTER INSERT ON lectures_sensors
-FOR EACH ROW
+CREATE OR REPLACE FUNCTION fn_control_llindars_sensor()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_tipus_sensor VARCHAR(30);
+    v_id_nau INT;
+    v_llindar_min NUMERIC(6,2);
+    v_llindar_max NUMERIC(6,2);
+    v_id_actuador_vent INT;
+    v_id_actuador_cal INT;
+    v_estat_vent VARCHAR(5);
+    v_estat_cal VARCHAR(5);
 BEGIN
-    DECLARE v_tipus_sensor VARCHAR(30);
-    DECLARE v_id_nau INT;
-    DECLARE v_llindar_min DECIMAL(6,2);
-    DECLARE v_llindar_max DECIMAL(6,2);
-    DECLARE v_id_actuador_vent INT;
-    DECLARE v_id_actuador_cal INT;
-    DECLARE v_estat_vent VARCHAR(5);
-    DECLARE v_estat_cal VARCHAR(5);
-
-    -- Obtenir dades del sensor que ha enviat la lectura
+    -- Obtenir tipus i llindars del sensor
     SELECT tipus_sensor, id_nau, llindar_minim, llindar_maxim
     INTO v_tipus_sensor, v_id_nau, v_llindar_min, v_llindar_max
     FROM sensors
@@ -50,176 +43,192 @@ BEGIN
         WHERE id_nau = v_id_nau AND tipus_actuador = 'calefactor' AND actiu = TRUE
         LIMIT 1;
 
-        -- Supera la temperatura màxima permesa -> Engegar ventiladors
+        -- 1. Supera la temperatura màxima permesa (> llindar_max, ex: 31ºC)
         IF v_llindar_max IS NOT NULL AND NEW.valor > v_llindar_max THEN
             IF v_id_actuador_vent IS NOT NULL AND v_estat_vent = 'OFF' THEN
-                -- 1. Actualitzar estat de l'actuador a ON
+                -- Activar ventilador
                 UPDATE actuadors SET estat_actual = 'ON' WHERE id_actuador = v_id_actuador_vent;
                 
-                -- 2. Registrar l'acció a la taula d'actuacions
+                -- Registrar l'acció
                 INSERT INTO registre_actuacions (id_actuador, accio, motiu, disparat_per_sensor_id)
-                VALUES (v_id_actuador_vent, 'ACTIVAR', CONCAT('Temperatura crítica: ', NEW.valor, ' ºC supera límit ', v_llindar_max, ' ºC'), NEW.id_sensor);
+                VALUES (v_id_actuador_vent, 'ON', 
+                        format('Temperatura detectada (%s ºC) supera llindar màxim (%s ºC)', NEW.valor, v_llindar_max),
+                        NEW.id_sensor);
             END IF;
 
-            -- Generar Alarma d'Incidència
-            INSERT INTO alarmes_incidencies (id_nau, id_sensor, nivell_criticitat, titol, descripcio)
-            VALUES (v_id_nau, NEW.id_sensor, 'CRITICAL', 'Sobreescalfament a la nau',
-                    CONCAT('Temperatura mesurada: ', NEW.valor, ' ºC (Màxim admès: ', v_llindar_max, ' ºC). Ventiladors activats.'));
+            -- Apagar calefacció si estigués engegada
+            IF v_id_actuador_cal IS NOT NULL AND v_estat_cal = 'ON' THEN
+                UPDATE actuadors SET estat_actual = 'OFF' WHERE id_actuador = v_id_actuador_cal;
+                INSERT INTO registre_actuacions (id_actuador, accio, motiu, disparat_per_sensor_id)
+                VALUES (v_id_actuador_cal, 'OFF', 'Aturada automàtica per excés de temperatura', NEW.id_sensor);
+            END IF;
 
-        -- Temperatura per sota del mínim -> Engegar calefacció i apagar ventiladors
-        ELSEIF v_llindar_min IS NOT NULL AND NEW.valor < v_llindar_min THEN
+            -- Generar Alarma si supera un llindar molt perillós (> 33ºC)
+            IF NEW.valor >= 33.0 THEN
+                INSERT INTO alarmes_incidencies (id_nau, id_sensor, nivell_gravetat, missatge)
+                VALUES (v_id_nau, NEW.id_sensor, 'critic',
+                        format('ALERTA CRÍTICA: Cop de calor imminent. Temperatura: %s ºC', NEW.valor));
+            END IF;
+
+        -- 2. Cau per sota de la temperatura mínima (< llindar_min, ex: 20ºC)
+        ELSIF v_llindar_min IS NOT NULL AND NEW.valor < v_llindar_min THEN
             IF v_id_actuador_cal IS NOT NULL AND v_estat_cal = 'OFF' THEN
                 UPDATE actuadors SET estat_actual = 'ON' WHERE id_actuador = v_id_actuador_cal;
                 INSERT INTO registre_actuacions (id_actuador, accio, motiu, disparat_per_sensor_id)
-                VALUES (v_id_actuador_cal, 'ACTIVAR', CONCAT('Temperatura baixa: ', NEW.valor, ' ºC per sota del mínim ', v_llindar_min, ' ºC'), NEW.id_sensor);
+                VALUES (v_id_actuador_cal, 'ON', 
+                        format('Temperatura detectada (%s ºC) per sota del llindar mínim (%s ºC)', NEW.valor, v_llindar_min),
+                        NEW.id_sensor);
             END IF;
 
             IF v_id_actuador_vent IS NOT NULL AND v_estat_vent = 'ON' THEN
                 UPDATE actuadors SET estat_actual = 'OFF' WHERE id_actuador = v_id_actuador_vent;
                 INSERT INTO registre_actuacions (id_actuador, accio, motiu, disparat_per_sensor_id)
-                VALUES (v_id_actuador_vent, 'DESACTIVAR', 'Aturada per temperatura baixa', NEW.id_sensor);
+                VALUES (v_id_actuador_vent, 'OFF', 'Aturada de ventilació per baixa temperatura', NEW.id_sensor);
             END IF;
 
-            INSERT INTO alarmes_incidencies (id_nau, id_sensor, nivell_criticitat, titol, descripcio)
-            VALUES (v_id_nau, NEW.id_sensor, 'WARNING', 'Temperatura baixa a la nau',
-                    CONCAT('Temperatura mesurada: ', NEW.valor, ' ºC (Mínim admès: ', v_llindar_min, ' ºC). Calefacció activada.'));
-
-        -- Temperatura normalitzada -> Apagar ventiladors si estaven encesos
-        ELSE
-            IF v_id_actuador_vent IS NOT NULL AND v_estat_vent = 'ON' THEN
-                UPDATE actuadors SET estat_actual = 'OFF' WHERE id_actuador = v_id_actuador_vent;
-                INSERT INTO registre_actuacions (id_actuador, accio, motiu, disparat_per_sensor_id)
-                VALUES (v_id_actuador_vent, 'DESACTIVAR', 'Temperatura restablerta dins dels paràmetres normals', NEW.id_sensor);
+            IF NEW.valor <= 16.0 THEN
+                INSERT INTO alarmes_incidencies (id_nau, id_sensor, nivell_gravetat, missatge)
+                VALUES (v_id_nau, NEW.id_sensor, 'critic',
+                        format('ALERTA CRÍTICA: Hipotèrmia potencial. Temperatura: %s ºC', NEW.valor));
             END IF;
         END IF;
 
     -- =========================================================================
-    -- CAS B: Sensor de SILO DE GRA / PINSO
+    -- CAS B: Sensor de DIÒXID DE CARBONI (CO2)
     -- =========================================================================
-    ELSEIF v_tipus_sensor = 'silo_gra' THEN
-        -- Si el nivell del silo cau per sota del mínim establert (ex: 2000 kg o 15%)
+    ELSIF v_tipus_sensor = 'co2' THEN
+        IF v_llindar_max IS NOT NULL AND NEW.valor > v_llindar_max THEN
+            SELECT id_actuador, estat_actual INTO v_id_actuador_vent, v_estat_vent
+            FROM actuadors
+            WHERE id_nau = v_id_nau AND tipus_actuador = 'ventilador' AND actiu = TRUE
+            LIMIT 1;
+
+            IF v_id_actuador_vent IS NOT NULL AND v_estat_vent = 'OFF' THEN
+                UPDATE actuadors SET estat_actual = 'ON' WHERE id_actuador = v_id_actuador_vent;
+                INSERT INTO registre_actuacions (id_actuador, accio, motiu, disparat_per_sensor_id)
+                VALUES (v_id_actuador_vent, 'ON', format('CO2 elevat (%s ppm): renovació d''aire d''emergència', NEW.valor), NEW.id_sensor);
+            END IF;
+
+            IF NEW.valor >= 3000.0 THEN
+                INSERT INTO alarmes_incidencies (id_nau, id_sensor, nivell_gravetat, missatge)
+                VALUES (v_id_nau, NEW.id_sensor, 'critic',
+                        format('ALERTA CRÍTICA: Concentració de CO2 perillosa (%s ppm)', NEW.valor));
+            END IF;
+        END IF;
+
+    -- =========================================================================
+    -- CAS C: Sensor de NIVELL / PES DE SILO (LoRaWAN)
+    -- =========================================================================
+    ELSIF v_tipus_sensor = 'pes_silo' THEN
         IF v_llindar_min IS NOT NULL AND NEW.valor < v_llindar_min THEN
-            INSERT INTO alarmes_incidencies (id_nau, id_sensor, nivell_criticitat, titol, descripcio)
-            VALUES (v_id_nau, NEW.id_sensor, 'WARNING', 'Nivell crític de pinso al silo',
-                    CONCAT('El silo de pinso està al límit: ', NEW.valor, ' kg restants (Llindar mínim: ', v_llindar_min, ' kg). Sol·licitar càrrega.'));
+            INSERT INTO alarmes_incidencies (id_nau, id_sensor, nivell_gravetat, missatge)
+            VALUES (v_id_nau, NEW.id_sensor, 'avis',
+                    format('AVÍS SILO: Nivell de pinso crític (%s kg). Cal comanda immediata.', NEW.valor));
         END IF;
     END IF;
 
-END$$
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tg_control_llindars_sensor ON lectures_sensors;
+CREATE TRIGGER tg_control_llindars_sensor
+AFTER INSERT ON lectures_sensors
+FOR EACH ROW
+EXECUTE FUNCTION fn_control_llindars_sensor();
 
 -- -----------------------------------------------------------------------------
--- 2. PROCEDIMENT EMMAGATZEMAT: sp_alta_granja_completa
--- Crea una granja, les seves naus i auto-provisiona els sensors i actuadors bàsics.
--- Aquest procediment serà utilitzat pel script d'automatització (Requeriment 4.7).
+-- 2. PROCEDIMENT EMMAGATZEMAT: sp_alta_granja_completa (Requeriment 4.7)
+-- Provisió atòmica d'una nova granja amb les seves naus, sensors i actuadors.
 -- -----------------------------------------------------------------------------
-DROP PROCEDURE IF EXISTS sp_alta_granja_completa$$
-
-CREATE PROCEDURE sp_alta_granja_completa (
-    IN p_id_client INT,
-    IN p_nom_granja VARCHAR(100),
-    IN p_codi_explotacio VARCHAR(50),
-    IN p_adreca VARCHAR(150),
-    IN p_poblacio VARCHAR(80),
-    IN p_num_naus INT,
-    OUT p_id_granja_creada INT
+CREATE OR REPLACE FUNCTION sp_alta_granja_completa(
+    p_id_client INT,
+    p_nom_granja VARCHAR(100),
+    p_codi_explotacio VARCHAR(30),
+    p_adreca VARCHAR(150),
+    p_poblacio VARCHAR(100),
+    p_num_naus INT
 )
+RETURNS INT AS $$
+DECLARE
+    v_id_granja INT;
+    v_id_nau INT;
+    v_i INT;
+    v_codi_nau VARCHAR(20);
 BEGIN
-    DECLARE i INT DEFAULT 1;
-    DECLARE v_id_nau_creada INT;
-    DECLARE v_codi_nau VARCHAR(20);
+    -- 1. Inserir Granja
+    INSERT INTO granges (id_client, nom_granja, codi_explotacio, adreca, poblacio)
+    VALUES (p_id_client, p_nom_granja, p_codi_explotacio, p_adreca, p_poblacio)
+    RETURNING id_granja INTO v_id_granja;
 
-    -- 1. Inserir la nova granja
-    INSERT INTO granges (id_client, nom_granja, codi_explotacio, adreca, poblacio, activa)
-    VALUES (p_id_client, p_nom_granja, p_codi_explotacio, p_adreca, p_poblacio, TRUE);
+    -- 2. Bucle per crear cadascuna de les naus sol·licitades
+    FOR v_i IN 1..p_num_naus LOOP
+        v_codi_nau := format('NAU-%s', lpad(v_i::text, 2, '0'));
 
-    SET p_id_granja_creada = LAST_INSERT_ID();
+        INSERT INTO naus (id_granja, codi_nau, capacitat_aus, longitud_metres, amplada_metres)
+        VALUES (v_id_granja, v_codi_nau, 20000, 100.00, 15.00)
+        RETURNING id_nau INTO v_id_nau;
 
-    -- 2. Iterar i crear les naus sol·licitades amb el seu equipament per defecte
-    WHILE i <= p_num_naus DO
-        SET v_codi_nau = CONCAT('NAU-', LPAD(i, 2, '0'));
+        -- Inserir sensors estàndard per a la nau
+        INSERT INTO sensors (id_nau, codi_sensor, tipus_sensor, tecnologia, unitat_mesura, llindar_minim, llindar_maxim) VALUES
+        (v_id_nau, format('TEMP-%s-%s', v_id_granja, v_codi_nau), 'temperatura', 'RS485', 'ºC', 20.00, 31.00),
+        (v_id_nau, format('HUM-%s-%s', v_id_granja, v_codi_nau),  'humitat',     'RS485', '%',  45.00, 70.00),
+        (v_id_nau, format('CO2-%s-%s', v_id_granja, v_codi_nau),  'co2',         'RS485', 'ppm', NULL, 2500.00),
+        (v_id_nau, format('SILO-%s-%s', v_id_granja, v_codi_nau), 'pes_silo',    'LoRaWAN', 'kg', 1000.00, NULL);
 
-        INSERT INTO naus (id_granja, codi_nau, capacitat_aus, superficie_m2)
-        VALUES (p_id_granja_creada, v_codi_nau, 12000, 950.00);
+        -- Inserir actuadors estàndard per a la nau
+        INSERT INTO actuadors (id_nau, codi_actuador, tipus_actuador, mode_operacio, estat_actual) VALUES
+        (v_id_nau, format('VENT-%s-%s', v_id_granja, v_codi_nau), 'ventilador', 'automatic', 'OFF'),
+        (v_id_nau, format('CALEF-%s-%s', v_id_granja, v_codi_nau), 'calefactor', 'automatic', 'OFF'),
+        (v_id_nau, format('LLUM-%s-%s', v_id_granja, v_codi_nau), 'il_luminacio', 'automatic', 'ON');
+    END LOOP;
 
-        SET v_id_nau_creada = LAST_INSERT_ID();
-
-        -- Provisionar sensors estàndard a la nau:
-        -- - Sensor de temperatura (RS485): Min 20ºC, Max 31ºC
-        INSERT INTO sensors (id_nau, tipus_sensor, tecnologia, model_hardware, llindar_minim, llindar_maxim)
-        VALUES (v_id_nau_creada, 'temperatura', 'RS485', 'Modbus-Temp-DHT', 20.00, 31.00);
-
-        -- - Sensor d'humitat (RS485): Min 45%, Max 70%
-        INSERT INTO sensors (id_nau, tipus_sensor, tecnologia, model_hardware, llindar_minim, llindar_maxim)
-        VALUES (v_id_nau_creada, 'humitat', 'RS485', 'Modbus-Hum-DHT', 45.00, 70.00);
-
-        -- - Sensor de silo exterior (LoRaWAN): Min 1500 kg
-        INSERT INTO sensors (id_nau, tipus_sensor, tecnologia, model_hardware, llindar_minim, llindar_maxim)
-        VALUES (v_id_nau_creada, 'silo_gra', 'LoRaWAN', 'LoRa-WeightScale-Silo', 1500.00, 15000.00);
-
-        -- Provisionar actuadors estàndard a la nau:
-        -- - Ventilador principal d'extracció
-        INSERT INTO actuadors (id_nau, tipus_actuador, estat_actual, ubicacio_especifica)
-        VALUES (v_id_nau_creada, 'ventilador', 'OFF', 'Façana Nord - Extractor 1');
-
-        -- - Sistema de calefacció per biomassa/gas
-        INSERT INTO actuadors (id_nau, tipus_actuador, estat_actual, ubicacio_especifica)
-        VALUES (v_id_nau_creada, 'calefactor', 'OFF', 'Canonada radiant central');
-
-        SET i = i + 1;
-    END WHILE;
-
-END$$
-
-DELIMITER ;
+    RETURN v_id_granja;
+END;
+$$ LANGUAGE plpgsql;
 
 -- -----------------------------------------------------------------------------
--- 3. VISTES ÚTILS PER A CONSULTES I QUADRES DE COMANDAMENT
+-- 3. VISTES D'INFORMACIÓ I MONITORITZACIÓ (Requeriment 4.extra)
 -- -----------------------------------------------------------------------------
-
--- Vista 1: Visió global AviGest (resum de totes les granges amb alarmes pendents)
-CREATE OR REPLACE VIEW v_resum_granges_avigest AS
+CREATE OR REPLACE VIEW v_estat_actual_naus AS
 SELECT 
     c.id_client,
-    c.nom_empresa AS nom_client,
-    g.id_granja,
-    g.nom_granja,
-    g.codi_explotacio,
-    g.poblacio,
-    COUNT(DISTINCT n.id_nau) AS total_naus,
-    IFNULL(SUM(lc.quantitat_actual), 0) AS pollastres_actius,
-    (SELECT COUNT(*) FROM alarmes_incidencies ai 
-     JOIN naus n2 ON ai.id_nau = n2.id_nau 
-     WHERE n2.id_granja = g.id_granja AND ai.resolta = FALSE) AS alarmes_pendents
-FROM clients c
-JOIN granges g ON c.id_client = g.id_client
-LEFT JOIN naus n ON g.id_granja = n.id_granja
-LEFT JOIN lots_crianca lc ON n.id_nau = lc.id_nau AND lc.estat = 'ACTIU'
-GROUP BY g.id_granja;
-
--- Vista 2: Monitorització en temps real per nau i sensor
-CREATE OR REPLACE VIEW v_estat_actual_sensors AS
-SELECT 
+    c.nom_empresa,
     g.id_granja,
     g.nom_granja,
     n.id_nau,
     n.codi_nau,
-    s.id_sensor,
+    (SELECT ls.valor FROM lectures_sensors ls 
+     JOIN sensors s ON ls.id_sensor = s.id_sensor 
+     WHERE s.id_nau = n.id_nau AND s.tipus_sensor = 'temperatura' 
+     ORDER BY ls.data_hora DESC LIMIT 1) AS darrera_temperatura,
+    (SELECT ls.valor FROM lectures_sensors ls 
+     JOIN sensors s ON ls.id_sensor = s.id_sensor 
+     WHERE s.id_nau = n.id_nau AND s.tipus_sensor = 'humitat' 
+     ORDER BY ls.data_hora DESC LIMIT 1) AS darrera_humitat,
+    (SELECT a.estat_actual FROM actuadors a 
+     WHERE a.id_nau = n.id_nau AND a.tipus_actuador = 'ventilador' LIMIT 1) AS estat_ventilador,
+    (SELECT COUNT(*) FROM alarmes_incidencies al 
+     WHERE al.id_nau = n.id_nau AND al.resolta = FALSE) AS alarmes_pendents
+FROM clients c
+JOIN granges g ON c.id_client = g.id_client
+JOIN naus n ON g.id_granja = n.id_granja
+WHERE g.activa = TRUE AND n.activa = TRUE;
+
+CREATE OR REPLACE VIEW v_alarmes_actives AS
+SELECT 
+    a.id_alarma,
+    c.nom_empresa,
+    g.nom_granja,
+    n.codi_nau,
     s.tipus_sensor,
-    s.tecnologia,
-    s.llindar_minim,
-    s.llindar_maxim,
-    ult.valor AS darrer_valor,
-    ult.unitat,
-    ult.data_hora AS darrera_lectura
-FROM sensors s
-JOIN naus n ON s.id_nau = n.id_nau
+    a.nivell_gravetat,
+    a.missatge,
+    a.data_generacio
+FROM alarmes_incidencies a
+JOIN naus n ON a.id_nau = n.id_nau
 JOIN granges g ON n.id_granja = g.id_granja
-LEFT JOIN (
-    SELECT ls1.id_sensor, ls1.valor, ls1.unitat, ls1.data_hora
-    FROM lectures_sensors ls1
-    INNER JOIN (
-        SELECT id_sensor, MAX(data_hora) AS max_data
-        FROM lectures_sensors
-        GROUP BY id_sensor
-    ) ls2 ON ls1.id_sensor = ls2.id_sensor AND ls1.data_hora = ls2.max_data
-) ult ON s.id_sensor = ult.id_sensor;
+JOIN clients c ON g.id_client = c.id_client
+LEFT JOIN sensors s ON a.id_sensor = s.id_sensor
+WHERE a.resolta = FALSE
+ORDER BY a.data_generacio DESC;

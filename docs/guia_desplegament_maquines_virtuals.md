@@ -1,226 +1,120 @@
-# Guia de Desplegament Pas a Pas en Màquines Virtuals — AviGest S.L.
+# Guia de Desplegament de la Topologia de Màquines Virtuals — AviGest S.L.
 
 **Projecte:** Implantació d'un sistema informàtic de gestió de granges de pollastres  
-**Destinada a:** Joan i Mariam (Execució del laboratori presencial i defensa oral)  
-**Entorn recomanat:** VMware Workstation o VirtualBox (Linux Ubuntu Server 24.04 LTS o Debian 12)  
+**Autors:** Joan (Infraestructura, Xarxa i Seguretat) i Mariam (Base de Dades, IoT i Automatització)  
+**Entorn d'execució:** Hipervisor VMware Workstation / VirtualBox  
 
 ---
 
-## 1. Preparació de l'Escenari a VMware / VirtualBox
+## 1. Mapa de Màquines Virtuals i Xarxes Virtuals (VMnets)
 
-Per simular la seu central i les granges remotes crearem **2 Màquines Virtuals (MVs)**:
+La infraestructura d'AviGest es desplega mitjançant un conjunt coordinat de màquines virtuals especialitzades interconnectades a través de les següents xarxes:
 
-| Màquina | Nom proposat | Sistema Operatiu | Memòria RAM | Rol en el Projecte |
-| :--- | :--- | :--- | :---: | :--- |
-| **MV 1** | `AviGest-Central` | Ubuntu Server 24.04 | 2 - 4 GB | **Seu Central:** MariaDB, OpenLDAP, phpMyAdmin, phpLDAPadmin, Backups i Tallafocs. |
-| **MV 2** | `AviGest-Granja` | Ubuntu Server o Debian | 1 - 2 GB | **Gateway de Granja:** Simulador de sensors ESP32, telemetria RS485 i LoRaWAN. |
+```mermaid
+flowchart TD
+    Client["pc-client<br/>(Navegador de prova)"]
+    Internet["Internet (NAT de l'hipervisor)"]
 
-### Pas 0: Xarxa de VMware
-1. A VMware Workstation, posa totes dues màquines en mode de xarxa **NAT** (o **Host-Only**).
-2. Arrenca totes dues màquines i esbrina la IP que tenen amb la comanda:
-   ```bash
-   hostname -I
-   ```
-   *Exemple per a aquesta guia:*
-   - **MV 1 (Central):** `192.168.100.10`
-   - **MV 2 (Granja):** `192.168.100.20`
-   - *(Substitueix aquestes IPs per les reals que et surtin a la teva pantalla).*
+    subgraph FW["fw-seu (OPNsense)"]
+        direction TB
+        WAF_Rules["3 Interfícies + Regles d'Estat"]
+        VPN_Srv["Servidor VPN (10.0.100.0/24)"]
+    end
+
+    subgraph DMZ_Net["DMZ (10.0.10.0/24)"]
+        DMZ_Web["dmz-web<br/>Nginx + proxy invers<br/>WAF i relay SMTP"]
+    end
+
+    subgraph LAN_Net["LAN seu (10.0.20.0/24)"]
+        Srv_Serveis["srv-serveis<br/>Docker: OpenLDAP<br/>PostgreSQL 16 + rèplica<br/>Broker MQTT Mosquitto"]
+        Srv_Backup["srv-backup<br/>Còpies amb cron<br/>Disc extern simulat"]
+    end
+
+    subgraph Granja1_Net["Granja 1 (10.1.1.0/24)"]
+        Granja1_Sim["granja1-sim<br/>Sensors ESP32 simulats<br/>Bus RS485 (Modbus)<br/>LoRaWAN (ChirpStack)"]
+        Granja1_Srv["granja1-srv<br/>Client VPN i MQTT local<br/>Regles dels actuadors<br/>Buffer de dades"]
+    end
+
+    Client --> Internet
+    Internet ==>|HTTPS només des d'IPs de clients| FW
+    FW -->|Port 443/80| DMZ_Web
+    DMZ_Web ==>|NOMÉS SQL:5432 i LDAP:389| Srv_Serveis
+    DMZ_Web -.->|BLOQUEJAT TOTA LA RESTA: DROP| LAN_Net
+
+    Granja1_Sim -->|Dades de camp| Granja1_Srv
+    Granja1_Srv ==>|Túnel VPN (10.0.100.0/24)| VPN_Srv
+    VPN_Srv ==>|NOMÉS MQTT:1883/8883| Srv_Serveis
+    VPN_Srv -.->|BLOQUEJAT ACCÉS A BD I LDAP: DROP| LAN_Net
+```
+
+### Pla d'adreçament i assignació d'adaptadors a VMware:
+
+| Màquina Virtual | Sistema Operatiu | Adaptadors de Xarxa a VMware | Adreça IP | Funció en el sistema |
+| :--- | :--- | :--- | :--- | :--- |
+| **`pc-client`** | Qualsevol OS / Host | NAT | IP de NAT | Simula l'equip de l'empresa client contractant que accedeix des d'Internet. |
+| **`fw-seu`** | OPNsense | **NIC 1:** NAT (WAN)<br/>**NIC 2:** VMnet10 (DMZ)<br/>**NIC 3:** VMnet20 (LAN) | **WAN:** DHCP NAT<br/>**DMZ:** `10.0.10.1`<br/>**LAN:** `10.0.20.1`<br/>**VPN:** `10.0.100.1` | Tallafocs perimetral de 3 potes, servidor VPN i aplicació de regles. |
+| **`dmz-web`** | Ubuntu Server | **NIC 1:** VMnet10 (DMZ) | `10.0.10.10` | Nginx, proxy invers, WAF i relay SMTP. Únic servei exposat al client. |
+| **`srv-serveis`** | Ubuntu Server | **NIC 1:** VMnet20 (LAN) | `10.0.20.10` | Docker: OpenLDAP, PostgreSQL 16 + rèplica, Broker MQTT Mosquitto. |
+| **`srv-backup`** | Ubuntu Server | **NIC 1:** VMnet20 (LAN) | `10.0.20.20` | Servidor dedicat de còpies de seguretat amb cron i 2n disc virtual. |
+| **`granja1-srv`**| Ubuntu Server | **NIC 1:** VMnet30 (Granja 1)<br/>**NIC 2:** NAT (sortida Internet/VPN) | `10.1.1.10`<br/>(VPN: `10.0.100.10`) | Gateway de granja: client VPN, MQTT local, regles d'actuadors i buffer. |
+| **`granja1-sim`**| Ubuntu Server / Alpine | **NIC 1:** VMnet30 (Granja 1) | `10.1.1.20` | Simulador ESP32, bus RS485 Modbus i LoRaWAN (ChirpStack). |
 
 ---
 
-## 2. Pas a Pas a la MV 1: Seu Central d'AviGest (Comanda per comanda)
+## 2. Recorregut Detallat d'una Lectura de Sensor
 
-Inicia sessió a la terminal de la **MV 1** i executa exactament aquests passos en ordre:
-
-### Pas 1: Actualització de paquets i eines necessàries
-```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y curl git mariadb-client ufw netcat-traditional
-```
-
-### Pas 2: Copiar el projecte a la MV 1
-Pots copiar la carpeta del projecte directament des del teu Windows amb `scp`, o clonar-la si la tens a GitHub.
-*Opció A: Des del teu Windows PowerShell:*
-```powershell
-scp -r C:\Users\jgarcia1_insmollerus\Desktop\Projecte\avigest-projecte usuari@<IP_MV1>:~/
-```
-*Opció B: Des de la terminal de la MV 1 si clones des de Git:*
-```bash
-git clone <URL_DEL_TEU_REPOSITORI_GITHUB> ~/avigest-projecte
-```
-
-Ara moguem la carpeta a `/opt` i assignem permisos:
-```bash
-sudo mv ~/avigest-projecte /opt/avigest-projecte
-sudo chown -R $USER:$USER /opt/avigest-projecte
-cd /opt/avigest-projecte
-```
-
-### Pas 3: Instal·lar Docker i Docker Compose
-Executa la comanda oficial d'instal·lació de Docker:
-```bash
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-sudo usermod -aG docker $USER
-newgrp docker
-```
-Verifica que Docker respon:
-```bash
-docker --version
-docker compose version
-```
-
-### Pas 4: Arrencar tots els serveis centrals (MariaDB + LDAP)
-Entra a la carpeta de Docker i aixeca la infraestructura:
-```bash
-cd /opt/avigest-projecte/docker
-docker compose up -d
-```
-*Espera uns 15 segons mentre MariaDB i OpenLDAP s'inicialitzen i carreguen l'esquema SQL i els usuaris.*
-
-Comprova que els 4 contenidors estan en estat `Up`:
-```bash
-docker compose ps
-```
-
-### Pas 5: Verificar que les dades s'han carregat correctament a MariaDB
-Executa aquesta consulta des de la terminal de la MV 1:
-```bash
-docker exec -it avigest_mariadb mariadb -u avigest_app -pavigest_secret_2026 avigest_db -e "SHOW TABLES;"
-```
-*Hauries de veure les 9 taules (`clients`, `granges`, `naus`, `sensors`, `actuadors`, etc.).*
-
-Ara comprova les granges de prova:
-```bash
-docker exec -it avigest_mariadb mariadb -u avigest_app -pavigest_secret_2026 avigest_db -e "SELECT id_granja, nom_granja, codi_explotacio, poblacio FROM granges;"
-```
-*Hauràs de veure: Granja Ponent Bellpuig, Granja Ponent Mollerussa i Granja Segrià Alcarràs.*
-
-### Pas 6: Verificar OpenLDAP per línia de comandes
-Executa una cerca LDAP:
-```bash
-docker exec -it avigest_openldap ldapsearch -x -b "dc=avigest,dc=cat" "(uid=admin_avigest)"
-```
-*Hauràs de veure l'administrador d'AviGest correctament retornat.*
-
-### Pas 7: Comprovar els panells web des del teu Windows
-Obre el navegador del teu ordinador físic (Chrome / Firefox) i entra a:
-1. **phpMyAdmin:** `http://<IP_MV1>:8080`
-   - Usuari: `avigest_app`
-   - Contrasenya: `avigest_secret_2026`
-2. **phpLDAPadmin:** `http://<IP_MV1>:8081`
-   - Usuari (Login DN): `cn=admin,dc=avigest,dc=cat`
-   - Contrasenya: `admin_ldap_pass_2026`
-
-### Pas 8: Configurar i provar les Còpies de Seguretat (Requeriment 4.5)
-Dona permisos als scripts de backup:
-```bash
-chmod +x /opt/avigest-projecte/infra/backups-prd/*.sh
-sudo mkdir -p /var/backups/avigest
-```
-Executa un backup manual per verificar-ne el funcionament:
-```bash
-sudo /opt/avigest-projecte/infra/backups-prd/backup_avigest.sh
-```
-Comprova que ha generat el fitxer `.tar.gz` i el fitxer de comprovació `.sha256`:
-```bash
-ls -la /var/backups/avigest
-```
-Instal·la la tasca programada nocturna al crontab:
-```bash
-sudo crontab /opt/avigest-projecte/infra/backups-prd/crontab.txt
-sudo crontab -l
-```
+1. **`granja1-sim`:**
+   - Simula els microcontroladors ESP32 llegint els sensors ambientals per RS485 Modbus i les cèl·lules de pesatge dels silos per LoRaWAN (ChirpStack).
+   - Publica la lectura cap al broker MQTT local de `granja1-srv`.
+2. **`granja1-srv` (Edge Computing):**
+   - Rep la lectura pel seu MQTT local.
+   - Avalua immediatament les regles locals dels actuadors: si la temperatura mesurada supera el llindar crític (> 31 ºC), **activa el ventilador localment** sense dependre de la seu central ni d'Internet.
+   - Emmagatzema la lectura al búfer local (*store-and-forward*).
+   - Envia el missatge telemètric pel túnel xifrat VPN (`10.0.100.0/24`) cap a la seu central.
+3. **`fw-seu` (OPNsense):**
+   - Rep el paquet a través de la interfície VPN.
+   - Aplica les regles del tallafocs: **l'únic trànsit permès des de la VPN cap a la LAN és el port del Broker MQTT (`srv-serveis:1883/8883`)**. Qualsevol altre trànsit és bloquejat.
+4. **`srv-serveis` (Nucli Central):**
+   - El broker MQTT Mosquitto rep la lectura i la persistència a la base de dades **PostgreSQL 16**.
+   - La base de dades s'encarrega d'alimentar la rèplica contínua.
+   - OpenLDAP manté els comptes d'usuaris per a les autenticacions.
+5. **`srv-backup` (Còpies i PRD):**
+   - Executa les tasques programades mitjançant `cron` connectant-se a `srv-serveis` per extreure el buidatge de la BD i LDAP.
+   - Copia els arxius a un segon disc virtual separat que simula la ubicació física externa.
+6. **`dmz-web` (Accés Client):**
+   - El client es connecta des de `pc-client` per Internet/HTTPS.
+   - OPNsense comprova la llista blanca d'IPs de clients contractats.
+   - Si és autoritzat, la connexió arriba a `dmz-web`, que passa pel proxy invers Nginx i consulta a `srv-serveis` les dades estrictament necessàries per PostgreSQL (5432) i LDAP (389).
 
 ---
 
-## 3. Pas a Pas a la MV 2: Gateway de Granja (IoT)
+## 3. Punts Crítics de Seguretat i Configuració
 
-Aquesta màquina representa el Gateway Fanless de la granja remota que llegeix els sensors.
+### 3.1. Regles del Tallafocs OPNsense (`fw-seu`)
+- **Aïllament estricte DMZ -> LAN:**
+  * La DMZ **mai no ha de poder iniciar connexions cap a la LAN**, excepte allò estrictament necessari:
+    - `dmz-web` -> `srv-serveis:5432` (PostgreSQL)
+    - `dmz-web` -> `srv-serveis:389/636` (OpenLDAP)
+  * Qualsevol altre intent d'iniciar trànsit cap a la LAN (com ara intents cap a `srv-backup`, SSH, etc.) és **bloquejat i registrat al log**.
+- **Aïllament VPN -> LAN:**
+  * Des de la VPN (`granja1-srv`) **només es permet trànsit cap al Broker MQTT de `srv-serveis` (port 1883/8883)**. La granja mai té accés a la BD ni a LDAP directament.
 
-Inicia sessió a la terminal de la **MV 2**:
-
-### Pas 1: Instal·lar paquets bàsics
-```bash
-sudo apt update
-sudo apt install -y python3 python3-pip mariadb-client netcat-traditional
-```
-
-### Pas 2: Copiar el projecte a la MV 2
-*Des del teu Windows PowerShell:*
-```powershell
-scp -r C:\Users\jgarcia1_insmollerus\Desktop\Projecte\avigest-projecte usuari@<IP_MV2>:~/
-```
-A la MV 2, mou-te a la carpeta dels sensors:
-```bash
-cd ~/avigest-projecte/iot/sensors
-```
-
-### Pas 3: Provar connectivitat amb la Seu Central (MV 1)
-Comprova que la MV 2 arriba a la MV 1 per xarxa:
-```bash
-ping -c 3 <IP_MV1>
-```
-Comprova que el port de MariaDB (3306) està obert i accessible des de la granja:
-```bash
-nc -zv <IP_MV1> 3306
-```
-*(Hauria de dir: `Connection to <IP_MV1> 3306 port [tcp/mysql] succeeded!`)*
-
-Fes una consulta de prova directament a la base de dades central des de la MV 2:
-```bash
-mariadb -h <IP_MV1> -u avigest_app -pavigest_secret_2026 avigest_db -e "SELECT nom_granja FROM granges;"
-```
+### 3.2. Redundància de la Base de Dades (Justificació de disseny)
+- Al laboratori, la rèplica de PostgreSQL està allotjada com a contenidor secundari dins de `srv-serveis`.
+- **Aquesta limitació està documentada a la fitxa de decisió FD01:** Si cau el procés o es corrompen les dades, la rèplica protegeix el servei; però si cau la màquina virtual `srv-serveis` sencera, la redundància s'assumeix mitjançant el servidor independent `srv-backup`. En producció real, la rèplica s'allotjaria en una VM pròpia.
 
 ---
 
-## 4. Com Realitzar la Demostració en Directe davant del Professor
+## 4. Procediment per a la Variació Presencial (Granja 2 — Requeriment 4.7)
 
-Segueix aquest ordre durant la teva defensa oral per mostrar totes les funcionalitats:
+Durant la defensa o sessió presencial, quan el professor demani afegir una segona granja:
 
-### Prova 1: Telemetria Normal en Temps Real
-A la **MV 2** (Gateway de Granja), engega el simulador:
-```bash
-python3 ~/avigest-projecte/iot/sensors/simulador_iot.py --host <IP_MV1> --mode normal
-```
-*Veuràs com cada 5 segons s'envien les lectures de temperatura, humitat i nivell de silo cap a la seu central.*
-
-### Prova 2: Simulació d'Alarma i Disparament del Trigger (La més important!)
-1. Obre **phpMyAdmin** des del teu navegador (`http://<IP_MV1>:8080`), ves a la taula `actuadors` i comprova que el ventilador de la Nau 1 està a **`OFF`**.
-2. A la **MV 2**, atura el mode normal (amb `Ctrl+C`) i executa el **mode alarma**:
-   ```bash
-   python3 ~/avigest-projecte/iot/sensors/simulador_iot.py --host <IP_MV1> --mode alarma
-   ```
-3. Observa la sortida per pantalla:
-   - S'injecta una temperatura de **34.8 ºC** (supera el límit de 31 ºC).
-   - El trigger `tg_control_llindars_sensor` actua automàticament.
-4. Torna al navegador web a phpMyAdmin i refresca:
-   - Taula `actuadors`: L'estat del ventilador ha canviat automàticament a **`ON`**.
-   - Taula `registre_actuacions`: S'ha creat una fila indicant `ACTIVAR` i el motiu ("Temperatura crítica: 34.8 ºC").
-   - Taula `alarmes_incidencies`: S'ha generat l'alarma de sobreescalfament per alertar el granger.
-
-### Prova 3: La Prova Presencial del Professor (Alta d'una Granja Nova)
-Quan el professor et digui: *"Afegiu-me una granja nova que es diu Granja Urgell Tàrrega amb 2 naus per al client 1"*:
-
-Ves a la **MV 1** (Seu Central) i executa l'script:
-```bash
-cd /opt/avigest-projecte/scripts/automatitzacio-granges
-chmod +x alta_granja.sh
-./alta_granja.sh -c 1 -n "Granja Urgell Tàrrega" -e "ES252170004" -a "Camí de Verdú s/n" -p "Tàrrega" -s 2 -u "gestor_tarrega"
-```
-En **2 segons**:
-- S'haurà creat la granja a MariaDB amb les seves 2 naus i sensors provisionats.
-- S'haurà creat l'usuari `gestor_tarrega` a OpenLDAP vinculat a la granja.
-- S'haurà generat l'estructura de carpetes per al nou gateway.
-- Ensenya el resultat a phpMyAdmin i a phpLDAPadmin per mostrar que tot ha quedat configurat automàticament.
-
-### Prova 4: Simulacre de Restauració davant Desastres (PRD)
-A la **MV 1**, demostra la recuperació del sistema:
-```bash
-# 1. Comprova quin és l'últim backup generat
-ls -la /var/backups/avigest/*.tar.gz
-
-# 2. Executa la restauració automàtica
-sudo /opt/avigest-projecte/infra/backups-prd/restaurar_avigest.sh /var/backups/avigest/<NOM_DEL_FITXER_BACKUP>.tar.gz
-```
-*En menys d'un minut el script descomprimeix el paquet, verifica el hash SHA-256 i restaura tant MariaDB com OpenLDAP.*
+1. **Clonació de les màquines de camp a VMware:**
+   - Es clona `granja1-srv` com a `granja2-srv`.
+   - Es clona `granja1-sim` com a `granja2-sim`.
+   - S'assigna una xarxa nova a VMware: **Granja 2 (`10.1.2.0/24`)**.
+2. **Execució de l'script d'automatització:**
+   - L'script `scripts/automatitzacio-granges/alta_granja.sh`:
+     1. Crea l'esquema i registres a PostgreSQL per a la nova granja.
+     2. Crea l'usuari gestor a OpenLDAP (`departmentNumber: GRANJA_2`).
+     3. Afegeix la regla al tallafocs OPNsense per autoritzar el nou túnel VPN des de la nova granja.

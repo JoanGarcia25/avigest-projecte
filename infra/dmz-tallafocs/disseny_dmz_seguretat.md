@@ -1,71 +1,101 @@
-# Arquitectura de Seguretat Perimetral, DMZ i Tallafocs — AviGest S.L.
+# Arquitectura de Seguretat Perimetral, DMZ i Tallafocs OPNsense (`fw-seu`)
 
 **Mòdul:** ASIX - Projecte (Requeriment 4.4)  
 **Responsable:** Joan (Àrea d'Infraestructura, Xarxa i Seguretat)  
+**Data:** Actualitzat a 26 d'octubre de 2026  
 
 ---
 
-## 1. Objectius de Seguretat Perimetral
-Segons l'enunciat obligatori (Requeriment 4.4):
-1. **DMZ a la seu central (no a les granges):** Allotja els serveis accessibles des de l'exterior (portal web d'accés i API d'ingesta).
-2. **Accés restringit per llista blanca:** Només es permet la connexió dels ordinadors concrets de les empreses que han contractat el servei (clients autoritzats) i del personal tècnic d'AviGest.
-3. **Aïllament de la xarxa de dades interna:** La base de dades MariaDB i el directori OpenLDAP mai no estan exposats directament a la WAN ni a Internet.
+## 1. Topologia de Xarxa en 3 Zones + VPN
 
----
-
-## 2. Model de Seguretat en Tres Zones
+El tallafocs perimetral de la seu central s'implementa mitjançant l'appliance virtual **OPNsense** (`fw-seu`), connectat a tres xarxes físicament/lògicament diferenciades i actuant com a servidor per al túnel VPN de les granges:
 
 ```mermaid
 flowchart TD
-    Internet["Internet (WAN)<br/>Clients i Granges Remotes"]
-    
-    subgraph TallafocsCentral["Tallafocs Perimetral de la Seu Central (Default Policy: DROP)"]
+    Client["pc-client<br/>(Navegador de prova)"]
+    Internet["Internet (NAT de l'hipervisor)"]
+
+    subgraph FW["fw-seu (OPNsense)"]
         direction TB
-        FiltreWAN["1. Filtratge per Llista Blanca (Whitelist IP)"]
-        FiltreDMZ["2. Control de trànsit DMZ -> LAN Interna"]
+        WAF_Rules["Regles d'inspecció d'estat (Default DROP)"]
+        VPN_Srv["Servidor VPN (10.0.100.0/24)"]
     end
 
-    subgraph DMZ["Zona Desmilitaritzada - DMZ (192.168.100.0/24)"]
-        WebServer["Nginx Reverse Proxy & Portal Web<br/>Ports: 80 / 443<br/>(Només accessible per IPs autoritzades)"]
-        APIGateway["Broker / API d'Ingesta de Sensors<br/>Port: 8883 (MQTTS) / 443"]
+    subgraph DMZ_Net["DMZ (10.0.10.0/24)"]
+        DMZ_Web["dmz-web<br/>Nginx + proxy invers<br/>WAF i relay SMTP"]
     end
 
-    subgraph LAN_Interna["Zona Segura - LAN Interna (192.168.200.0/24)"]
-        MariaDB["Base de Dades MariaDB<br/>Port: 3306 (Només escolta a LAN)"]
-        OpenLDAP["Directori OpenLDAP<br/>Ports: 389 / 636 (Només escolta a LAN)"]
-        Backups["Servidor de Backups / NAS<br/>SSH / Rsync intern"]
+    subgraph LAN_Net["LAN seu (10.0.20.0/24)"]
+        Srv_Serveis["srv-serveis<br/>Docker: OpenLDAP<br/>PostgreSQL + rèplica<br/>Broker MQTT"]
+        Srv_Backup["srv-backup<br/>Còpies amb cron<br/>Disc extern simulat"]
     end
 
-    Internet ==>|HTTPS només des d'IPs de clients autoritzats| FiltreWAN
-    FiltreWAN --> DMZ
-    DMZ ==>|Consultes SQL autoritzades (3306)| MariaDB
-    DMZ ==>|Autenticació usuaris (389)| OpenLDAP
-    
-    Internet -.->|BLOQUEJAT DIRECTE: DROP| LAN_Interna
+    subgraph Granja1_Net["Granja 1 (10.1.1.0/24)"]
+        Granja1_Sim["granja1-sim<br/>Sensors ESP32 simulats<br/>RS485 (Modbus)<br/>LoRaWAN (ChirpStack)"]
+        Granja1_Srv["granja1-srv<br/>Client VPN i MQTT local<br/>Regles dels actuadors<br/>Buffer de dades"]
+    end
+
+    Client --> Internet
+    Internet ==>|Trànsit WAN només des d'IPs de clients| FW
+    FW -->|Port 443/80| DMZ_Web
+    DMZ_Web ==>|NOMÉS SQL:5432 i LDAP:389| Srv_Serveis
+    DMZ_Web -.->|BLOQUEJAT TOTA LA RESTA: DROP| LAN_Net
+
+    Granja1_Sim -->|Dades de camp| Granja1_Srv
+    Granja1_Srv ==>|Túnel VPN (10.0.100.0/24)| VPN_Srv
+    VPN_Srv ==>|NOMÉS MQTT:1883/8883| Srv_Serveis
+    VPN_Srv -.->|BLOQUEJAT ACCÉS A BD I LDAP: DROP| LAN_Net
 ```
 
 ---
 
-## 3. Matriu de Fluxos i Regles de Trànsit
+## 2. Mapa d'Adreçament IP del Sistema
 
-| Zona Origen | Zona Destí | Port / Servei | Política / Condició | Justificació |
-| :--- | :--- | :--- | :---: | :--- |
-| **WAN (Clients autoritzats)** | **DMZ** | TCP 443 (HTTPS) | **ACCEPT** | Accés al portal web per part dels administradors de client i gestors de granges des de les seves seus. |
-| **WAN (Qualsevol altra IP)** | **DMZ** | TCP 443 (HTTPS) | **DROP** | **Requisit d'enunciat:** Només s'admeten ordinadors de les empreses que han contractat el servei. |
-| **WAN (Granges IoT autoritzades)** | **DMZ** | TCP 8883 (MQTT xifrat) | **ACCEPT** | Recepció de lectures de telemetria des dels gateways industrials de cada granja. |
-| **WAN (Tothom)** | **LAN Interna** | Qualsevol port | **DROP** | Protecció absoluta de la base de dades i usuaris contra atacs d'escaneig o força bruta. |
-| **DMZ** | **LAN Interna** | TCP 3306 (MariaDB) | **ACCEPT** | La web necessita consultar i escriure dades a la base de dades central. |
-| **DMZ** | **LAN Interna** | TCP 389/636 (LDAP) | **ACCEPT** | La web necessita validar les credencials d'inici de sessió contra el directori central. |
-| **DMZ** | **LAN Interna** | Qualsevol altre port | **DROP** | Principi de mínim privilegi: cap altre servei intern és accessible des de la DMZ. |
-| **LAN Interna** | **DMZ / WAN** | Connexions noves | **DROP** | Els servidors interns de BD no poden iniciar connexions cap a la DMZ ni cap a l'exterior (excepte sortida DNS/NTP controlada). |
-| **Qualsevol** | **Qualsevol** | Paquets invàlids | **DROP** | Mitigació d'atacs de fragments, TCP flags alterades o spoofing d'IPs. |
+| Màquina Virtual | Zona de Xarxa | Adreça IP / Rang | Serveis que allotja |
+| :--- | :--- | :--- | :--- |
+| **`pc-client`** | Internet (Ext.) | IP assignada per NAT | Navegador web de prova de l'empresa client contractant. |
+| **`fw-seu` (WAN)** | Internet | IP NAT WAN | Interfície pública d'OPNsense (accés web per als clients). |
+| **`fw-seu` (DMZ)** | DMZ | `10.0.10.1/24` | Gateway perimetral per a la xarxa DMZ. |
+| **`fw-seu` (LAN)** | LAN seu | `10.0.20.1/24` | Gateway de seguretat per a la xarxa interna de serveis. |
+| **`fw-seu` (VPN)** | VPN Server | `10.0.100.1/24` | Pila de terminació de túnels VPN de les granges remotes. |
+| **`dmz-web`** | DMZ | `10.0.10.10/24` | Proxy invers Nginx, WAF, Portal Web i Relay SMTP. |
+| **`srv-serveis`** | LAN seu | `10.0.20.10/24` | PostgreSQL (5432), OpenLDAP (389/636) i Broker MQTT (1883/8883). |
+| **`srv-backup`** | LAN seu | `10.0.20.20/24` | Servidor de backups amb cron i segon disc virtual muntat. |
+| **`granja1-srv`** | Granja 1 | `10.1.1.10/24` (i IP VPN `10.0.100.10`) | Client VPN, MQTT local, regles d'actuadors i buffer. |
+| **`granja1-sim`** | Granja 1 | `10.1.1.20/24` | Simulador ESP32, bus RS485 Modbus i servidor ChirpStack LoRa. |
+| *`granja2-srv` / `sim`* | *Granja 2 (Variació)* | *`10.1.2.0/24`* | *Granja addicional creada per a la variació del requeriment 4.7.* |
 
 ---
 
-## 4. Implementació de la Llista Blanca (Whitelist)
-Les empreses clients registren la seva adreça IP pública estàtica (o xarxa corporativa) en el moment de l'alta del contracte:
-- **Client 1 (AgroPonent S.L.):** IP pública `198.51.100.10`
-- **Client 2 (Avícola del Segrià S.A.):** IP pública `203.0.113.25`
-- **Seu Central AviGest (Oficines/VPN de Suport):** IP pública `198.51.100.5`
+## 3. Matriu de Regles de Tallafocs Documentades i Justificades (Requeriment 4.4)
 
-Tota connexió provinent d'adreces diferents serà descartada de forma immediata pel tallafocs abans d'arribar al servidor web, complint rigorosament el requeriment 4.4 de l'enunciat.
+Totes les regles segueixen el principi de mínim privilegi amb política per defecte **`DROP`** a totes les interfícies:
+
+### 3.1. Interfície WAN (Internet)
+| Origen | Destí | Port / Protocol | Acció | Justificació Tècnica |
+| :--- | :--- | :--- | :---: | :--- |
+| **Alias `CLIENTS_AUTORITZATS`** (`pc-client`) | `dmz-web` (`10.0.10.10`) | TCP 443 (HTTPS) / TCP 80 (HTTP) | **PASS** | Permet als clients contractats accedir al portal web d'administració de les seves granges. |
+| **Qualsevol altra IP d'Internet** | Qualsevol | Qualsevol | **BLOCK / DROP** | Compliment estricte del requeriment: només es permet l'accés a les IPs de les empreses que han contractat el servei. |
+| **IPs de les Granges (`granja1-srv`)** | `fw-seu` (WAN) | UDP 1194 (OpenVPN) o 51820 (WireGuard) | **PASS** | Permet l'establiment del túnel VPN xifrat des de la granja fins al tallafocs central. |
+
+### 3.2. Interfície DMZ (`10.0.10.0/24`)
+> **Regla Crítica de Seguretat:** La DMZ no pot iniciar connexions cap a la LAN, excepte els ports estrictament necessaris per a l'aplicació.
+
+| Origen | Destí | Port / Protocol | Acció | Justificació Tècnica |
+| :--- | :--- | :--- | :---: | :--- |
+| `dmz-web` (`10.0.10.10`) | `srv-serveis` (`10.0.20.10`) | TCP 5432 (PostgreSQL) | **PASS** | El portal web allotjat a la DMZ necessita consultar dades de clients i granges. |
+| `dmz-web` (`10.0.10.10`) | `srv-serveis` (`10.0.20.10`) | TCP 389 / 636 (OpenLDAP) | **PASS** | El portal web necessita validar les credencials d'inici de sessió dels usuaris contra el directori central. |
+| `dmz-web` (`10.0.10.10`) | **LAN seu (`10.0.20.0/24`)** | **Qualsevol altre port** | **BLOCK / DROP** | **Aïllament fonamental:** Si el servidor web de la DMZ és vulnerat, l'atacant té completament prohibit escanejar o connectar-se a `srv-backup`, accedir per SSH a `srv-serveis` o atacar altres serveis interns. |
+| `dmz-web` (`10.0.10.10`) | WAN (Internet) | TCP 25 / 587 (SMTP) | **PASS** | Sortida controlada per a l'enviament de correus d'alarma (Relay SMTP). |
+
+### 3.3. Interfície VPN (`10.0.100.0/24`)
+| Origen | Destí | Port / Protocol | Acció | Justificació Tècnica |
+| :--- | :--- | :--- | :---: | :--- |
+| `granja1-srv` (`10.0.100.10`) | `srv-serveis` (`10.0.20.10`) | TCP 1883 / 8883 (Broker MQTT) | **PASS** | La granja només necessita publicar les lectures telemètriques al broker MQTT de la seu. |
+| `granja1-srv` (`10.0.100.10`) | **LAN seu (`10.0.20.0/24`)** | **Qualsevol altre port** | **BLOCK / DROP** | Els equips de les granges tenen expressament prohibit connectar-se directament a la base de dades, a LDAP o al servidor de còpies de seguretat. |
+
+### 3.4. Interfície LAN (`10.0.20.0/24`)
+| Origen | Destí | Port / Protocol | Acció | Justificació Tècnica |
+| :--- | :--- | :--- | :---: | :--- |
+| `srv-backup` (`10.0.20.20`) | `srv-serveis` (`10.0.20.10`) | TCP 5432 (PostgreSQL) i TCP 389/636 (LDAP) | **PASS** | `srv-backup` necessita extreure els buidatges transaccionals per a les còpies de seguretat nocturnes. |
+| `srv-serveis` / `srv-backup` | WAN (Internet) | TCP 80, 443 / UDP 123 (NTP) | **PASS** | Actualitzacions oficials de paquets i sincronització horària de rellotge (NTP). |
