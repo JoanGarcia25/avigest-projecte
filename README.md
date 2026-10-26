@@ -52,4 +52,8 @@ Serveis actius:
 ## 4. Fites del Projecte
 
 - [E0 — Constitució d'Equip i Rols](docs/E0_divisio_tasques_rols.md)
+- [E1 — Estudi de Necessitats del Sector (PDF)](docs/E1_estudi_necessitats_joangarcia_mariamsolano%20(2).pdf)
 - [E2 — Document de Disseny Tècnic Oficial](docs/E2_disseny_tecnic/E2_document_disseny_tecnic.md)
+- [E3 — Pla d'Intervenció, Recursos, Costos i Rols](docs/E3_pla_intervencio/E3_pla_intervencio.md)
+- [Diari de Treball i Sessions](docs/diari_treball/diari_treball.md)
+

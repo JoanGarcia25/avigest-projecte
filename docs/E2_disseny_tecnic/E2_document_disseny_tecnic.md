@@ -91,11 +91,11 @@ flowchart TD
 
 | Codi Fitxa | Àmbit Tècnic | Decisió Presa | Justificació Principal | Document Detallat |
 | :--- | :--- | :--- | :--- | :--- |
-| **FD01** | SGBD Central | **PostgreSQL 16 + Rèplica** | Triggers PL/pgSQL avançats, suport TimescaleDB/JSON per a telemetria IoT, Row-Level Security natiu i streaming replication. | [FD01_sgbd.md](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/docs/fitxes_decisio/FD01_sgbd.md) |
-| **FD02** | Directori Central | **OpenLDAP + phpLDAPadmin** | Lleuger (<80MB RAM), estàndard ASIX, estructura modular LDIF amb 4 rols diferenciats i aïllament per granja. | [FD02_ldap.md](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/docs/fitxes_decisio/FD02_ldap.md) |
-| **FD03** | Seguretat Perimetral | **OPNsense (`fw-seu`)** | Appliance dedicat amb 3 interfícies físiques (WAN, DMZ, LAN), servidor VPN integrat, llista blanca d'IPs i política estricta DMZ-LAN. | [FD03_tallafocs_dmz.md](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/docs/fitxes_decisio/FD03_tallafocs_dmz.md) |
-| **FD04** | Còpies de Seguretat | **`srv-backup` dedicat + 2n disc** | Aïllament de fallades (VM pròpia), model 3-2-1 amb segon disc virtual per simular emmagatzematge extern, cron nocturn i RTO < 30 min. | [FD04_backups_prd.md](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/docs/fitxes_decisio/FD04_backups_prd.md) |
-| **FD05** | Comunicacions IoT | **Model Híbrid Edge (RS485 + LoRaWAN + MQTT)** | `granja1-sim` (Modbus a naus i LoRa a silos exteriors) cap a `granja1-srv` (MQTT local + buffer) i túnel VPN cap a la seu. | [FD05_iot_comunicacions.md](file:///c:/Users/jgarcia1_insmollerus/Desktop/Projecte/avigest-projecte/docs/fitxes_decisio/FD05_iot_comunicacions.md) |
+| **FD01** | SGBD Central | **PostgreSQL 16 + Rèplica** | Triggers PL/pgSQL avançats, suport TimescaleDB/JSON per a telemetria IoT, Row-Level Security natiu i streaming replication. | [FD01_sgbd.md](../fitxes_decisio/FD01_sgbd.md) |
+| **FD02** | Directori Central | **OpenLDAP + phpLDAPadmin** | Lleuger (<80MB RAM), estàndard ASIX, estructura modular LDIF amb 4 rols diferenciats i aïllament per granja. | [FD02_ldap.md](../fitxes_decisio/FD02_ldap.md) |
+| **FD03** | Seguretat Perimetral | **OPNsense (`fw-seu`)** | Appliance dedicat amb 3 interfícies físiques (WAN, DMZ, LAN), servidor VPN integrat, llista blanca d'IPs i política estricta DMZ-LAN. | [FD03_tallafocs_dmz.md](../fitxes_decisio/FD03_tallafocs_dmz.md) |
+| **FD04** | Còpies de Seguretat | **`srv-backup` dedicat + 2n disc** | Aïllament de fallades (VM pròpia), model 3-2-1 amb segon disc virtual per simular emmagatzematge extern, cron nocturn i RTO < 30 min. | [FD04_backups_prd.md](../fitxes_decisio/FD04_backups_prd.md) |
+| **FD05** | Comunicacions IoT | **Model Híbrid Edge (RS485 + LoRaWAN + MQTT)** | `granja1-sim` (Modbus a naus i LoRa a silos exteriors) cap a `granja1-srv` (MQTT local + buffer) i túnel VPN cap a la seu. | [FD05_iot_comunicacions.md](../fitxes_decisio/FD05_iot_comunicacions.md) |
 
 ---
 
@@ -146,25 +146,128 @@ El tallafocs perimetral `fw-seu` (OPNsense) aplica una política estricta de tal
 ## 7. Base de Dades Centralitzada: PostgreSQL 16 i Rèplica (Requeriment 4.3)
 *Allotjada a `srv-serveis` (`10.0.20.10`)*.
 
-- **Model Entitat-Relació:** 9 taules normalitzades (`clients`, `granges`, `naus`, `lots_crianca`, `sensors`, `actuadors`, `lectures_sensors`, `registre_actuacions`, `alarmes_incidencies`).
-- **Triggers PL/pgSQL (R5 i R7):** En cada inserció de lectura, si la temperatura supera el llindar màxim de la nau (> 31 ºC), el trigger activa automàticament el ventilador a `ON`, apunta l'acció a `registre_actuacions` i genera l'alarma a `alarmes_incidencies`.
-- **Rols de motor SQL (Mínim Privilegi):**
-  * `avigest_app`: Permisos DML complets sobre taules de negoci.
-  * `avigest_iot`: **NOMÉS permís `INSERT`** a `lectures_sensors`. Mai pot esborrar ni llegir dades de clients.
-  * `avigest_consulta`: Només `SELECT` sobre vistes d'informes.
-  * `avigest_backup`: Permisos exclusius per a `pg_dump`.
+### 7.1. Model Entitat-Relació Complet (Mermaid)
+
+```mermaid
+erDiagram
+    CLIENTS ||--o{ GRANGES : "contracta (R1)"
+    GRANGES ||--o{ NAUS : "conte"
+    NAUS ||--o{ LOTS_CRIANCA : "allotja cicles (R6)"
+    NAUS ||--o{ SENSORS : "monitoritza (R4)"
+    NAUS ||--o{ ACTUADORS : "regula ambient (R5)"
+    NAUS ||--o{ ALARMES_INCIDENCIES : "genera alertes (R7)"
+    SENSORS ||--o{ LECTURES_SENSORS : "enregistra"
+    ACTUADORS ||--o{ REGISTRE_ACTUACIONS : "executa canvis"
+    SENSORS ||--o{ ALARMES_INCIDENCIES : "dispara per llindar"
+
+    CLIENTS {
+        INT id_client PK
+        VARCHAR nif UK
+        VARCHAR nom_empresa
+        VARCHAR email
+        BOOLEAN actiu
+    }
+    GRANGES {
+        INT id_granja PK
+        INT id_client FK
+        VARCHAR nom_granja
+        VARCHAR codi_explotacio UK
+        BOOLEAN activa
+    }
+    NAUS {
+        INT id_nau PK
+        INT id_granja FK
+        VARCHAR codi_nau
+        INT capacitat_aus
+    }
+    LOTS_CRIANCA {
+        INT id_lot PK
+        INT id_nau FK
+        VARCHAR codi_lot UK
+        INT num_aus_inicials
+        INT num_baixes
+        DATE data_entrada
+        VARCHAR estat
+    }
+    SENSORS {
+        INT id_sensor PK
+        INT id_nau FK
+        VARCHAR tipus_sensor
+        VARCHAR tecnologia
+        NUMERIC llindar_minim
+        NUMERIC llindar_maxim
+    }
+    ACTUADORS {
+        INT id_actuador PK
+        INT id_nau FK
+        VARCHAR tipus_actuador
+        VARCHAR estat_actual
+    }
+    LECTURES_SENSORS {
+        BIGINT id_lectura PK
+        INT id_sensor FK
+        NUMERIC valor
+        TIMESTAMP data_hora
+    }
+    REGISTRE_ACTUACIONS {
+        BIGINT id_actuacio PK
+        INT id_actuador FK
+        VARCHAR accio
+        VARCHAR motiu
+        TIMESTAMP data_hora
+    }
+    ALARMES_INCIDENCIES {
+        BIGINT id_alarma PK
+        INT id_nau FK
+        VARCHAR nivell_gravetat
+        VARCHAR missatge
+        BOOLEAN resolta
+    }
+```
+
+### 7.2. Lògica Procedural i Triggers PL/pgSQL (R5 i R7)
+- **Control de termòstat automàtic:** Trigger `fn_control_llindars_sensor()` que commuta ventiladors a `ON` i calefactors a `OFF` si $T > 31^\circ\text{C}$, generant l'acció a `registre_actuacions` i alarma crítica a `alarmes_incidencies` si $T \ge 33^\circ\text{C}$.
+- **Normalització de temperatura:** Aturada automàtica de ventilació quan la temperatura retorna al rang òptim ($20^\circ\text{C} \le T \le 31^\circ\text{C}$).
+
+### 7.3. Consultes i Vistes Comparatives de Negoci (Requeriment 4.3)
+1. **`v_comparativa_lots_rendiment`:** Mortalitat, percentatge de baixes i durada de cicles entre naus i granges.
+2. **`v_resum_diari_climatic`:** Agrupacions diàries de temperatures mitjanes, mínimes, màximes i volum d'alarmes per nau per detectar estrès tèrmic.
+3. **`v_estat_silos_gra`:** Monitoratge de pes romanent de pinso als silos i avís precoç de comandes abans d'esgotar l'estoc.
+4. **`v_panell_executiu_global`:** Visió agregada multitenant amb recompte de naus, capacitat d'aus en producció i incidències pendents per client.
+
+### 7.4. Rols SQL de Mínim Privilegi
+- `avigest_app`: Accés DML complet.
+- `avigest_iot`: **Només permís `INSERT`** a `lectures_sensors` (sense accés a clients ni usuaris).
+- `avigest_consulta`: Només `SELECT` sobre les vistes d'informació.
+- `avigest_backup`: Permís per a `pg_dump`.
 
 ---
 
-## 8. Arquitectura IoT: Simulació, Edge Computing i Comunicacions (Requeriment 4.8)
+## 8. Arquitectura IoT: Simulació, Edge Computing i Inventari (Requeriments 4.8 i R4)
 
+### 8.1. Arquitectura de Comunicacions (Híbrid RS485 + LoRaWAN)
 1. **`granja1-sim` (Simulador de Dispositius):**
-   - Simula els microcontroladors ESP32 llegint sensors de temperatura i humitat connectats per un bus sèrie diferencial **RS485 (Modbus RTU)**.
-   - Simula les cèl·lules de pesatge dels silos exteriors transmetent per ràdio **LoRaWAN (868 MHz)** gestionats per un servidor **ChirpStack**.
+   - Simula microcontroladors ESP32 amb sensors ambientals connectats per bus sèrie diferencial **RS485 (Modbus RTU)** dins de les naus.
+   - Simula cèl·lules de pesatge de silos exteriors transmetent per ràdio **LoRaWAN (868 MHz)** gestionats per servidor **ChirpStack**.
 2. **`granja1-srv` (Controlador Local Edge):**
-   - Rep les lectures de camp mitjançant un broker MQTT local.
-   - **Regles locals d'actuació (Seguretat autònoma):** Si la temperatura supera el llindar crític, commuta el ventilador localment sense dependre d'Internet.
-   - **Buffer:** Emmagatzema les lectures si la VPN cau i les transmet cap a la seu central un cop restablerta la connexió.
+   - Rep lectures mitjançant broker MQTT local.
+   - **Regles locals d'actuació autònoma:** Execució immediata de ventilació si $T > 31^\circ\text{C}$ sense dependre d'Internet.
+   - **Buffer Store-and-Forward:** Retenció local de dades fins a 72 hores si cau el túnel VPN.
+
+### 8.2. Inventari Necessari de l'IoT (Requisit Explícit d'Avaluació)
+
+La següent taula recull el dimensionament físic de sensors, actuadors i equipament de comunicacions per a una explotació pilot estàndard (Granja de 2 naus i 2 silos):
+
+| Dispositiu / Sensor | Model de Referència Industrial | Protocol / Tecnologia | Rang de Treball i Precisió | Ubicació Física | Quantitat per Nau / Granja |
+| :--- | :--- | :--- | :--- | :--- | :---: |
+| **Sonda Temp / Humitat** | Industrial SHT30 / XY-MD02 (amb filtre sinteritzat) | RS485 (Modbus RTU) | -40 a +80 ºC ($\pm 0.3^\circ\text{C}$) / 0-100% RH ($\pm 3\%$) | Interior de cada nau (repartits a terç davanter, central i posterior) | 3 per nau (6 per granja) |
+| **Sensor de $CO_2$ industrial** | Senseair S8 / Winsen MH-Z19C NDIR | RS485 (Modbus RTU) | 0 a 5.000 ppm ($\pm 50$ ppm) | Alçada d'aus (centre de la nau) | 1 per nau (2 per granja) |
+| **Cèl·lules de pesatge de Sitja** | Transductor de càrrega per a potes de silo (4x cel·les) | Mòdul LoRaWAN 868 MHz (IP67) | 0 a 20.000 kg ($\pm 0.5\%$) | Base exterior dels silos de gra | 1 kit per silo (2 per granja) |
+| **Comptador d'Aigua d'impulsos** | Comptador d'emissor de polsos Woltman DN20 | RS485 / Entrada digital ESP32 | 1 pols / litre | Entrada de línia d'abeuradors | 1 per nau (2 per granja) |
+| **Mòdul de Control / Micro** | ESP32-WROOM-32U amb xassís DIN i antena exterior | WiFi / Ethernet + RS485 transceiver MAX485 | 240 MHz Dual Core, 3.3V/5V DC | Armari elèctric de capçalera de nau | 1 per nau (2 per granja) |
+| **Mòdul de Relés Actuadors** | Mòdul 4/8 canals relé optoacoblat 16A/250VAC | RS485 Modbus / GPIO 5V | Suport càrregues inductives de motors | Quadre de maniobra de ventiladors/calefacció | 1 per nau (2 per granja) |
+| **Gateway LoRaWAN exterior** | Dragino LPS8N / Milesight UG65 | LoRaWAN 868 MHz (8 canals) cap a Ethernet | Cobertura exterior fins a 2-3 km | Façana exterior de la sala de control | 1 per granja |
+| **Gateway Industrial Local** | Advantech UNO-2271G (Fanless IP50/65) | Dual GbE, RS485 integrat, MQTT / VPN | Linux Debian 12, xassís carril DIN | Armari de control IP66 | 1 per granja (`granja1-srv`) |
 
 ---
 
