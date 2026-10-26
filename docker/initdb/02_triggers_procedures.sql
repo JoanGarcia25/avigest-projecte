@@ -92,11 +92,18 @@ BEGIN
                         format('ALERTA CRÍTICA: Hipotèrmia potencial. Temperatura: %s ºC', NEW.valor));
             END IF;
 
-            -- Millora: Apagar calefactors si la temperatura ja no és baixa
+        -- 3. Temperatura restablerta dins del rang normal (entre min i max)
+        ELSE
+            IF v_id_actuador_vent IS NOT NULL AND v_estat_vent = 'ON' THEN
+                UPDATE actuadors SET estat_actual = 'OFF' WHERE id_actuador = v_id_actuador_vent;
+                INSERT INTO registre_actuacions (id_actuador, accio, motiu, disparat_per_sensor_id)
+                VALUES (v_id_actuador_vent, 'OFF', 'Temperatura normalitzada. Aturada automàtica de ventilació.', NEW.id_sensor);
+            END IF;
+
             IF v_id_actuador_cal IS NOT NULL AND v_estat_cal = 'ON' THEN
                 UPDATE actuadors SET estat_actual = 'OFF' WHERE id_actuador = v_id_actuador_cal;
                 INSERT INTO registre_actuacions (id_actuador, accio, motiu, disparat_per_sensor_id)
-                VALUES (v_id_actuador_cal, 'DESACTIVAR', 'Temperatura restablerta dins dels paràmetres normals. Calefacció ja no necessària.', NEW.id_sensor);
+                VALUES (v_id_actuador_cal, 'OFF', 'Temperatura restablerta dins dels paràmetres normals. Calefacció ja no necessària.', NEW.id_sensor);
             END IF;
         END IF;
 
