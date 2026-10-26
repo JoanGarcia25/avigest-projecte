@@ -119,3 +119,25 @@ LEFT JOIN naus n ON g.id_granja = n.id_granja AND n.activa = TRUE
 LEFT JOIN lots_crianca l ON n.id_nau = l.id_nau AND l.estat = 'en_curs'
 GROUP BY c.id_client, c.nom_empresa
 ORDER BY c.nom_empresa;
+
+-- =============================================================================
+-- CONSULTES COMPARATIVES D'EXEMPLE PER A INFORMES I AUDITORIA
+-- =============================================================================
+
+-- Consulta A: Rànquing d'incidències per nau (Naus que han patit més alertes crítiques)
+-- SELECT n.codi_nau, g.nom_granja, COUNT(a.id_alarma) AS total_critiques
+-- FROM alarmes_incidencies a
+-- JOIN naus n ON a.id_nau = n.id_nau
+-- JOIN granges g ON n.id_granja = g.id_granja
+-- WHERE a.nivell_gravetat = 'critic'
+-- GROUP BY n.codi_nau, g.nom_granja
+-- ORDER BY total_critiques DESC;
+
+-- Consulta B: Mitjana d'activacions de ventiladors per sobreescalfament (>31ºC)
+-- SELECT a.tipus_actuador, n.codi_nau, COUNT(r.id_registre) AS cops_activat
+-- FROM registre_actuacions r
+-- JOIN actuadors a ON r.id_actuador = a.id_actuador
+-- JOIN naus n ON a.id_nau = n.id_nau
+-- WHERE r.accio = 'ON'
+-- GROUP BY a.tipus_actuador, n.codi_nau
+-- ORDER BY cops_activat DESC;

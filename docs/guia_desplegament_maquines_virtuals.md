@@ -2,119 +2,189 @@
 
 **Projecte:** Implantació d'un sistema informàtic de gestió de granges de pollastres  
 **Autors:** Joan (Infraestructura, Xarxa i Seguretat) i Mariam (Base de Dades, IoT i Automatització)  
-**Entorn d'execució:** Hipervisor VMware Workstation / VirtualBox  
+**Entorn d'execució:** Hipervisor Oracle VirtualBox (entorn estàndard d'aula) / VMware Workstation  
+**Guies complementàries:**
+- [docs/Guies_MV/Guia del laboratori virtual d'AviGest.pdf](Guies_MV/Guia%20del%20laboratori%20virtual%20d’AviGest.pdf)
+- [docs/Guies_MV/Pas a pas plantilla debian-base i xarxes virtuals.docx](Guies_MV/Pas%20a%20pas%20plantilla%20debian-base%20i%20xarxes%20virtuals.docx)
 
 ---
 
-## 1. Mapa de Màquines Virtuals i Xarxes Virtuals (VMnets)
+## 1. Mapa de Màquines Virtuals i Xarxes Virtuals
 
-La infraestructura d'AviGest es desplega mitjançant un conjunt coordinat de màquines virtuals especialitzades interconnectades a través de les següents xarxes:
+La infraestructura d'AviGest es desplega mitjançant un conjunt coordinat de 6 màquines virtuals (més l'equip client físic o virtualitzat) interconnectades a través de segments de xarxa privats i aïllats:
 
 ```mermaid
 flowchart TD
-    Client["pc-client<br/>(Navegador de prova)"]
-    Internet["Internet (NAT de l'hipervisor)"]
+    Client["pc-client / Host físic<br/>(Navegador de prova)"]
+    Internet["Internet (Xarxa NAT: 10.0.2.0/24)"]
 
     subgraph FW["fw-seu (OPNsense)"]
         direction TB
         WAF_Rules["3 Interfícies + Regles d'Estat"]
-        VPN_Srv["Servidor VPN (10.0.100.0/24)"]
+        VPN_Srv["Servidor VPN WireGuard (10.0.100.1)"]
     end
 
     subgraph DMZ_Net["DMZ (10.0.10.0/24)"]
-        DMZ_Web["dmz-web<br/>Nginx + proxy invers<br/>WAF i relay SMTP"]
+        DMZ_Web["dmz-web (10.0.10.10)<br/>Debian 13: Nginx + proxy invers<br/>WAF i relay SMTP"]
     end
 
     subgraph LAN_Net["LAN seu (10.0.20.0/24)"]
-        Srv_Serveis["srv-serveis<br/>Docker: OpenLDAP<br/>PostgreSQL 16 + rèplica<br/>Broker MQTT Mosquitto"]
-        Srv_Backup["srv-backup<br/>Còpies amb cron<br/>Disc extern simulat"]
+        Srv_Serveis["srv-serveis (10.0.20.10)<br/>Debian 13 + Docker Engine:<br/>PostgreSQL 16 + Rèplica<br/>Mosquitto MQTT + OpenLDAP"]
+        Srv_Backup["srv-backup (10.0.20.20)<br/>Debian 13: Còpies amb cron<br/>2n Disc virtual simulat (/mnt)"]
     end
 
     subgraph Granja1_Net["Granja 1 (10.1.1.0/24)"]
-        Granja1_Sim["granja1-sim<br/>Sensors ESP32 simulats<br/>Bus RS485 (Modbus)<br/>LoRaWAN (ChirpStack)"]
-        Granja1_Srv["granja1-srv<br/>Client VPN i MQTT local<br/>Regles dels actuadors<br/>Buffer de dades"]
+        Granja1_Sim["granja1-sim (10.1.1.20)<br/>Debian 13: Simulador ESP32<br/>RS485 Modbus i ChirpStack LoRa"]
+        Granja1_Srv["granja1-srv (10.1.1.10)<br/>Debian 13: Gateway Edge<br/>Client WireGuard (10.0.100.10)<br/>MQTT local + regles ventilació (>31ºC)"]
     end
 
     Client --> Internet
-    Internet ==>|HTTPS només des d'IPs de clients| FW
+    Internet ==>|HTTPS (443) només des d'IPs autoritzades| FW
     FW -->|Port 443/80| DMZ_Web
-    DMZ_Web ==>|NOMÉS SQL:5432 i LDAP:389| Srv_Serveis
+    DMZ_Web ==>|NOMÉS SQL:5432 i LDAPS:636/389| Srv_Serveis
     DMZ_Web -.->|BLOQUEJAT TOTA LA RESTA: DROP| LAN_Net
 
     Granja1_Sim -->|Dades de camp| Granja1_Srv
-    Granja1_Srv ==>|Túnel VPN (10.0.100.0/24)| VPN_Srv
+    Granja1_Srv ==>|Túnel WireGuard VPN (10.0.100.0/24)| VPN_Srv
     VPN_Srv ==>|NOMÉS MQTT:1883/8883| Srv_Serveis
     VPN_Srv -.->|BLOQUEJAT ACCÉS A BD I LDAP: DROP| LAN_Net
 ```
 
-### Pla d'adreçament i assignació d'adaptadors a VMware:
+---
 
-| Màquina Virtual | Sistema Operatiu | Adaptadors de Xarxa a VMware | Adreça IP | Funció en el sistema |
-| :--- | :--- | :--- | :--- | :--- |
-| **`pc-client`** | Qualsevol OS / Host | NAT | IP de NAT | Simula l'equip de l'empresa client contractant que accedeix des d'Internet. |
-| **`fw-seu`** | OPNsense | **NIC 1:** NAT (WAN)<br/>**NIC 2:** VMnet10 (DMZ)<br/>**NIC 3:** VMnet20 (LAN) | **WAN:** DHCP NAT<br/>**DMZ:** `10.0.10.1`<br/>**LAN:** `10.0.20.1`<br/>**VPN:** `10.0.100.1` | Tallafocs perimetral de 3 potes, servidor VPN i aplicació de regles. |
-| **`dmz-web`** | Ubuntu Server | **NIC 1:** VMnet10 (DMZ) | `10.0.10.10` | Nginx, proxy invers, WAF i relay SMTP. Únic servei exposat al client. |
-| **`srv-serveis`** | Ubuntu Server | **NIC 1:** VMnet20 (LAN) | `10.0.20.10` | Docker: OpenLDAP, PostgreSQL 16 + rèplica, Broker MQTT Mosquitto. |
-| **`srv-backup`** | Ubuntu Server | **NIC 1:** VMnet20 (LAN) | `10.0.20.20` | Servidor dedicat de còpies de seguretat amb cron i 2n disc virtual. |
-| **`granja1-srv`**| Ubuntu Server | **NIC 1:** VMnet30 (Granja 1)<br/>**NIC 2:** NAT (sortida Internet/VPN) | `10.1.1.10`<br/>(VPN: `10.0.100.10`) | Gateway de granja: client VPN, MQTT local, regles d'actuadors i buffer. |
-| **`granja1-sim`**| Ubuntu Server / Alpine | **NIC 1:** VMnet30 (Granja 1) | `10.1.1.20` | Simulador ESP32, bus RS485 Modbus i LoRaWAN (ChirpStack). |
+## 2. Pla d'Adreçament, Xarxes i Màquines Virtuals
+
+Cinc de les sis màquines virtuals es basen en el mateix sistema operatiu: **Debian 13 («trixie» / Debian stable)** mitjançant la plantilla clonable `debian-base` (sense entorn gràfic, usuari administratiu comú `avadmin`, sincronització NTP amb `chrony` i autenticació SSH per clau). El consum total de memòria RAM de tot el laboratori se situa al voltant dels **10 GB**, apte per a la majoria d'ordinadors d'aula.
+
+### 2.1. Taula de Correspondència de Xarxes Virtuals
+
+| Zona de Xarxa | Rang de Xarxa | Tipus a VirtualBox | Nom a VirtualBox | Equivalent a VMware | Equips connectats |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Internet / WAN** | `10.0.2.0/24` | Xarxa NAT (*NAT Network*) | `internet-lab` | `NAT` | WAN de `fw-seu`, sortida de `granja1-srv` i `pc-client` |
+| **DMZ** | `10.0.10.0/24` | Xarxa interna (*Internal Network*) | `dmz` | `VMnet10` | Interfície DMZ de `fw-seu` i `dmz-web` |
+| **LAN seu** | `10.0.20.0/24` | Xarxa interna (*Internal Network*) | `lan-seu` | `VMnet20` | Interfície LAN de `fw-seu`, `srv-serveis` i `srv-backup` |
+| **Granja 1** | `10.1.1.0/24` | Xarxa interna (*Internal Network*) | `lan-granja1` | `VMnet30` | `granja1-srv` i `granja1-sim` |
+| **Granja 2** *(Variació 4.7)* | `10.1.2.0/24` | Xarxa interna (*Internal Network*) | `lan-granja2` | `VMnet40` | `granja2-srv` i `granja2-sim` |
+| **Túnel VPN** | `10.0.100.0/24` | Túnel WireGuard (Virtual) | `wg0` | `wg0` | `fw-seu` (`.1`), `granja1-srv` (`.10` / `.2`), `granja2-srv` (`.20`) |
+
+> [!TIP]
+> **Creació de la xarxa NAT a VirtualBox per línia de comandes (PowerShell al Host):**
+> ```powershell
+> $vbm = 'C:\Program Files\Oracle\VirtualBox\VBoxManage.exe'
+> & $vbm natnetwork add --netname internet-lab --network 10.0.2.0/24 --enable --dhcp on
+> & $vbm list natnetworks
+> ```
 
 ---
 
-## 2. Recorregut Detallat d'una Lectura de Sensor
+### 2.2. Inventari de Màquines Virtuals
 
-1. **`granja1-sim`:**
-   - Simula els microcontroladors ESP32 llegint els sensors ambientals per RS485 Modbus i les cèl·lules de pesatge dels silos per LoRaWAN (ChirpStack).
-   - Publica la lectura cap al broker MQTT local de `granja1-srv`.
+| Màquina Virtual | Rol al Projecte | Sistema Operatiu | Recursos (vCPU / RAM / Disc) | Adaptadors de Xarxa (VirtualBox / VMware) | Adreces IP |
+| :--- | :--- | :--- | :---: | :--- | :--- |
+| **`pc-client`** | Client contractant que accedeix des d'Internet | Host físic / VM Debian | 1 vCPU / 1 GB / 10 GB | **Adaptador 1:** Xarxa NAT (`internet-lab` / `NAT`) | DHCP (`10.0.2.x`) o IP física |
+| **`fw-seu`** | Tallafocs perimetral de 3 potes, NAT i VPN | **OPNsense** (FreeBSD) | 2 vCPU / 2 GB / 20 GB | **Adaptador 1:** Xarxa NAT (`internet-lab`)<br/>**Adaptador 2:** Xarxa interna (`dmz`)<br/>**Adaptador 3:** Xarxa interna (`lan-seu`) | **WAN:** DHCP (`10.0.2.1` gw)<br/>**DMZ:** `10.0.10.1`<br/>**LAN:** `10.0.20.1`<br/>**VPN:** `10.0.100.1` |
+| **`dmz-web`** | Nginx, proxy invers, WAF i relay SMTP | **Debian 13** (clon) | 1 vCPU / 1 GB / 10 GB | **Adaptador 1:** Xarxa interna (`dmz`) | `10.0.10.10`<br/>(GW: `10.0.10.1`) |
+| **`srv-serveis`** | PostgreSQL 16 + Rèplica, Mosquitto, OpenLDAP | **Debian 13** (clon) + Docker | 2 vCPU / 4 GB / 40 GB | **Adaptador 1:** Xarxa interna (`lan-seu`) | `10.0.20.10`<br/>(GW: `10.0.20.1`) |
+| **`srv-backup`** | Servidor de backups dedicat amb cron i 2n disc | **Debian 13** (clon) | 1 vCPU / 1 GB / 10 GB + 20 GB | **Adaptador 1:** Xarxa interna (`lan-seu`) | `10.0.20.20`<br/>(GW: `10.0.20.1`) |
+| **`granja1-srv`**| Gateway Edge: VPN, MQTT local, actuadors | **Debian 13** (clon) | 1 vCPU / 1 GB / 10 GB | **Adaptador 1:** Xarxa interna (`lan-granja1`)<br/>**Adaptador 2:** Xarxa NAT (`internet-lab`) | **LAN:** `10.1.1.10`<br/>**VPN:** `10.0.100.10` (o `.2`) |
+| **`granja1-sim`**| Simulador de sensors ESP32 i silos LoRaWAN | **Debian 13** (clon) | 1 vCPU / 1 GB / 10 GB | **Adaptador 1:** Xarxa interna (`lan-granja1`) | `10.1.1.20`<br/>(GW: `10.1.1.10`) |
+
+---
+
+## 3. Preparació de la Plantilla Base Comuna (`debian-base`)
+
+Per estalviar feina i garantir que cap màquina tingui incoherències, es prepara una única màquina virtual **`debian-base`** de la qual es deriven els 5 servidors Debian:
+
+1. **Instal·lació neta:** Debian 13 («trixie» netinst amd64) en mode text, sense entorn d'escriptori, amb només *SSH server* i *standard system utilities*.
+2. **Usuari administratiu:** Crear l'usuari `avadmin` amb permisos `sudo` (evitant l'ús directe de `root`).
+3. **Paquets base de diagnòstic i seguretat:**
+   ```bash
+   sudo apt update && sudo apt full-upgrade -y
+   sudo apt install -y vim curl wget ca-certificates gnupg chrony nftables tcpdump dnsutils netcat-openbsd git
+   ```
+4. **Sincronització horària estricta:**
+   ```bash
+   sudo timedatectl set-timezone Europe/Madrid
+   sudo systemctl enable --now chrony
+   chronyc tracking
+   ```
+5. **Neteja prèvia al clonatge (Evitar col·lisions d'identitat a la xarxa):**
+   ```bash
+   # Buidar machine-id perquè cada clon en generi un de nou
+   sudo truncate -s 0 /etc/machine-id
+   # Netejar claus SSH per regenerar-les als clons
+   sudo rm -f /etc/ssh/ssh_host_*
+   sudo poweroff
+   ```
+6. **Després de clonar cada VM:**
+   - Canviar el hostname a `/etc/hostname` i `/etc/hosts`.
+   - Executar `sudo dpkg-reconfigure openssh-server` per generar claus SSH úniques.
+   - Configurar la IP estàtica a `/etc/network/interfaces`.
+
+---
+
+## 4. Recorregut Detallat d'una Lectura de Sensor
+
+1. **`granja1-sim` (Simulació de camp):**
+   - Simula els microcontroladors ESP32 llegint sensors ambientals per RS485 Modbus i les cèl·lules de pesatge dels silos per LoRaWAN (ChirpStack).
+   - Publica la lectura cap al broker MQTT local de `granja1-srv` (`10.1.1.10:1883`).
 2. **`granja1-srv` (Edge Computing):**
-   - Rep la lectura pel seu MQTT local.
-   - Avalua immediatament les regles locals dels actuadors: si la temperatura mesurada supera el llindar crític (> 31 ºC), **activa el ventilador localment** sense dependre de la seu central ni d'Internet.
+   - Rep la lectura pel seu broker MQTT local.
+   - Avalua immediatament les regles locals dels actuadors: si la temperatura mesurada supera el llindar crític (> 31 ºC), **activa el ventilador localment en < 2 segons** sense dependre de la seu central ni d'Internet.
    - Emmagatzema la lectura al búfer local (*store-and-forward*).
-   - Envia el missatge telemètric pel túnel xifrat VPN (`10.0.100.0/24`) cap a la seu central.
+   - Envia el missatge telemètric pel túnel xifrat WireGuard VPN (`10.0.100.0/24`) cap a la seu central.
 3. **`fw-seu` (OPNsense):**
-   - Rep el paquet a través de la interfície VPN.
-   - Aplica les regles del tallafocs: **l'únic trànsit permès des de la VPN cap a la LAN és el port del Broker MQTT (`srv-serveis:1883/8883`)**. Qualsevol altre trànsit és bloquejat.
+   - Rep el paquet a través de la interfície VPN WireGuard.
+   - Aplica les regles del tallafocs: **l'únic trànsit permès des de la VPN cap a la LAN és el port del Broker MQTT (`srv-serveis:1883/8883`)**. Qualsevol altre trànsit és bloquejat i registrat.
 4. **`srv-serveis` (Nucli Central):**
-   - El broker MQTT Mosquitto rep la lectura i la persistència a la base de dades **PostgreSQL 16**.
-   - La base de dades s'encarrega d'alimentar la rèplica contínua.
-   - OpenLDAP manté els comptes d'usuaris per a les autenticacions.
+   - El broker MQTT Mosquitto rep la lectura i el servei d'ingesta la persisteix a la base de dades **PostgreSQL 16**.
+   - Els triggers PL/pgSQL avaluen els llindars i generen les alertes a `alarmes_incidencies` si escau.
+   - La base de dades alimenta la rèplica de continuïtat.
+   - OpenLDAP manté els comptes d'usuaris i rols per a les autenticacions.
 5. **`srv-backup` (Còpies i PRD):**
-   - Executa les tasques programades mitjançant `cron` connectant-se a `srv-serveis` per extreure el buidatge de la BD i LDAP.
-   - Copia els arxius a un segon disc virtual separat que simula la ubicació física externa.
+   - Executa les tasques programades mitjançant `cron` (a les 02:00 AM) connectant-se a `srv-serveis` per extreure el buidatge de la BD (`pg_dump`) i LDAP (`slapcat`).
+   - Copia els arxius a un segon disc virtual separat muntat a `/mnt/disc-extern-backup/` simulant la ubicació física externa (Estratègia 3-2-1).
 6. **`dmz-web` (Accés Client):**
-   - El client es connecta des de `pc-client` per Internet/HTTPS.
+   - El client es connecta des de `pc-client` (o navegador host) per Internet/HTTPS.
    - OPNsense comprova la llista blanca d'IPs de clients contractats.
-   - Si és autoritzat, la connexió arriba a `dmz-web`, que passa pel proxy invers Nginx i consulta a `srv-serveis` les dades estrictament necessàries per PostgreSQL (5432) i LDAP (389).
+   - Si és autoritzat, la connexió arriba a `dmz-web`, que passa pel proxy invers Nginx i consulta a `srv-serveis` les dades estrictament necessàries per PostgreSQL (5432) i LDAP (389/636).
 
 ---
 
-## 3. Punts Crítics de Seguretat i Configuració
+## 5. Punts Crítics de Seguretat i Configuració
 
-### 3.1. Regles del Tallafocs OPNsense (`fw-seu`)
+### 5.1. Regles del Tallafocs OPNsense (`fw-seu`)
 - **Aïllament estricte DMZ -> LAN:**
-  * La DMZ **mai no ha de poder iniciar connexions cap a la LAN**, excepte allò estrictament necessari:
+  * La DMZ **mai no pot iniciar connexions cap a la LAN**, excepte allò estrictament necessari:
     - `dmz-web` -> `srv-serveis:5432` (PostgreSQL)
-    - `dmz-web` -> `srv-serveis:389/636` (OpenLDAP)
+    - `dmz-web` -> `srv-serveis:389/636` (OpenLDAP / LDAPS)
   * Qualsevol altre intent d'iniciar trànsit cap a la LAN (com ara intents cap a `srv-backup`, SSH, etc.) és **bloquejat i registrat al log**.
 - **Aïllament VPN -> LAN:**
   * Des de la VPN (`granja1-srv`) **només es permet trànsit cap al Broker MQTT de `srv-serveis` (port 1883/8883)**. La granja mai té accés a la BD ni a LDAP directament.
 
-### 3.2. Redundància de la Base de Dades (Justificació de disseny)
+### 5.2. Redundància de la Base de Dades (Justificació de disseny — FD01)
 - Al laboratori, la rèplica de PostgreSQL està allotjada com a contenidor secundari dins de `srv-serveis`.
-- **Aquesta limitació està documentada a la fitxa de decisió FD01:** Si cau el procés o es corrompen les dades, la rèplica protegeix el servei; però si cau la màquina virtual `srv-serveis` sencera, la redundància s'assumeix mitjançant el servidor independent `srv-backup`. En producció real, la rèplica s'allotjaria en una VM pròpia.
+- **Aquesta limitació està documentada formalment:** Si cau el procés o es corrompen les dades, la rèplica protegeix el servei; però si cau la màquina virtual `srv-serveis` sencera, la redundància s'assumeix mitjançant el servidor independent `srv-backup`. En producció real, la rèplica s'allotjaria en una VM pròpia o servidor físic separat.
 
 ---
 
-## 4. Procediment per a la Variació Presencial (Granja 2 — Requeriment 4.7)
+## 6. Procediment per a la Variació Presencial (Granja 2 — Requeriment 4.7)
 
 Durant la defensa o sessió presencial, quan el professor demani afegir una segona granja:
 
-1. **Clonació de les màquines de camp a VMware:**
+1. **Clonació de les màquines de camp:**
    - Es clona `granja1-srv` com a `granja2-srv`.
    - Es clona `granja1-sim` com a `granja2-sim`.
-   - S'assigna una xarxa nova a VMware: **Granja 2 (`10.1.2.0/24`)**.
+   - S'assigna una xarxa nova a l'hipervisor: **Granja 2 (`10.1.2.0/24`)** (`lan-granja2` a VirtualBox / `VMnet40` a VMware).
 2. **Execució de l'script d'automatització:**
-   - L'script `scripts/automatitzacio-granges/alta_granja.sh`:
-     1. Crea l'esquema i registres a PostgreSQL per a la nova granja.
+   - Des de consola s'executa l'script:
+     ```bash
+     cd scripts/automatitzacio-granges
+     ./alta_granja.sh -c 1 -n "Granja 2 Urgell" -e "ES252170004" -a "Camí Vell s/n" -p "Bellpuig" -s 2 -u "gestor_granja2" -r "10.1.2.0/24"
+     ```
+   - L'script en un segon:
+     1. Crea l'esquema, naus, sensors i actuadors a PostgreSQL.
      2. Crea l'usuari gestor a OpenLDAP (`departmentNumber: GRANJA_2`).
-     3. Afegeix la regla al tallafocs OPNsense per autoritzar el nou túnel VPN des de la nova granja.
+     3. Afegeix la regla al tallafocs per autoritzar el nou túnel VPN (`10.0.100.20`).
+     4. Genera la configuració local per al gateway clonat.
+

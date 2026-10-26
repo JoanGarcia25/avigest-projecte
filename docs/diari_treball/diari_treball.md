@@ -116,10 +116,13 @@
       * `granja1-srv`: Camp (`10.1.1.10` / VPN `10.0.100.10`) amb MQTT local, regles locals de ventiladors (>31ºC), búfer store-and-forward i client VPN.
       * `granja1-sim`: Camp (`10.1.1.20`) simulador d'ESP32 per RS485 Modbus i silos per LoRaWAN ChirpStack.
   - **Joan:**
-    - Disseny i documentació de les regles de tallafocs OPNsense a [disseny_dmz_seguretat.md](../../infra/dmz-tallafocs/disseny_dmz_seguretat.md) i [firewall_regles.sh](../../infra/dmz-tallafocs/firewall_regles.sh), amb aïllament estricte DMZ -> LAN (només TCP 5432 i 389 permesos) i pas de VPN a Broker MQTT.
+    - Elaboració i pujada de les guies oficials de laboratori a `docs/Guies_MV/`: [Guia del laboratori virtual d'AviGest.pdf](../Guies_MV/Guia%20del%20laboratori%20virtual%20d’AviGest.pdf) i la guia pas a pas [Pas a pas plantilla debian-base i xarxes virtuals.docx](../Guies_MV/Pas%20a%20pas%20plantilla%20debian-base%20i%20xarxes%20virtuals.docx).
+    - Disseny i documentació de les regles de tallafocs OPNsense a [disseny_dmz_seguretat.md](../../infra/dmz-tallafocs/disseny_dmz_seguretat.md) i [firewall_regles.sh](../../infra/dmz-tallafocs/firewall_regles.sh), amb aïllament estricte DMZ -> LAN (només TCP 5432 i LDAPS permesos) i pas de VPN WireGuard a Broker MQTT.
     - Configuració del servidor dedicat `srv-backup` i del pla de recuperació PRD amb el segon disc virtual simulat ([pla_recuperacio_desastres_prd.md](../../infra/backups-prd/pla_recuperacio_desastres_prd.md)).
   - **Mariam:**
     - Migració completa de la base de dades a **PostgreSQL 16**: conversió de taules DDL, triggers de termòstat automàtic en PL/pgSQL i procediments d'alta atòmica de granges.
+    - Desenvolupament de les 4 vistes i consultes comparatives de negoci ([05_vistes_consultes_comparatives.sql](../../bd/sql/05_vistes_consultes_comparatives.sql)).
+    - Redacció i estructuració del lliurable [E3_pla_intervencio.md](../E3_pla_intervencio/E3_pla_intervencio.md): pressupostos CapEx/OpEx, matriu d'acompliment de fites amb dates reals i cronograma d'intervenció a camp.
     - Actualització de [FD01_sgbd.md](../fitxes_decisio/FD01_sgbd.md) documentant formalment la limitació de la rèplica de BD en contenidor dins de `srv-serveis` i la seva mitigació mitjançant `srv-backup`.
     - Adaptació de l'script d'automatització [alta_granja.sh](../../scripts/automatitzacio-granges/alta_granja.sh) per a la variació de la Granja 2 (`10.1.2.0/24`).
 - **Dedicació:** Joan: 6 h | Mariam: 6 h (Total: 12 h)

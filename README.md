@@ -18,7 +18,10 @@ La infraestructura d'AviGest es desplega mitjançant un conjunt coordinat de mà
 - **`granja1-sim`:** Simulador de camp (`10.1.1.20`): ESP32 (RS485 Modbus) i silos LoRaWAN (ChirpStack).
 
 > [!TIP]
-> **Consulteu la guia pas a pas:** [docs/guia_desplegament_maquines_virtuals.md](docs/guia_desplegament_maquines_virtuals.md) per a les instruccions exactes de configuració a VMware / VirtualBox i el guió per a la defensa davant del professor.
+> **Consulteu les guies de desplegament de laboratori:**
+> - [Guia de desplegament de la topologia de VMs](docs/guia_desplegament_maquines_virtuals.md)
+> - [Guia del laboratori virtual d'AviGest (PDF)](docs/Guies_MV/Guia%20del%20laboratori%20virtual%20d’AviGest.pdf)
+> - [Pas a pas: plantilla debian-base i xarxes virtuals (Word)](docs/Guies_MV/Pas%20a%20pas%20plantilla%20debian-base%20i%20xarxes%20virtuals.docx)
 
 ---
 
@@ -33,7 +36,7 @@ docker compose up -d
 Serveis actius:
 - **PostgreSQL 16 (Base de Dades):** Port `5432` (Usuari: `avigest_app`, Pass: `avigest_secret_2026`, BD: `avigest_db`)
 - **PostgreSQL Rèplica:** Port `5433` (Hot Standby local de demostració)
-- **Broker MQTT Mosquitto:** Port `1883` (Recepció de telemetria des de la VPN de granja)
+- **Broker MQTT Mosquitto:** Port `1883` / `8883` (Recepció de telemetria des de la VPN WireGuard de granja)
 - **OpenLDAP (Directori d'usuaris):** Port `389` / `636` (Base: `dc=avigest,dc=cat`)
 - **phpLDAPadmin (Interfície web LDAP):** `http://localhost:8081` (Login DN: `cn=admin,dc=avigest,dc=cat`, Pass: `admin_ldap_pass_2026`)
 
@@ -49,11 +52,13 @@ Serveis actius:
 
 ---
 
-## 4. Fites del Projecte
+## 4. Fites del Projecte i Documents Oficials
 
 - [E0 — Constitució d'Equip i Rols](docs/E0_divisio_tasques_rols.md)
 - [E1 — Estudi de Necessitats del Sector (PDF)](docs/E1_estudi_necessitats_joangarcia_mariamsolano%20(2).pdf)
 - [E2 — Document de Disseny Tècnic Oficial](docs/E2_disseny_tecnic/E2_document_disseny_tecnic.md)
 - [E3 — Pla d'Intervenció, Recursos, Costos i Rols](docs/E3_pla_intervencio/E3_pla_intervencio.md)
 - [Diari de Treball i Sessions](docs/diari_treball/diari_treball.md)
+- [Guies de Laboratori Virtual (Debian Base i VirtualBox)](docs/Guies_MV/)
+
 
