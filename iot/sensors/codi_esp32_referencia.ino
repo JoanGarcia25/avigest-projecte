@@ -23,10 +23,10 @@
 #define PIN_TX2 17               // Port sèrie RS485 TX
 #define PIN_RS485_DIR 4          // Control de direcció Transmissió/Recepció MAX485
 
-// Configuració de la xarxa local de la granja
+// Configuració de la xarxa local de la granja (Granja 1: 10.1.1.0/24)
 const char* WIFI_SSID = "AviGest_Granja_LAN";
 const char* WIFI_PASS = "ClauSeguraGranja2026";
-const char* GATEWAY_URL = "http://192.168.1.10:8000/api/telemetria";
+const char* GATEWAY_URL = "http://10.1.1.10:8000/api/telemetria";
 
 // Paràmetres de la instal·lació
 const int ID_GRANJA = 1;

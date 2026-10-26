@@ -9,7 +9,7 @@
 **Tutor del Projecte:** Professorat de l'Institut Mollerussa  
 **Inici del Projecte:** 14 de setembre de 2026  
 **Lliurament Fita E2/E3:** 4 de desembre de 2026  
-**Darrera actualització:** Dilluns, 19 d'octubre de 2026  
+**Darrera actualització:** Dilluns, 26 d'octubre de 2026  
 
 ---
 
@@ -80,7 +80,7 @@
 
 ---
 
-### Sessió 5: Dilluns, 19 d'octubre de 2026 (6 hores — AVUI)
+### Sessió 5: Dilluns, 19 d'octubre de 2026 (6 hores)
 **Fita:** Investigació de solucions, primeres proves de concepte (POC) i acords de disseny
 
 - **Objectiu:** Aprofundir en les fitxes de decisió, fer proves tècniques preliminars de laboratori i consensuar el model conceptual de dades i usuaris.
@@ -90,7 +90,7 @@
     - Investigació sobre la segmentació perimetral: esquema de DMZ per aïllar la base de dades d'Internet ([FD03_tallafocs_dmz.md](../fitxes_decisio/FD03_tallafocs_dmz.md)).
     - Estudi de maquinari de servidor central per a entorns virtualitzats (necessitat de discs RAID i doble font d'alimentació).
   - **Mariam (3h):**
-    - Redacció de l'esborrany de la fitxa [FD01_sgbd.md](../fitxes_decisio/FD01_sgbd.md): comparació de MariaDB 10.11 LTS vs PostgreSQL i SQLite (simplicitat, facilitat d'administració i suport natiu de triggers).
+    - Redacció de l'esborrany de la fitxa [FD01_sgbd.md](../fitxes_decisio/FD01_sgbd.md): comparació inicial de SGBD.
     - Proves de concepte SQL en local: definició conceptual de les primeres entitats (clients, granges, naus, sensors i actuadors).
     - Investigació sobre protocols de comunicació de camp: avantatges de cablejar RS485 a l'interior de les naus vs LoRaWAN per a sitges exteriors ([FD05_iot_comunicacions.md](../fitxes_decisio/FD05_iot_comunicacions.md)).
   - **Treball conjunt (3h):**
@@ -101,17 +101,43 @@
 
 ---
 
+### Sessió 6: Dilluns, 26 d'octubre de 2026 (6 hores — AVUI)
+**Fita:** Redisseny complet i consens de la topologia de Màquines Virtuals (Punt i a part)
+
+- **Objectiu:** Reestructurar l'entorn de màquines virtuals per reflectir una infraestructura industrial realista, professional i 100% defensable davant del tribunal, consolidant les 7 VMs especialitzades i el flux de dades de sensors de punta a punta.
+- **Treball realitzat durant les 6 hores:**
+  - **Treball conjunt (Consens de l'esquema de VMs):**
+    - S'ha acordat fer un punt i a part respecte a l'esquema inicial i desplegar la infraestructura dividida en:
+      * `pc-client`: Client extern / navegador de prova via Internet (NAT).
+      * `fw-seu`: Tallafocs perimetral OPNsense de 3 interfícies físiques (WAN, DMZ `10.0.10.0/24`, LAN `10.0.20.0/24`) i servidor VPN (`10.0.100.0/24`).
+      * `dmz-web`: DMZ (`10.0.10.10`) amb proxy invers Nginx, WAF i relay SMTP, accessible només per llista blanca d'IPs.
+      * `srv-serveis`: LAN (`10.0.20.10`) amb PostgreSQL 16 + Rèplica, Broker MQTT Mosquitto i OpenLDAP.
+      * `srv-backup`: LAN (`10.0.20.20`) VM dedicada amb cron nocturn i segon disc virtual simulat.
+      * `granja1-srv`: Camp (`10.1.1.10` / VPN `10.0.100.10`) amb MQTT local, regles locals de ventiladors (>31ºC), búfer store-and-forward i client VPN.
+      * `granja1-sim`: Camp (`10.1.1.20`) simulador d'ESP32 per RS485 Modbus i silos per LoRaWAN ChirpStack.
+  - **Joan:**
+    - Disseny i documentació de les regles de tallafocs OPNsense a [disseny_dmz_seguretat.md](../../infra/dmz-tallafocs/disseny_dmz_seguretat.md) i [firewall_regles.sh](../../infra/dmz-tallafocs/firewall_regles.sh), amb aïllament estricte DMZ -> LAN (només TCP 5432 i 389 permesos) i pas de VPN a Broker MQTT.
+    - Configuració del servidor dedicat `srv-backup` i del pla de recuperació PRD amb el segon disc virtual simulat ([pla_recuperacio_desastres_prd.md](../../infra/backups-prd/pla_recuperacio_desastres_prd.md)).
+  - **Mariam:**
+    - Migració completa de la base de dades a **PostgreSQL 16**: conversió de taules DDL, triggers de termòstat automàtic en PL/pgSQL i procediments d'alta atòmica de granges.
+    - Actualització de [FD01_sgbd.md](../fitxes_decisio/FD01_sgbd.md) documentant formalment la limitació de la rèplica de BD en contenidor dins de `srv-serveis` i la seva mitigació mitjançant `srv-backup`.
+    - Adaptació de l'script d'automatització [alta_granja.sh](../../scripts/automatitzacio-granges/alta_granja.sh) per a la variació de la Granja 2 (`10.1.2.0/24`).
+- **Dedicació:** Joan: 6 h | Mariam: 6 h (Total: 12 h)
+
+---
+
 ## Taula Resum d'Hores Lectives Dedicades
 
 | Sessió | Data | Fase / Fita | Hores Joan | Hores Mariam | Total Sessió |
-| :---: | :---: | :--- | :---: | :---: | :---: |
+| :---: | :---: | :--- | :--- :---: | :---: | :---: |
 | **S1** | Dilluns 14/09/2026 | Constitució equip i rols (E0) | 6 h | 6 h | **12 h** |
 | **S2** | Dilluns 21/09/2026 | Estudi de necessitats i mercat (E1) | 6 h | 6 h | **12 h** |
 | **S3** | Dilluns 28/09/2026 | Tancament E1 i preparació diapositives | 6 h | 6 h | **12 h** |
 | **S4** | Dilluns 05/10/2026 | Defenses orals E1 (1h 30m prep + 10m defensa + torns companys) | 6 h | 6 h | **12 h** |
 | — | Dilluns 12/10/2026 | *FESTIU (Festa Nacional — Sense classe)* | 0 h | 0 h | **0 h** |
 | **S5** | Dilluns 19/10/2026 | Investigació, proves de concepte i acords E2 | 6 h | 6 h | **12 h** |
-| **TOTAL** | *(Fins al 19/10)* | **5 dilluns lectius x 6 hores** | **30 h** | **30 h** | **60 h** |
+| **S6** | Dilluns 26/10/2026 | Consens nou esquema multi-VM, PostgreSQL 16 i OPNsense | 6 h | 6 h | **12 h** |
+| **TOTAL** | *(Fins al 26/10)* | **6 dilluns lectius x 6 hores** | **36 h** | **36 h** | **72 h** |
 
 ---
 
@@ -129,10 +155,10 @@ gantt
     S2 E1 Treball necessitats :done, 2026-09-21, 1d
     S3 E1 Tancament           :done, 2026-09-28, 1d
     S4 Defenses orals E1      :done, 2026-10-05, 1d
-    S5 Investigació i POCs    :active, 2026-10-19, 1d
+    S5 Investigació i POCs    :done, 2026-10-19, 1d
+    S6 Nou Esquema Multi-VM   :done, 2026-10-26, 1d
     section Sessions Planificades
-    S6 Fitxes decisió i Model ER       :2026-10-26, 1d
-    S7 Disseny Xarxa/DMZ i DDL preliminar :2026-11-02, 1d
+    S7 Disseny Xarxa/DMZ i DDL final   :2026-11-02, 1d
     S8 Lògica Triggers i Arbre LDAP     :2026-11-09, 1d
     S9 IoT Edge, Backups i PRD          :2026-11-16, 1d
     S10 Pla Intervenció E3 i Scripts    :2026-11-23, 1d
@@ -142,28 +168,24 @@ gantt
 
 ### Detall de les properes sessions lectives:
 
-1. **Sessió 6 (Dilluns, 26 d'octubre):**
-   - **Joan:** Completar la fitxa FD04 (Còpies de seguretat i PRD: Scripts Bash vs Borg vs Bacula) i dimensionament del maquinari de granges (armaris IP66 i passius *fanless*).
-   - **Mariam:** Completar el diagrama conceptual del Model Entitat-Relació a [model_er.md](../../bd/model-er/model_er.md) i documentar la justificació de tipus de dades (BIGINT per a lectures de sensors).
+1. **Sessió 7 (Dilluns, 2 de novembre):**
+   - **Joan:** Implementació de la configuració d'interfícies i regles a l'entorn virtual d'OPNsense (`fw-seu`) i proves d'aïllament DMZ.
+   - **Mariam:** Validació de la ingesta de dades a PostgreSQL 16 a través del broker MQTT central.
 
-2. **Sessió 7 (Dilluns, 2 de novembre):**
-   - **Joan:** Disseny de la topologia de xarxa en 3 zones (WAN / DMZ / LAN) i primer esborrany de la política de tallafocs amb llista blanca de clients.
-   - **Mariam:** Redacció de l'esborrany de l'esquema relacional DDL (taules `clients`, `granges`, `naus`, `sensors`, `actuadors`, etc.).
+2. **Sessió 8 (Dilluns, 9 de novembre):**
+   - **Joan:** Desplegament de l'arbre LDAP a `srv-serveis` i validació d'autenticació per a usuaris de granja i de seu central.
+   - **Mariam:** Proves d'estrès dels triggers PL/pgSQL davant d'incidències tèrmiques amb el simulador IoT.
 
-3. **Sessió 8 (Dilluns, 9 de novembre):**
-   - **Joan:** Disseny de la jerarquia d'unitats organitzatives a OpenLDAP i definició dels 4 grups d'usuaris (`AdminsAviGest`, `AdminsClient`, `GestorsGranja`, `UsuarisConsulta`).
-   - **Mariam:** Disseny dels automatismes a la base de dades: definició teòrica dels llindars ambientals i funcionament del trigger davant d'incidències tèrmiques o d'aire.
+3. **Sessió 9 (Dilluns, 16 de novembre):**
+   - **Joan:** Proves de còpia i restauració amb `srv-backup` i validació del segon disc simulat (RTO < 30 min).
+   - **Mariam:** Prova de buffer Store-and-Forward a `granja1-srv` davant de desconnexió intencionada del túnel VPN.
 
-4. **Sessió 9 (Dilluns, 16 de novembre):**
-   - **Joan:** Disseny de la política de còpies de seguretat 3-2-1 i definició dels objectius de RTO i RPO davant de caigudes.
-   - **Mariam:** Disseny de l'arquitectura de comunicacions IoT: flux de dades des de l'ESP32 fins a la central i especificació del maquinari de camp.
+4. **Sessió 10 (Dilluns, 23 de novembre):**
+   - **Treball conjunt:** Elaboració del document **E3 (Pla d'Intervenció i Pressupostos)**: dimensionament econòmic de maquinari i hores de treball.
+   - Assaig de l'script d'alta ràpida de la Granja 2 (`alta_granja.sh`).
 
-5. **Sessió 10 (Dilluns, 23 de novembre):**
-   - **Treball conjunt:** Inici del document **E3 (Pla d'Intervenció)**: planificació d'implantació, recursos necessaris, pressupost estimat i cronograma per a la fase d'execució.
-   - Disseny del procediment d'alta ràpida de granges (especificació de l'script requerit a la prova presencial).
+5. **Sessió 11 (Dilluns, 30 de novembre):**
+   - **Treball conjunt:** Maquetació i revisió creuada final d'E2 i E3 per al lliurament definitiu.
 
-6. **Sessió 11 (Dilluns, 30 de novembre):**
-   - **Treball conjunt:** Integració final de tots els apartats al document mestre [E2_document_disseny_tecnic.md](../E2_disseny_tecnic/E2_document_disseny_tecnic.md), revisió creuada de coherència entre xarxa i base de dades, i maquetació per al lliurament oficial.
-
-7. **Divendres, 4 de desembre de 2026:**
+6. **Divendres, 4 de desembre de 2026:**
    - **Lliurament oficial dels documents E2 (Disseny Tècnic) i E3 (Pla d'Intervenció).**
