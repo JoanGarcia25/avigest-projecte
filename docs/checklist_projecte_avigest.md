@@ -171,13 +171,14 @@
 
 | Màquina Virtual | SO / Base | Xarxa (VirtualBox / VMware) | IP | Funció | Estat |
 | :--- | :--- | :--- | :--- | :--- | :---: |
-| `pc-client` | Host físic / Debian | NAT (`internet-lab` / NAT) | DHCP NAT | Navegador de prova | ⬜ Pendent |
+| `pc-client` | Host físic / Ubuntu | NAT (`internet-lab` / NAT) | DHCP NAT | Navegador de prova | ⬜ Pendent |
 | `fw-seu` | **OPNsense** | WAN, `dmz`, `lan-seu` | WAN/DMZ/LAN/VPN | Tallafocs 3 potes + VPN WireGuard | ⬜ Pendent |
-| `dmz-web` | **Debian 13** (clon) | `dmz` (VMnet10) | `10.0.10.10` | Nginx + Proxy Invers + WAF + SMTP | ⬜ Pendent |
-| `srv-serveis` | **Debian 13** + Docker | `lan-seu` (VMnet20) | `10.0.20.10` | Docker: PG16 + MQTT + LDAP | 🟡 En curs |
-| `srv-backup` | **Debian 13** (clon) | `lan-seu` (VMnet20) | `10.0.20.20` | Còpies cron + 2n disc virtual (/mnt) | ⬜ Pendent |
-| `granja1-srv` | **Debian 13** (clon) | `lan-granja1` + NAT | `10.1.1.10` / VPN `.10` | Gateway Edge + MQTT local + WireGuard | ⬜ Pendent |
-| `granja1-sim` | **Debian 13** (clon) | `lan-granja1` (VMnet30) | `10.1.1.20` | Simulador ESP32 (RS485) / ChirpStack | ⬜ Pendent |
+| `dmz-web` | **Ubuntu Server 24.04** | `dmz` (VMnet10) | `10.0.10.10` | Nginx + Proxy Invers + WAF + SMTP | ⬜ Pendent |
+| `srv-serveis` | **Ubuntu Server 24.04** + Docker | `lan-seu` (VMnet20) | `10.0.20.10` | Docker: PG16 + MQTT + LDAP | 🟡 En curs |
+| `srv-backup` | **Ubuntu Server 24.04** | `lan-seu` (VMnet20) | `10.0.20.20` | Còpies cron + 2n disc virtual (/mnt) | ⬜ Pendent |
+| `granja1-srv` | **Ubuntu Server 24.04** | `lan-granja1` + NAT | `10.1.1.10` / VPN `.10` | Gateway Edge + MQTT local + WireGuard | ⬜ Pendent |
+| `granja1-sim` | **Ubuntu Server 24.04** | `lan-granja1` (VMnet30) | `10.1.1.20` | Simulador ESP32 (RS485) / ChirpStack | ⬜ Pendent |
+
 
 
 ---

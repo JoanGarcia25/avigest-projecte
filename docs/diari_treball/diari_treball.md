@@ -125,6 +125,9 @@
     - Redacció i estructuració del lliurable [E3_pla_intervencio.md](../E3_pla_intervencio/E3_pla_intervencio.md): pressupostos CapEx/OpEx, matriu d'acompliment de fites amb dates reals i cronograma d'intervenció a camp.
     - Actualització de [FD01_sgbd.md](../fitxes_decisio/FD01_sgbd.md) documentant formalment la limitació de la rèplica de BD en contenidor dins de `srv-serveis` i la seva mitigació mitjançant `srv-backup`.
     - Adaptació de l'script d'automatització [alta_granja.sh](../../scripts/automatitzacio-granges/alta_granja.sh) per a la variació de la Granja 2 (`10.1.2.0/24`).
+  - **Decisió d'homogeneïtat de sistemes (Recomanació docent):**
+    - Arran de la indicació directa del professor de no barrejar sistemes operatius entre màquines de servei per garantir la màxima connectivitat i simplicitat, s'adopta formalment **Ubuntu Server 24.04 LTS** com a distribució única per a les 5 màquines de serveis (`dmz-web`, `srv-serveis`, `srv-backup`, `granja1-srv`, `granja1-sim`), a partir d'una sola plantilla màster `ubuntu-base` amb xarxa Netplan YAML.
+    - Es manté **OPNsense** com a tallafocs dedicat per complir la funció d'appliance de seguretat perimetral de 3 potes.
 - **Dedicació:** Joan: 6 h | Mariam: 6 h (Total: 12 h)
 
 ---

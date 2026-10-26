@@ -267,7 +267,7 @@ La següent taula recull el dimensionament físic de sensors, actuadors i equipa
 | **Mòdul de Control / Micro** | ESP32-WROOM-32U amb xassís DIN i antena exterior | WiFi / Ethernet + RS485 transceiver MAX485 | 240 MHz Dual Core, 3.3V/5V DC | Armari elèctric de capçalera de nau | 1 per nau (2 per granja) |
 | **Mòdul de Relés Actuadors** | Mòdul 4/8 canals relé optoacoblat 16A/250VAC | RS485 Modbus / GPIO 5V | Suport càrregues inductives de motors | Quadre de maniobra de ventiladors/calefacció | 1 per nau (2 per granja) |
 | **Gateway LoRaWAN exterior** | Dragino LPS8N / Milesight UG65 | LoRaWAN 868 MHz (8 canals) cap a Ethernet | Cobertura exterior fins a 2-3 km | Façana exterior de la sala de control | 1 per granja |
-| **Gateway Industrial Local** | Advantech UNO-2271G (Fanless IP50/65) | Dual GbE, RS485 integrat, MQTT / VPN | Linux Debian 12, xassís carril DIN | Armari de control IP66 | 1 per granja (`granja1-srv`) |
+| **Gateway Industrial Local** | Advantech UNO-2271G (Fanless IP50/65) | Dual GbE, RS485 integrat, MQTT / VPN | Linux Ubuntu Server 24.04 LTS, xassís carril DIN | Armari de control IP66 | 1 per granja (`granja1-srv`) |
 
 ---
 

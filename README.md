@@ -7,21 +7,22 @@ Equip: **Joan** (Infraestructura, Xarxa i Seguretat) i **Mariam** (Base de Dades
 
 ## 1. Topologia de Màquines Virtuals
 
-La infraestructura d'AviGest es desplega mitjançant un conjunt coordinat de màquines virtuals:
+La infraestructura d'AviGest es desplega mitjançant un conjunt coordinat de 6 màquines virtuals. Seguint la recomanació del professor d'unificar sistemes operatius i no barrejar distribucions, **els 5 servidors de serveis utilitzen Ubuntu Server 24.04 LTS** (a partir de la plantilla màster `ubuntu-base` i xarxa Netplan), mantenint **OPNsense** exclusivament com a appliance de seguretat dedicat:
 
 - **`pc-client`:** Navegador web de prova de l'empresa client connectada a través d'Internet (NAT).
-- **`fw-seu`:** Tallafocs perimetral OPNsense de 3 interfícies físiques (WAN, DMZ `10.0.10.0/24`, LAN `10.0.20.0/24`) i servidor VPN (`10.0.100.0/24`).
-- **`dmz-web`:** Proxy invers Nginx, WAF i relay SMTP (`10.0.10.10`). Únic servei exposat a Internet sota llista blanca d'IPs de clients.
-- **`srv-serveis`:** Nucli intern de la seu (`10.0.20.10`): PostgreSQL 16 + Rèplica, Broker MQTT Mosquitto i OpenLDAP.
-- **`srv-backup`:** Servidor dedicat de còpies de seguretat (`10.0.20.20`) amb cron nocturn i un segon disc virtual simulat.
-- **`granja1-srv`:** Gateway de camp (`10.1.1.10` / VPN `10.0.100.10`): regles locals d'actuadors (>31ºC), buffer *store-and-forward* i client VPN.
-- **`granja1-sim`:** Simulador de camp (`10.1.1.20`): ESP32 (RS485 Modbus) i silos LoRaWAN (ChirpStack).
+- **`fw-seu`:** Tallafocs perimetral OPNsense de 3 interfícies físiques (WAN, DMZ `10.0.10.0/24`, LAN `10.0.20.0/24`) i servidor VPN WireGuard (`10.0.100.0/24`).
+- **`dmz-web`:** Proxy invers Nginx, WAF i relay SMTP (`10.0.10.10` a Ubuntu 24.04). Únic servei exposat a Internet sota llista blanca d'IPs de clients.
+- **`srv-serveis`:** Nucli intern de la seu (`10.0.20.10` a Ubuntu 24.04): PostgreSQL 16 + Rèplica, Broker MQTT Mosquitto i OpenLDAP.
+- **`srv-backup`:** Servidor dedicat de còpies de seguretat (`10.0.20.20` a Ubuntu 24.04) amb cron nocturn i un segon disc virtual simulat (/mnt).
+- **`granja1-srv`:** Gateway de camp (`10.1.1.10` a Ubuntu 24.04 / VPN WireGuard `10.0.100.10`): regles locals d'actuadors (>31ºC), buffer *store-and-forward* i client VPN.
+- **`granja1-sim`:** Simulador de camp (`10.1.1.20` a Ubuntu 24.04): ESP32 (RS485 Modbus) i silos LoRaWAN (ChirpStack).
 
 > [!TIP]
 > **Consulteu les guies de desplegament de laboratori:**
-> - [Guia de desplegament de la topologia de VMs](docs/guia_desplegament_maquines_virtuals.md)
+> - [Guia de desplegament de la topologia de VMs (amb plantilles Netplan)](docs/guia_desplegament_maquines_virtuals.md)
 > - [Guia del laboratori virtual d'AviGest (PDF)](docs/Guies_MV/Guia%20del%20laboratori%20virtual%20d’AviGest.pdf)
-> - [Pas a pas: plantilla debian-base i xarxes virtuals (Word)](docs/Guies_MV/Pas%20a%20pas%20plantilla%20debian-base%20i%20xarxes%20virtuals.docx)
+> - [Guia pas a pas de plantilles i xarxes virtuals (Word)](docs/Guies_MV/Pas%20a%20pas%20plantilla%20debian-base%20i%20xarxes%20virtuals.docx)
+
 
 ---
 

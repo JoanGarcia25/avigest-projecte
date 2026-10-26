@@ -3,6 +3,7 @@
 **Projecte:** Implantació d'un sistema informàtic de gestió de granges de pollastres  
 **Autors:** Joan (Infraestructura, Xarxa i Seguretat) i Mariam (Base de Dades, IoT i Automatització)  
 **Entorn d'execució:** Hipervisor Oracle VirtualBox (entorn estàndard d'aula) / VMware Workstation  
+**Criteri d'homogeneïtat docent:** Seguint la recomanació del professor de no barrejar distribucions Linux a la capa de serveis, s'adopta **Ubuntu Server 24.04 LTS** per a les 5 màquines de serveis mitjançant una única plantilla màster (`ubuntu-base`), mantenint **OPNsense** exclusivament com a appliance de seguretat perimetral dedicat.  
 **Guies complementàries:**
 - [docs/Guies_MV/Guia del laboratori virtual d'AviGest.pdf](Guies_MV/Guia%20del%20laboratori%20virtual%20d’AviGest.pdf)
 - [docs/Guies_MV/Pas a pas plantilla debian-base i xarxes virtuals.docx](Guies_MV/Pas%20a%20pas%20plantilla%20debian-base%20i%20xarxes%20virtuals.docx)
@@ -25,17 +26,17 @@ flowchart TD
     end
 
     subgraph DMZ_Net["DMZ (10.0.10.0/24)"]
-        DMZ_Web["dmz-web (10.0.10.10)<br/>Debian 13: Nginx + proxy invers<br/>WAF i relay SMTP"]
+        DMZ_Web["dmz-web (10.0.10.10)<br/>Ubuntu 24.04: Nginx + proxy invers<br/>WAF i relay SMTP"]
     end
 
     subgraph LAN_Net["LAN seu (10.0.20.0/24)"]
-        Srv_Serveis["srv-serveis (10.0.20.10)<br/>Debian 13 + Docker Engine:<br/>PostgreSQL 16 + Rèplica<br/>Mosquitto MQTT + OpenLDAP"]
-        Srv_Backup["srv-backup (10.0.20.20)<br/>Debian 13: Còpies amb cron<br/>2n Disc virtual simulat (/mnt)"]
+        Srv_Serveis["srv-serveis (10.0.20.10)<br/>Ubuntu 24.04 + Docker Engine:<br/>PostgreSQL 16 + Rèplica<br/>Mosquitto MQTT + OpenLDAP"]
+        Srv_Backup["srv-backup (10.0.20.20)<br/>Ubuntu 24.04: Còpies amb cron<br/>2n Disc virtual simulat (/mnt)"]
     end
 
     subgraph Granja1_Net["Granja 1 (10.1.1.0/24)"]
-        Granja1_Sim["granja1-sim (10.1.1.20)<br/>Debian 13: Simulador ESP32<br/>RS485 Modbus i ChirpStack LoRa"]
-        Granja1_Srv["granja1-srv (10.1.1.10)<br/>Debian 13: Gateway Edge<br/>Client WireGuard (10.0.100.10)<br/>MQTT local + regles ventilació (>31ºC)"]
+        Granja1_Sim["granja1-sim (10.1.1.20)<br/>Ubuntu 24.04: Simulador ESP32<br/>RS485 Modbus i ChirpStack LoRa"]
+        Granja1_Srv["granja1-srv (10.1.1.10)<br/>Ubuntu 24.04: Gateway Edge<br/>Client WireGuard (10.0.100.10)<br/>MQTT local + regles ventilació (>31ºC)"]
     end
 
     Client --> Internet
@@ -54,7 +55,7 @@ flowchart TD
 
 ## 2. Pla d'Adreçament, Xarxes i Màquines Virtuals
 
-Cinc de les sis màquines virtuals es basen en el mateix sistema operatiu: **Debian 13 («trixie» / Debian stable)** mitjançant la plantilla clonable `debian-base` (sense entorn gràfic, usuari administratiu comú `avadmin`, sincronització NTP amb `chrony` i autenticació SSH per clau). El consum total de memòria RAM de tot el laboratori se situa al voltant dels **10 GB**, apte per a la majoria d'ordinadors d'aula.
+Totes les 5 màquines virtuals de serveis comparteixen el mateix sistema operatiu base: **Ubuntu Server 24.04 LTS** (derivat de la plantilla màster `ubuntu-base` sense escriptori gràfic, usuari administratiu comú `avadmin`, sincronització horària `chrony` i xarxa declarativa amb **Netplan YAML**). El consum total de RAM se situa entre **8 i 10 GB**.
 
 ### 2.1. Taula de Correspondència de Xarxes Virtuals
 
@@ -81,45 +82,130 @@ Cinc de les sis màquines virtuals es basen en el mateix sistema operatiu: **Deb
 
 | Màquina Virtual | Rol al Projecte | Sistema Operatiu | Recursos (vCPU / RAM / Disc) | Adaptadors de Xarxa (VirtualBox / VMware) | Adreces IP |
 | :--- | :--- | :--- | :---: | :--- | :--- |
-| **`pc-client`** | Client contractant que accedeix des d'Internet | Host físic / VM Debian | 1 vCPU / 1 GB / 10 GB | **Adaptador 1:** Xarxa NAT (`internet-lab` / `NAT`) | DHCP (`10.0.2.x`) o IP física |
-| **`fw-seu`** | Tallafocs perimetral de 3 potes, NAT i VPN | **OPNsense** (FreeBSD) | 2 vCPU / 2 GB / 20 GB | **Adaptador 1:** Xarxa NAT (`internet-lab`)<br/>**Adaptador 2:** Xarxa interna (`dmz`)<br/>**Adaptador 3:** Xarxa interna (`lan-seu`) | **WAN:** DHCP (`10.0.2.1` gw)<br/>**DMZ:** `10.0.10.1`<br/>**LAN:** `10.0.20.1`<br/>**VPN:** `10.0.100.1` |
-| **`dmz-web`** | Nginx, proxy invers, WAF i relay SMTP | **Debian 13** (clon) | 1 vCPU / 1 GB / 10 GB | **Adaptador 1:** Xarxa interna (`dmz`) | `10.0.10.10`<br/>(GW: `10.0.10.1`) |
-| **`srv-serveis`** | PostgreSQL 16 + Rèplica, Mosquitto, OpenLDAP | **Debian 13** (clon) + Docker | 2 vCPU / 4 GB / 40 GB | **Adaptador 1:** Xarxa interna (`lan-seu`) | `10.0.20.10`<br/>(GW: `10.0.20.1`) |
-| **`srv-backup`** | Servidor de backups dedicat amb cron i 2n disc | **Debian 13** (clon) | 1 vCPU / 1 GB / 10 GB + 20 GB | **Adaptador 1:** Xarxa interna (`lan-seu`) | `10.0.20.20`<br/>(GW: `10.0.20.1`) |
-| **`granja1-srv`**| Gateway Edge: VPN, MQTT local, actuadors | **Debian 13** (clon) | 1 vCPU / 1 GB / 10 GB | **Adaptador 1:** Xarxa interna (`lan-granja1`)<br/>**Adaptador 2:** Xarxa NAT (`internet-lab`) | **LAN:** `10.1.1.10`<br/>**VPN:** `10.0.100.10` (o `.2`) |
-| **`granja1-sim`**| Simulador de sensors ESP32 i silos LoRaWAN | **Debian 13** (clon) | 1 vCPU / 1 GB / 10 GB | **Adaptador 1:** Xarxa interna (`lan-granja1`) | `10.1.1.20`<br/>(GW: `10.1.1.10`) |
+| **`pc-client`** | Client contractant que accedeix des d'Internet | Host físic / VM Ubuntu | 1 vCPU / 1 GB / 10 GB | **Adaptador 1:** Xarxa NAT (`internet-lab` / `NAT`) | DHCP (`10.0.2.x`) o IP física |
+| **`fw-seu`** | Tallafocs perimetral de 3 potes, NAT i VPN | **OPNsense** (FreeBSD Appliance) | 2 vCPU / 2 GB / 20 GB | **Adaptador 1:** Xarxa NAT (`internet-lab`)<br/>**Adaptador 2:** Xarxa interna (`dmz`)<br/>**Adaptador 3:** Xarxa interna (`lan-seu`) | **WAN:** DHCP (`10.0.2.1` gw)<br/>**DMZ:** `10.0.10.1`<br/>**LAN:** `10.0.20.1`<br/>**VPN:** `10.0.100.1` |
+| **`dmz-web`** | Nginx, proxy invers, WAF i relay SMTP | **Ubuntu Server 24.04** (clon) | 1 vCPU / 1 GB / 10 GB | **Adaptador 1:** Xarxa interna (`dmz`) | `10.0.10.10`<br/>(GW: `10.0.10.1`) |
+| **`srv-serveis`** | PostgreSQL 16 + Rèplica, Mosquitto, OpenLDAP | **Ubuntu Server 24.04** (clon) + Docker | 2 vCPU / 4 GB / 40 GB | **Adaptador 1:** Xarxa interna (`lan-seu`) | `10.0.20.10`<br/>(GW: `10.0.20.1`) |
+| **`srv-backup`** | Servidor de backups dedicat amb cron i 2n disc | **Ubuntu Server 24.04** (clon) | 1 vCPU / 1 GB / 10 GB + 20 GB | **Adaptador 1:** Xarxa interna (`lan-seu`) | `10.0.20.20`<br/>(GW: `10.0.20.1`) |
+| **`granja1-srv`**| Gateway Edge: VPN, MQTT local, actuadors | **Ubuntu Server 24.04** (clon) | 1 vCPU / 1 GB / 10 GB | **Adaptador 1:** Xarxa interna (`lan-granja1`)<br/>**Adaptador 2:** Xarxa NAT (`internet-lab`) | **LAN:** `10.1.1.10`<br/>**VPN:** `10.0.100.10` (o `.2`) |
+| **`granja1-sim`**| Simulador de sensors ESP32 i silos LoRaWAN | **Ubuntu Server 24.04** (clon) | 1 vCPU / 1 GB / 10 GB | **Adaptador 1:** Xarxa interna (`lan-granja1`) | `10.1.1.20`<br/>(GW: `10.1.1.10`) |
 
 ---
 
-## 3. Preparació de la Plantilla Base Comuna (`debian-base`)
+## 3. Preparació de la Plantilla Base Comuna (`ubuntu-base`)
 
-Per estalviar feina i garantir que cap màquina tingui incoherències, es prepara una única màquina virtual **`debian-base`** de la qual es deriven els 5 servidors Debian:
+Per unificar la gestió i complir l'encàrrec docent, es prepara una única màquina virtual **`ubuntu-base`** (Ubuntu Server 24.04 LTS Live Server amd64):
 
-1. **Instal·lació neta:** Debian 13 («trixie» netinst amd64) en mode text, sense entorn d'escriptori, amb només *SSH server* i *standard system utilities*.
-2. **Usuari administratiu:** Crear l'usuari `avadmin` amb permisos `sudo` (evitant l'ús directe de `root`).
-3. **Paquets base de diagnòstic i seguretat:**
+1. **Instal·lació mínima:** Triar opció *Ubuntu Server (minimized)* durant la instal·lació de Subiquity. Sense entorn gràfic.
+2. **Usuari administratiu:** Crear `avadmin` amb permisos `sudo`.
+3. **Optimització de memòria RAM (Molt recomanat):**
+   ```bash
+   # Desinstal·lar snapd per estalviar ~150-200 MB de RAM en cada VM
+   sudo systemctl stop snapd.service snapd.socket
+   sudo apt purge snapd -y
+   sudo rm -rf /var/cache/snapd /snap
+   ```
+4. **Instal·lació d'eines essencials:**
    ```bash
    sudo apt update && sudo apt full-upgrade -y
-   sudo apt install -y vim curl wget ca-certificates gnupg chrony nftables tcpdump dnsutils netcat-openbsd git
+   sudo apt install -y vim curl wget ca-certificates gnupg chrony ufw tcpdump dnsutils netcat-openbsd git wireguard-tools
    ```
-4. **Sincronització horària estricta:**
+5. **Sincronització horària:**
    ```bash
    sudo timedatectl set-timezone Europe/Madrid
    sudo systemctl enable --now chrony
-   chronyc tracking
    ```
-5. **Neteja prèvia al clonatge (Evitar col·lisions d'identitat a la xarxa):**
+6. **Neteja prèvia al clonatge:**
    ```bash
-   # Buidar machine-id perquè cada clon en generi un de nou
+   # Netejar machine-id i claus SSH per regenerar-les a cada clon
    sudo truncate -s 0 /etc/machine-id
-   # Netejar claus SSH per regenerar-les als clons
    sudo rm -f /etc/ssh/ssh_host_*
    sudo poweroff
    ```
-6. **Després de clonar cada VM:**
-   - Canviar el hostname a `/etc/hostname` i `/etc/hosts`.
-   - Executar `sudo dpkg-reconfigure openssh-server` per generar claus SSH úniques.
-   - Configurar la IP estàtica a `/etc/network/interfaces`.
+7. **Després de clonar cada VM:**
+   - Canviar el nom d'equip: `sudo hostnamectl set-hostname <nom_vm>`
+   - Regenerar claus SSH: `sudo dpkg-reconfigure openssh-server`
+   - Configurar la xarxa estàtica amb Netplan a `/etc/netplan/01-netcfg.yaml` i aplicar amb `sudo netplan apply`.
+
+### 3.1. Plantilles Netplan (`/etc/netplan/01-netcfg.yaml`) per a cada VM:
+
+- **Per a `dmz-web` (Interfície DMZ: `10.0.10.10`):**
+  ```yaml
+  network:
+    version: 2
+    renderer: networkd
+    ethernets:
+      enp0s3: # o eth0 segons VirtualBox/VMware
+        addresses:
+          - 10.0.10.10/24
+        routes:
+          - to: default
+            via: 10.0.10.1
+        nameservers:
+          addresses: [10.0.10.1, 1.1.1.1]
+  ```
+
+- **Per a `srv-serveis` (LAN: `10.0.20.10`):**
+  ```yaml
+  network:
+    version: 2
+    renderer: networkd
+    ethernets:
+      enp0s3:
+        addresses:
+          - 10.0.20.10/24
+        routes:
+          - to: default
+            via: 10.0.20.1
+        nameservers:
+          addresses: [10.0.20.1, 1.1.1.1]
+  ```
+
+- **Per a `srv-backup` (LAN: `10.0.20.20`):**
+  ```yaml
+  network:
+    version: 2
+    renderer: networkd
+    ethernets:
+      enp0s3:
+        addresses:
+          - 10.0.20.20/24
+        routes:
+          - to: default
+            via: 10.0.20.1
+        nameservers:
+          addresses: [10.0.20.1, 1.1.1.1]
+  ```
+
+- **Per a `granja1-srv` (Gateway Granja: NIC 1 LAN `10.1.1.10`, NIC 2 NAT WAN):**
+  ```yaml
+  network:
+    version: 2
+    renderer: networkd
+    ethernets:
+      enp0s3: # Connectat a lan-granja1
+        addresses:
+          - 10.1.1.10/24
+      enp0s8: # Connectat a internet-lab
+        dhcp4: true
+  ```
+
+- **Per a `granja1-sim` (Simulador: `10.1.1.20`):**
+  ```yaml
+  network:
+    version: 2
+    renderer: networkd
+    ethernets:
+      enp0s3:
+        addresses:
+          - 10.1.1.20/24
+        routes:
+          - to: default
+            via: 10.1.1.10
+        nameservers:
+          addresses: [10.1.1.10, 1.1.1.1]
+  ```
+
 
 ---
 
