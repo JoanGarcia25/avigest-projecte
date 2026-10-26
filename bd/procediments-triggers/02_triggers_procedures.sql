@@ -91,6 +91,13 @@ BEGIN
                 VALUES (v_id_nau, NEW.id_sensor, 'critic',
                         format('ALERTA CRÍTICA: Hipotèrmia potencial. Temperatura: %s ºC', NEW.valor));
             END IF;
+
+            -- Millora: Apagar calefactors si la temperatura ja no és baixa
+            IF v_id_actuador_cal IS NOT NULL AND v_estat_cal = 'ON' THEN
+                UPDATE actuadors SET estat_actual = 'OFF' WHERE id_actuador = v_id_actuador_cal;
+                INSERT INTO registre_actuacions (id_actuador, accio, motiu, disparat_per_sensor_id)
+                VALUES (v_id_actuador_cal, 'DESACTIVAR', 'Temperatura restablerta dins dels paràmetres normals. Calefacció ja no necessària.', NEW.id_sensor);
+            END IF;
         END IF;
 
     -- =========================================================================

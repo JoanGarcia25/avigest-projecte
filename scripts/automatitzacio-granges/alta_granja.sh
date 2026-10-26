@@ -109,8 +109,10 @@ if [[ -z "${NUM_NAUS}" ]]; then
     NUM_NAUS="${NUM_NAUS:-2}"
 fi
 if [[ -z "${GESTOR_USER}" ]]; then
-    read -p "Nom d'usuari per al Gestor de la granja (ex: gestor_${POBLACIO,,}): " GESTOR_USER
-    GESTOR_USER="${GESTOR_USER:-gestor_${POBLACIO,,}}"
+    # Normalitzar el nom de la població per a un nom d'usuari segur (minúscules, sense accents ni espais)
+    POBLACIO_CLEAN=$(echo "${POBLACIO}" | tr '[:upper:]' '[:lower:]' | tr ' ' '_' | sed 'y/áàéèíïóòúüñç/aaeeiioouunc/' 2>/dev/null || echo "${POBLACIO,,}")
+    read -p "Nom d'usuari per al Gestor de la granja (ex: gestor_${POBLACIO_CLEAN}): " GESTOR_USER
+    GESTOR_USER="${GESTOR_USER:-gestor_${POBLACIO_CLEAN}}"
 fi
 
 echo ""

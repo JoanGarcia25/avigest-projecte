@@ -43,6 +43,7 @@ Quan s'executa `./alta_granja.sh`:
 ```bash
 ./alta_granja.sh -c 1 -n "Granja 2 Urgell" -e "ES252170004" -a "Camí Vell s/n" -p "Bellpuig" -s 2 -u "gestor_granja2" -r "10.1.2.0/24"
 ```
+*(Nota: Si no s'especifica el flag `-P`, es genera automàticament una contrasenya aleatòria segura de 12 caràcters).*
 
 ### Mode 2: Assistent Interactiu per Consola
 ```bash

@@ -54,4 +54,4 @@ gantt
 | Disseny del logo de l'empresa (AviGest S.L.) | A definir |
 | Preparació de les 2 diapositives (què han comparat / què faran) | Tots dos |
 | Configuració del repositori Git (estructura de carpetes, branques) | Joan |
-| Creació del document/full compartit del diari de treball | Mariam |
+| Creació del document/full compartit del diari de treball | Mariam ([diari_treball.md](diari_treball/diari_treball.md)) |
