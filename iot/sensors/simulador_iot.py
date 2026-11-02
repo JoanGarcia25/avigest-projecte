@@ -39,8 +39,8 @@ from datetime import datetime
 CONFIG_CONN = {
     "host": os.getenv("PGHOST", "10.0.20.10"),
     "port": os.getenv("PGPORT", "5432"),
-    "user": os.getenv("PGUSER", "avigest_app"),
-    "password": os.getenv("PGPASSWORD", "avigest_secret_2026"),
+    "user": os.getenv("PGUSER", "avigest_iot"),
+    "password": os.getenv("PGPASSWORD", "iot_ingest_pass_2026"),
     "database": os.getenv("PGDATABASE", "avigest_db")
 }
 
@@ -117,7 +117,7 @@ def executar_sql_postgres(sql):
     # 2. Docker local si s'executa a srv-serveis
     docker_bin = shutil.which("docker")
     if docker_bin:
-        cmd = ["docker", "exec", "-i", "avigest_postgres", "psql", "-U", user, "-d", db, "-c", sql]
+        cmd = ["docker", "exec", "-e", f"PGPASSWORD={pwd}", "-i", "avigest_postgres", "psql", "-U", user, "-d", db, "-c", sql]
         try:
             res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=5)
             if res.returncode == 0:

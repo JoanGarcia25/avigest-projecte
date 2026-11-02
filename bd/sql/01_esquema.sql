@@ -2,9 +2,11 @@
 -- AviGest S.L. — Esquema de Base de Dades (PostgreSQL 16)
 -- Fitxer: bd/sql/01_esquema.sql / docker/initdb/01_esquema.sql
 -- Descripció: Creació de taules, claus primàries, foranes, índexs i restriccions.
+-- Mòdul: ASIX - Projecte (Requeriments R1 a R7 i Requeriment 4.3)
 -- =============================================================================
 
--- Desactivar/netejar taules existents si escau
+-- Desactivar/netejar taules existents en ordre invers de dependència
+DROP TABLE IF EXISTS auditoria_canvis CASCADE;
 DROP TABLE IF EXISTS alarmes_incidencies CASCADE;
 DROP TABLE IF EXISTS registre_actuacions CASCADE;
 DROP TABLE IF EXISTS lectures_sensors CASCADE;
@@ -17,7 +19,7 @@ DROP TABLE IF EXISTS clients CASCADE;
 
 -- -----------------------------------------------------------------------------
 -- 1. Taula CLIENTS (Requeriment R1)
--- Representa l'empresa o integradora propietària de les explotacions.
+-- Representa l'empresa o integradora ramadera propietària de les explotacions.
 -- -----------------------------------------------------------------------------
 CREATE TABLE clients (
     id_client SERIAL PRIMARY KEY,
@@ -32,7 +34,7 @@ CREATE TABLE clients (
 
 -- -----------------------------------------------------------------------------
 -- 2. Taula GRANGES (Requeriment R1 i R3)
--- Cada granja pertany a un únic client (aïllament multitenant).
+-- Cada granja pertany a un únic client (aïllament multitenant per disseny).
 -- -----------------------------------------------------------------------------
 CREATE TABLE granges (
     id_granja SERIAL PRIMARY KEY,
@@ -49,7 +51,7 @@ CREATE TABLE granges (
 
 -- -----------------------------------------------------------------------------
 -- 3. Taula NAUS
--- Pavellons físics on s'engreixen els pollastres.
+-- Pavellons físics dins de la granja on s'allotgen els lots d'engreix.
 -- -----------------------------------------------------------------------------
 CREATE TABLE naus (
     id_nau SERIAL PRIMARY KEY,
@@ -66,8 +68,9 @@ CREATE TABLE naus (
 );
 
 -- -----------------------------------------------------------------------------
--- 4. Taula LOTS_CRIANCA
--- Seguiment de cada cicle d'engreix des de l'entrada fins a l'escorxador (~45 dies).
+-- 4. Taula LOTS_CRIANCA (Requeriment R6)
+-- Cicle d'engreix complet (~45 dies) des de l'arribada dels pollets fins a l'escorxador.
+-- Permet el seguiment de mortalitat, consum de pinso i càlcul de l'ICA.
 -- -----------------------------------------------------------------------------
 CREATE TABLE lots_crianca (
     id_lot SERIAL PRIMARY KEY,
@@ -78,21 +81,23 @@ CREATE TABLE lots_crianca (
     data_sortida_real DATE,
     num_aus_inicials INT NOT NULL CHECK (num_aus_inicials > 0),
     num_baixes INT NOT NULL DEFAULT 0 CHECK (num_baixes >= 0),
+    pes_mitja_kg NUMERIC(4,2) CHECK (pes_mitja_kg > 0),
+    pinso_consumit_kg NUMERIC(10,2) CHECK (pinso_consumit_kg >= 0),
     estat VARCHAR(20) NOT NULL DEFAULT 'en_curs' CHECK (estat IN ('en_curs', 'finalitzat', 'cancel_lat')),
     CONSTRAINT fk_lots_nau FOREIGN KEY (id_nau)
         REFERENCES naus(id_nau) ON DELETE RESTRICT
 );
 
 -- -----------------------------------------------------------------------------
--- 5. Taula SENSORS (Requeriment R4)
--- Dispositius de telemetria (temperatura, humitat per RS485 o silos per LoRaWAN).
+-- 5. Taula SENSORS (Requeriment R4, 4.8)
+-- Dispositius de telemetria ambiental i d'estoc (RS485 Modbus a naus, LoRaWAN a silos).
 -- -----------------------------------------------------------------------------
 CREATE TABLE sensors (
     id_sensor SERIAL PRIMARY KEY,
     id_nau INT NOT NULL,
     codi_sensor VARCHAR(30) NOT NULL UNIQUE,
-    tipus_sensor VARCHAR(30) NOT NULL CHECK (tipus_sensor IN ('temperatura', 'humitat', 'co2', 'pes_silo', 'llum', 'consum_aigua')),
-    tecnologia VARCHAR(20) NOT NULL DEFAULT 'RS485' CHECK (tecnologia IN ('RS485', 'LoRaWAN', 'Modbus', 'Analogic')),
+    tipus_sensor VARCHAR(30) NOT NULL CHECK (tipus_sensor IN ('temperatura', 'humitat', 'co2', 'pes_silo', 'llum', 'consum_aigua', 'amoniac')),
+    tecnologia VARCHAR(20) NOT NULL DEFAULT 'RS485' CHECK (tecnologia IN ('RS485', 'LoRaWAN', 'Modbus', 'Analogic', 'Zigbee', 'Virtual')),
     unitat_mesura VARCHAR(15) NOT NULL,
     llindar_minim NUMERIC(6,2),
     llindar_maxim NUMERIC(6,2),
@@ -104,13 +109,13 @@ CREATE TABLE sensors (
 
 -- -----------------------------------------------------------------------------
 -- 6. Taula ACTUADORS (Requeriment R5)
--- Màquines controlades (ventiladors, calefactors, línies d'alimentació).
+-- Maquinària de climatització i confort animal (ventiladors, calefactors, etc.).
 -- -----------------------------------------------------------------------------
 CREATE TABLE actuadors (
     id_actuador SERIAL PRIMARY KEY,
     id_nau INT NOT NULL,
     codi_actuador VARCHAR(30) NOT NULL UNIQUE,
-    tipus_actuador VARCHAR(30) NOT NULL CHECK (tipus_actuador IN ('ventilador', 'calefactor', 'il_luminacio', 'menjadora', 'bomba_aigua')),
+    tipus_actuador VARCHAR(30) NOT NULL CHECK (tipus_actuador IN ('ventilador', 'calefactor', 'il_luminacio', 'menjadora', 'bomba_aigua', 'alarma_sonora', 'nebulitzador')),
     mode_operacio VARCHAR(15) NOT NULL DEFAULT 'automatic' CHECK (mode_operacio IN ('automatic', 'manual', 'aturat')),
     estat_actual VARCHAR(5) NOT NULL DEFAULT 'OFF' CHECK (estat_actual IN ('ON', 'OFF')),
     actiu BOOLEAN NOT NULL DEFAULT TRUE,
@@ -121,7 +126,7 @@ CREATE TABLE actuadors (
 
 -- -----------------------------------------------------------------------------
 -- 7. Taula LECTURES_SENSORS (Requeriment R4 i R5)
--- Sèrie temporal amb totes les dades recollides de camp via MQTT.
+-- Sèrie temporal d'alt volum rebuda del broker MQTT i Edge Computing.
 -- -----------------------------------------------------------------------------
 CREATE TABLE lectures_sensors (
     id_lectura BIGSERIAL PRIMARY KEY,
@@ -133,8 +138,8 @@ CREATE TABLE lectures_sensors (
 );
 
 -- -----------------------------------------------------------------------------
--- 8. Taula REGISTRE_ACTUACIONS
--- Històric d'activacions i aturades d'actuadors, amb motiu i disparador.
+-- 8. Taula REGISTRE_ACTUACIONS (Requeriment R5)
+-- Registre cronològic d'activacions i desconnexions d'actuadors amb causa auditable.
 -- -----------------------------------------------------------------------------
 CREATE TABLE registre_actuacions (
     id_registre BIGSERIAL PRIMARY KEY,
@@ -151,7 +156,7 @@ CREATE TABLE registre_actuacions (
 
 -- -----------------------------------------------------------------------------
 -- 9. Taula ALARMES_INCIDENCIES (Requeriment R7)
--- Incidències crítiques disparades automàticament per triggers PL/pgSQL.
+-- Alertes de camp disparades automàticament per triggers PL/pgSQL davant d'anomalies.
 -- -----------------------------------------------------------------------------
 CREATE TABLE alarmes_incidencies (
     id_alarma BIGSERIAL PRIMARY KEY,
@@ -162,6 +167,7 @@ CREATE TABLE alarmes_incidencies (
     resolta BOOLEAN NOT NULL DEFAULT FALSE,
     data_generacio TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     data_resolucio TIMESTAMP WITH TIME ZONE,
+    observacions_resolucio TEXT,
     CONSTRAINT fk_alarmes_nau FOREIGN KEY (id_nau)
         REFERENCES naus(id_nau) ON DELETE CASCADE,
     CONSTRAINT fk_alarmes_sensor FOREIGN KEY (id_sensor)
@@ -169,11 +175,28 @@ CREATE TABLE alarmes_incidencies (
 );
 
 -- -----------------------------------------------------------------------------
--- Índexs de rendiment per a consultes i sèries temporals
+-- 10. Taula AUDITORIA_CANVIS (Requeriment 4.3 / E2 Sec. 7.2)
+-- Registre de traçabilitat de canvis DML (INSERT, UPDATE, DELETE) en taules de gestió.
+-- -----------------------------------------------------------------------------
+CREATE TABLE auditoria_canvis (
+    id_auditoria BIGSERIAL PRIMARY KEY,
+    taula VARCHAR(50) NOT NULL,
+    operacio VARCHAR(10) NOT NULL CHECK (operacio IN ('INSERT', 'UPDATE', 'DELETE')),
+    usuari_bd VARCHAR(50) NOT NULL DEFAULT CURRENT_USER,
+    dades_antigues JSONB,
+    dades_noves JSONB,
+    data_hora TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- -----------------------------------------------------------------------------
+-- Índexs de rendiment per a consultes analítiques i sèries temporals
 -- -----------------------------------------------------------------------------
 CREATE INDEX idx_granges_client ON granges(id_client);
 CREATE INDEX idx_naus_granja ON naus(id_granja);
 CREATE INDEX idx_sensors_nau ON sensors(id_nau);
 CREATE INDEX idx_actuadors_nau ON actuadors(id_nau);
+CREATE INDEX idx_lots_nau_estat ON lots_crianca(id_nau, estat);
 CREATE INDEX idx_lectures_sensor_data ON lectures_sensors(id_sensor, data_hora DESC);
 CREATE INDEX idx_alarmes_pendents ON alarmes_incidencies(id_nau, resolta);
+CREATE INDEX idx_alarmes_gravetat ON alarmes_incidencies(resolta, nivell_gravetat);
+CREATE INDEX idx_auditoria_taula_data ON auditoria_canvis(taula, data_hora DESC);

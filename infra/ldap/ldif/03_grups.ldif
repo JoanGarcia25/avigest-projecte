@@ -1,0 +1,33 @@
+# =============================================================================
+# Grups de rols (groupOfNames exigeix que els member ja existeixin: va DESPRÉS dels usuaris)
+# =============================================================================
+
+dn: cn=AdminsAviGest,ou=groups,dc=avigest,dc=cat
+objectClass: top
+objectClass: groupOfNames
+cn: AdminsAviGest
+description: Administradors globals de la plataforma AviGest
+member: uid=admin_avigest,ou=avigest,ou=users,dc=avigest,dc=cat
+
+dn: cn=AdminsClient,ou=groups,dc=avigest,dc=cat
+objectClass: top
+objectClass: groupOfNames
+cn: AdminsClient
+description: Propietaris o administradors d'empreses clients
+member: uid=jaume_admin,ou=client_agroponent,ou=clients,ou=users,dc=avigest,dc=cat
+member: uid=laura_admin,ou=client_segria,ou=clients,ou=users,dc=avigest,dc=cat
+
+dn: cn=GestorsGranja,ou=groups,dc=avigest,dc=cat
+objectClass: top
+objectClass: groupOfNames
+cn: GestorsGranja
+description: Responsables operatius de granges concretes
+member: uid=gestor_bellpuig,ou=client_agroponent,ou=clients,ou=users,dc=avigest,dc=cat
+member: uid=gestor_alcarras,ou=client_segria,ou=clients,ou=users,dc=avigest,dc=cat
+
+dn: cn=UsuarisConsulta,ou=groups,dc=avigest,dc=cat
+objectClass: top
+objectClass: groupOfNames
+cn: UsuarisConsulta
+description: Usuaris amb accés de només lectura (veterinaris, auditories)
+member: uid=veterinari_ponent,ou=client_agroponent,ou=clients,ou=users,dc=avigest,dc=cat

@@ -30,32 +30,33 @@ La seu central d'AviGest conté dades crítiques i privades de múltiples client
   - **Control d'accés perimetral granular:** Permet crear *Aliases* per a la llista blanca de clients contractats des d'Internet i aplicar la regla crítica: **la DMZ no pot iniciar connexions cap a la LAN excepte a ports estrictament autoritzats**.
   - **Eina gràfica i diagnòstic:** Quadre de comandament complet, gràfiques de trànsit en temps real i registre detallat de paquets descartats (*live log*), ideal per a la defensa presencial davant del tribunal.
 * **Contres:**
-  - Requereix una màquina virtual dedicada amb 3 o 4 interfícies de xarxa virtuals a VMware.
+  - Requereix una màquina virtual dedicada amb 3 o 4 interfícies de xarxa virtuals a l'hipervisor (VirtualBox / VMware).
 
 ### Alternativa 2: Tallafocs natiu Linux pur (`iptables` / `nftables` / `UFW`)
 * **Descripció:** Filtratge de paquets basat en scripts a la màquina amfitriona.
 * **Pros:**
   - Molt lleuger en memòria RAM.
 * **Contres:**
-  - Configurar un servidor VPN complet (OpenVPN/WireGuard) juntament amb l'encaminament NAT de 3 zones mitjançant scripts de Bash manuals augmenta el risc d'error de configuració durant una sessió en directe.
+  - Configurar un servidor VPN complet (WireGuard / OpenVPN) juntament amb l'encaminament NAT de 3 zones mitjançant scripts de Bash manuals augmenta el risc d'error de configuració durant una sessió en directe.
   - No disposa de quadre de comandament visual per monitoritzar les connexions en viu durant la presentació oral.
 
 ---
 
 ## 3. Decisió presa
-**S'escull OPNsense com a tallafocs dedicat (`fw-seu`).**
+**S'escull OPNsense com a tallafocs dedicat (`fw-seu`) amb servidor VPN WireGuard integrat.**
 
 ### Justificació de les regles clau de tallafocs:
 1. **Regla WAN -> DMZ:** Només es permet el trànsit HTTPS (443) i HTTP (80) provinent de l'adreça IP pública de `pc-client` (o clients contractats) cap a `dmz-web`. Tota la resta és **DROP**.
 2. **Regla DMZ -> LAN (Aïllament estricte):** **La DMZ té expressament denegada la capacitat d'iniciar connexions cap a la LAN**, amb les úniques excepcions imprescindibles per al servei:
    - Cap a `srv-serveis`: Port 5432 (PostgreSQL) per consultar la BD.
-   - Cap a `srv-serveis`: Port 389/636 (OpenLDAP) per autenticar usuaris.
+   - Cap a `srv-serveis`: Port 389/636 (OpenLDAP / LDAPS) per autenticar usuaris.
    - Qualsevol altra connexió iniciada des de la DMZ cap a la LAN és bloquejada i registrada (*Default DROP*).
 3. **Regla VPN (`10.0.100.0/24`) -> LAN:** El tràfic provinent de `granja1-srv` **només pot accedir a `srv-serveis` a través del port MQTT (1883/8883)**. La granja mai no té accés directe a la BD ni a LDAP.
 
 ---
 
 ## 4. Mètode de verificació
-- **Inspecció de regles a la GUI d'OPNsense:** Comprovació de les regles a les pestanyes WAN, DMZ, LAN i OpenVPN.
+- **Inspecció de regles a la GUI d'OPNsense:** Comprovació de les regles a les pestanyes WAN, DMZ, LAN i WireGuard / VPN.
 - **Prova de trànsit creuat:** Comprovació amb `curl` i `nc` que `dmz-web` no pot obrir connexions arbitràries cap a `srv-backup` ni ports no autoritzats de `srv-serveis`.
-- **Validació de túnel VPN:** Connexió satisfactòria des de `granja1-srv` i comprovació del handshake a OPNsense.
+- **Validació de túnel VPN:** Connexió satisfactòria des de `granja1-srv` i comprovació del handshake a OPNsense (`wg show`).
+

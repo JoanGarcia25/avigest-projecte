@@ -102,24 +102,29 @@
 ---
 
 ### Sessió 6: Dilluns, 26 d'octubre de 2026 (6 hores — AVUI)
-**Fita:** Redisseny complet i consens de la topologia de Màquines Virtuals (Punt i a part)
+**Fita:** Consens de la topologia multi-VM, homogeneïtzació a Ubuntu Server 24.04 LTS i avanç de l'E3
 
-- **Objectiu:** Reestructurar l'entorn de màquines virtuals per reflectir una infraestructura industrial realista, professional i 100% defensable davant del tribunal, consolidant les 7 VMs especialitzades i el flux de dades de sensors de punta a punta.
+- **Objectiu:** Reestructurar l'entorn de màquines virtuals per reflectir una infraestructura industrial realista, professional i 100% defensable davant del tribunal, consolidant les 6 VMs especialitzades, aplicant el consell docent d'homogeneïtat i avançant el pla d'intervenció.
 - **Treball realitzat durant les 6 hores:**
-  - **Treball conjunt (Consens de l'esquema de VMs):**
-    - S'ha acordat fer un punt i a part respecte a l'esquema inicial i desplegar la infraestructura dividida en:
-      * `pc-client`: Client extern / navegador de prova via Internet (NAT).
-      * `fw-seu`: Tallafocs perimetral OPNsense de 3 interfícies físiques (WAN, DMZ `10.0.10.0/24`, LAN `10.0.20.0/24`) i servidor VPN (`10.0.100.0/24`).
-      * `dmz-web`: DMZ (`10.0.10.10`) amb proxy invers Nginx, WAF i relay SMTP, accessible només per llista blanca d'IPs.
-      * `srv-serveis`: LAN (`10.0.20.10`) amb PostgreSQL 16 + Rèplica, Broker MQTT Mosquitto i OpenLDAP.
-      * `srv-backup`: LAN (`10.0.20.20`) VM dedicada amb cron nocturn i segon disc virtual simulat.
-      * `granja1-srv`: Camp (`10.1.1.10` / VPN `10.0.100.10`) amb MQTT local, regles locals de ventiladors (>31ºC), búfer store-and-forward i client VPN.
-      * `granja1-sim`: Camp (`10.1.1.20`) simulador d'ESP32 per RS485 Modbus i silos per LoRaWAN ChirpStack.
+  - **Treball conjunt (Consens de l'esquema de VMs i homogeneïtat de sistemes):**
+    - Arran de la recomanació explícita del professor a l'aula de **no barrejar distribucions Linux** per evitar problemes de connectivitat, s'adopta formalment **Ubuntu Server 24.04 LTS** com a distribució única per a totes les màquines de serveis mitjançant la plantilla clonable `ubuntu-base` amb xarxa declarativa **Netplan (YAML)**.
+    - Es manté **OPNsense** com a appliance de seguretat dedicat de 3 potes per a la seu central.
+    - S'acorda l'esquema final de màquines virtuals:
+      * `pc-client`: Client extern / navegador de prova del client contractant (Host físic / NAT).
+      * `fw-seu`: Tallafocs perimetral OPNsense de 3 interfícies físiques (WAN, DMZ `10.0.10.0/24`, LAN `10.0.20.0/24`) i servidor VPN WireGuard (`10.0.100.0/24`).
+      * `dmz-web`: DMZ (`10.0.10.10`, Ubuntu 24.04) amb proxy invers Nginx, WAF i relay SMTP, accessible només per llista blanca d'IPs.
+      * `srv-serveis`: LAN (`10.0.20.10`, Ubuntu 24.04) amb Docker Engine: PostgreSQL 16 + Rèplica, Broker MQTT Mosquitto i OpenLDAP.
+      * `srv-backup`: LAN (`10.0.20.20`, Ubuntu 24.04) VM dedicada de còpies amb cron nocturn i segon disc virtual simulat (/mnt).
+      * `granja1-srv`: Camp (`10.1.1.10`, Ubuntu 24.04 / VPN WireGuard `10.0.100.10`) amb MQTT local, regles d'actuadors (>31ºC), búfer store-and-forward i client VPN.
+      * `granja1-sim`: Camp (`10.1.1.20`, Ubuntu 24.04) simulador d'ESP32 per RS485 Modbus i silos per LoRaWAN ChirpStack.
   - **Joan:**
-    - Disseny i documentació de les regles de tallafocs OPNsense a [disseny_dmz_seguretat.md](../../infra/dmz-tallafocs/disseny_dmz_seguretat.md) i [firewall_regles.sh](../../infra/dmz-tallafocs/firewall_regles.sh), amb aïllament estricte DMZ -> LAN (només TCP 5432 i 389 permesos) i pas de VPN a Broker MQTT.
+    - Elaboració de la documentació de desplegament de màquines virtuals i pujada de les guies de referència a `docs/Guies_MV/` ([Guia del laboratori virtual d'AviGest.pdf](../Guies_MV/Guia%20del%20laboratori%20virtual%20d’AviGest.pdf) i [guia_desplegament_maquines_virtuals.md](../guia_desplegament_maquines_virtuals.md) amb les configuracions de Netplan YAML).
+    - Disseny i documentació de les regles de tallafocs OPNsense a [disseny_dmz_seguretat.md](../../infra/dmz-tallafocs/disseny_dmz_seguretat.md) i [firewall_regles.sh](../../infra/dmz-tallafocs/firewall_regles.sh), amb aïllament estricte DMZ -> LAN (només TCP 5432 i LDAPS permesos) i pas de VPN WireGuard a Broker MQTT.
     - Configuració del servidor dedicat `srv-backup` i del pla de recuperació PRD amb el segon disc virtual simulat ([pla_recuperacio_desastres_prd.md](../../infra/backups-prd/pla_recuperacio_desastres_prd.md)).
   - **Mariam:**
     - Migració completa de la base de dades a **PostgreSQL 16**: conversió de taules DDL, triggers de termòstat automàtic en PL/pgSQL i procediments d'alta atòmica de granges.
+    - Desenvolupament de les 4 vistes i consultes comparatives de negoci ([05_vistes_consultes_comparatives.sql](../../bd/sql/05_vistes_consultes_comparatives.sql)).
+    - Redacció i estructuració del lliurable [E3_pla_intervencio.md](../E3_pla_intervencio/E3_pla_intervencio.md): pressupostos CapEx/OpEx, matriu d'acompliment de fites amb dates reals i cronograma d'intervenció a camp.
     - Actualització de [FD01_sgbd.md](../fitxes_decisio/FD01_sgbd.md) documentant formalment la limitació de la rèplica de BD en contenidor dins de `srv-serveis` i la seva mitigació mitjançant `srv-backup`.
     - Adaptació de l'script d'automatització [alta_granja.sh](../../scripts/automatitzacio-granges/alta_granja.sh) per a la variació de la Granja 2 (`10.1.2.0/24`).
 - **Dedicació:** Joan: 6 h | Mariam: 6 h (Total: 12 h)
@@ -136,7 +141,7 @@
 | **S4** | Dilluns 05/10/2026 | Defenses orals E1 (1h 30m prep + 10m defensa + torns companys) | 6 h | 6 h | **12 h** |
 | — | Dilluns 12/10/2026 | *FESTIU (Festa Nacional — Sense classe)* | 0 h | 0 h | **0 h** |
 | **S5** | Dilluns 19/10/2026 | Investigació, proves de concepte i acords E2 | 6 h | 6 h | **12 h** |
-| **S6** | Dilluns 26/10/2026 | Consens nou esquema multi-VM, PostgreSQL 16 i OPNsense | 6 h | 6 h | **12 h** |
+| **S6** | Dilluns 26/10/2026 | Multi-VM (Ubuntu 24.04 + OPNsense), PostgreSQL 16 i avanç E3 | 6 h | 6 h | **12 h** |
 | **TOTAL** | *(Fins al 26/10)* | **6 dilluns lectius x 6 hores** | **36 h** | **36 h** | **72 h** |
 
 ---
@@ -156,12 +161,12 @@ gantt
     S3 E1 Tancament           :done, 2026-09-28, 1d
     S4 Defenses orals E1      :done, 2026-10-05, 1d
     S5 Investigació i POCs    :done, 2026-10-19, 1d
-    S6 Nou Esquema Multi-VM   :done, 2026-10-26, 1d
+    S6 Multi-VM i avanç E3    :done, 2026-10-26, 1d
     section Sessions Planificades
     S7 Disseny Xarxa/DMZ i DDL final   :2026-11-02, 1d
     S8 Lògica Triggers i Arbre LDAP     :2026-11-09, 1d
     S9 IoT Edge, Backups i PRD          :2026-11-16, 1d
-    S10 Pla Intervenció E3 i Scripts    :2026-11-23, 1d
+    S10 Assaig Variació i Tancament E3  :2026-11-23, 1d
     S11 Integració final E2/E3          :2026-11-30, 1d
     Lliurament oficial E2 i E3          :milestone, 2026-12-04, 0d
 ```
@@ -181,11 +186,12 @@ gantt
    - **Mariam:** Prova de buffer Store-and-Forward a `granja1-srv` davant de desconnexió intencionada del túnel VPN.
 
 4. **Sessió 10 (Dilluns, 23 de novembre):**
-   - **Treball conjunt:** Elaboració del document **E3 (Pla d'Intervenció i Pressupostos)**: dimensionament econòmic de maquinari i hores de treball.
-   - Assaig de l'script d'alta ràpida de la Granja 2 (`alta_granja.sh`).
+   - **Treball conjunt:** Assaig de l'script d'alta ràpida de la Granja 2 (`alta_granja.sh`) per a la prova de variació presencial.
+   - Revisió econòmica final i ajust de fites del document **E3 (Pla d'Intervenció i Pressupostos)** avançat a la Sessió 6.
 
 5. **Sessió 11 (Dilluns, 30 de novembre):**
-   - **Treball conjunt:** Maquetació i revisió creuada final d'E2 i E3 per al lliurament definitiu.
+   - **Treball conjunt:** Maquetació, revisió creuada final d'estil i coherència de l'E2 i l'E3, i generació dels PDFs definitius.
 
 6. **Divendres, 4 de desembre de 2026:**
-   - **Lliurament oficial dels documents E2 (Disseny Tècnic) i E3 (Pla d'Intervenció).**
+   - **Lliurament oficial dels documents E2 (Disseny Tècnic) i E3 (Pla d'Intervenció) al campus virtual.**
+
