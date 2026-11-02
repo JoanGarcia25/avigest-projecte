@@ -56,7 +56,7 @@ flowchart TD
     end
 
     subgraph LAN_Net["LAN seu (10.0.20.0/24)"]
-        Srv_Serveis["srv-serveis<br/>Docker: OpenLDAP<br/>PostgreSQL 16 + rèplica<br/>Broker MQTT Mosquitto"]
+        Srv_Serveis["srv-serveis<br/>Docker: OpenLDAP<br/>PostgreSQL 16 + rèplica WAL<br/>MQTT + ingesta a PostgreSQL"]
         Srv_Backup["srv-backup<br/>Còpies amb cron<br/>Disc extern simulat"]
     end
 
@@ -73,15 +73,15 @@ flowchart TD
 
     Granja1_Sim -->|Dades de camp| Granja1_Srv
     Granja1_Srv ==>|Túnel VPN (10.0.100.0/24)| VPN_Srv
-    VPN_Srv ==>|NOMÉS MQTT:1883/8883| Srv_Serveis
+    VPN_Srv ==>|NOMÉS MQTT:1883 (xifrat WireGuard)| Srv_Serveis
     VPN_Srv -.->|BLOQUEJAT ACCÉS DIRECTE A BD: DROP| LAN_Net
 ```
 
 ### Recorregut d'una lectura telemètrica (End-to-End):
 1. **`granja1-sim`:** Simula els sensors de temperatura/humitat (ESP32 via RS485 Modbus) i els sensors de silos (LoRaWAN amb ChirpStack) i envia les trames a `granja1-srv`.
 2. **`granja1-srv`:** Desa les lectures en un búfer local (*store-and-forward*), avalua les regles locals (si T > 31ºC activa el ventilador immediatament) i reenvia les lectures pel túnel VPN fins a `fw-seu`.
-3. **`fw-seu`:** Rep el trànsit de la VPN (`10.0.100.0/24`) i **només permet el pas cap al port del broker MQTT (1883/8883) de la LAN**.
-4. **`srv-serveis`:** El broker MQTT rep les lectures i un servei d'ingesta les emmagatzema a **PostgreSQL 16**, que alhora manté una rèplica sincronitzada. Al mateix equip resideix **OpenLDAP** per a l'autenticació centralitzada.
+3. **`fw-seu`:** Rep el trànsit de la VPN (`10.0.100.0/24`) i **només permet el pas cap al port MQTT 1883 de la LAN**. El xifratge l'aporta WireGuard; no s'exposa MQTTTLS (8883) sense certificats al laboratori.
+4. **`srv-serveis`:** Mosquitto rep les lectures. El contenidor **`avigest_mqtt_ingest`** les persisteix a **PostgreSQL 16**. La rèplica (port 5433) és un *Hot Standby* amb streaming WAL. **OpenLDAP** autentica usuaris.
 5. **`srv-backup`:** Màquina dedicada que executa les còpies de seguretat diàries amb `cron` i les arxiva en un segon disc virtual simulant una ubicació externa.
 6. **`dmz-web`:** L'únic servei exposat a Internet: rep les peticions dels clients (`pc-client`), aplica WAF i proxy invers Nginx, i només consulta a la LAN els ports estrictament indispensables (PostgreSQL 5432 i LDAP 389).
 
@@ -91,7 +91,7 @@ flowchart TD
 
 | Codi Fitxa | Àmbit Tècnic | Decisió Presa | Justificació Principal | Document Detallat |
 | :--- | :--- | :--- | :--- | :--- |
-| **FD01** | SGBD Central | **PostgreSQL 16 + Rèplica** | Triggers PL/pgSQL avançats, suport TimescaleDB/JSON per a telemetria IoT, Row-Level Security natiu i streaming replication. | [FD01_sgbd.md](../fitxes_decisio/FD01_sgbd.md) |
+| **FD01** | SGBD Central | **PostgreSQL 16 + Rèplica WAL** | Triggers PL/pgSQL, JSON, Row-Level Security i *streaming replication* (Hot Standby al port 5433). TimescaleDB no està desplegat. | [FD01_sgbd.md](../fitxes_decisio/FD01_sgbd.md) |
 | **FD02** | Directori Central | **OpenLDAP + phpLDAPadmin** | Lleuger (<80MB RAM), estàndard ASIX, estructura modular LDIF amb 4 rols diferenciats i aïllament per granja. | [FD02_ldap.md](../fitxes_decisio/FD02_ldap.md) |
 | **FD03** | Seguretat Perimetral | **OPNsense (`fw-seu`)** | Appliance dedicat amb 3 interfícies físiques (WAN, DMZ, LAN), servidor VPN integrat, llista blanca d'IPs i política estricta DMZ-LAN. | [FD03_tallafocs_dmz.md](../fitxes_decisio/FD03_tallafocs_dmz.md) |
 | **FD04** | Còpies de Seguretat | **`srv-backup` dedicat + 2n disc** | Aïllament de fallades (VM pròpia), model 3-2-1 amb segon disc virtual per simular emmagatzematge extern, cron nocturn i RTO < 30 min. | [FD04_backups_prd.md](../fitxes_decisio/FD04_backups_prd.md) |
@@ -127,7 +127,7 @@ El tallafocs perimetral `fw-seu` (OPNsense) aplica una política estricta de tal
      * `dmz-web` -> `srv-serveis:389` (OpenLDAP)
    - Qualsevol intent d'iniciar connexions cap a `srv-backup` o ports administratius (SSH, gestió) és immediatament **bloquejat i registrat al log d'OPNsense**.
 3. **Control d'accés VPN:**
-   - El túnel VPN (`10.0.100.0/24`) que prové de `granja1-srv` **únicament té permès el trànsit cap a `srv-serveis:1883/8883` (Broker MQTT)**. No té accés a la base de dades ni a LDAP.
+   - El túnel VPN (`10.0.100.0/24`) que prové de `granja1-srv` **únicament té permès el trànsit cap a `srv-serveis:1883` (Broker MQTT)**. No té accés a la base de dades ni a LDAP.
 
 ---
 
@@ -186,6 +186,8 @@ erDiagram
         VARCHAR codi_lot UK
         INT num_aus_inicials
         INT num_baixes
+        NUMERIC pes_mitja_kg
+        NUMERIC pinso_consumit_kg
         DATE data_entrada
         VARCHAR estat
     }
@@ -210,7 +212,7 @@ erDiagram
         TIMESTAMP data_hora
     }
     REGISTRE_ACTUACIONS {
-        BIGINT id_actuacio PK
+        BIGINT id_registre PK
         INT id_actuador FK
         VARCHAR accio
         VARCHAR motiu
@@ -222,12 +224,24 @@ erDiagram
         VARCHAR nivell_gravetat
         VARCHAR missatge
         BOOLEAN resolta
+        TEXT observacions_resolucio
+    }
+    AUDITORIA_CANVIS {
+        BIGINT id_auditoria PK
+        VARCHAR taula
+        VARCHAR operacio
+        VARCHAR usuari_bd
+        JSONB dades_antigues
+        JSONB dades_noves
+        TIMESTAMP data_hora
     }
 ```
 
 ### 7.2. Lògica Procedural i Triggers PL/pgSQL (R5 i R7)
-- **Control de termòstat automàtic:** Trigger `fn_control_llindars_sensor()` que commuta ventiladors a `ON` i calefactors a `OFF` si $T > 31^\circ\text{C}$, generant l'acció a `registre_actuacions` i alarma crítica a `alarmes_incidencies` si $T \ge 33^\circ\text{C}$.
+- **Control de termòstat automàtic:** Trigger `fn_control_llindars_sensor()` que commuta ventiladors a `ON` i calefactors a `OFF` si $T > 31^\circ\text{C}$, generant l'acció a `registre_actuacions` i alarma crítica a `alarmes_incidencies` si $T \ge 33^\circ\text{C}$. També cobreix CO2 i silo buit.
 - **Normalització de temperatura:** Aturada automàtica de ventilació quan la temperatura retorna al rang òptim ($20^\circ\text{C} \le T \le 31^\circ\text{C}$).
+- **Auditoria:** Trigger `fn_auditoria_canvis()` sobre `clients`, `granges`, `lots_crianca` i `sensors` (no sobre telemetria, per volum).
+- **RLS:** Sense `sp_set_tenant()` el rol `avigest_consulta` no veu files. `SELECT sp_set_tenant(1, 1)` limita a la granja Bellpuig. El rol `avigest_app` és superusuari de Docker i **no** demostra l'aïllament.
 
 ### 7.3. Consultes i Vistes Comparatives de Negoci (Requeriment 4.3)
 1. **`v_comparativa_lots_rendiment`:** Mortalitat, percentatge de baixes i durada de cicles entre naus i granges.
@@ -236,10 +250,10 @@ erDiagram
 4. **`v_panell_executiu_global`:** Visió agregada multitenant amb recompte de naus, capacitat d'aus en producció i incidències pendents per client.
 
 ### 7.4. Rols SQL de Mínim Privilegi
-- `avigest_app`: Accés DML complet.
-- `avigest_iot`: **Només permís `INSERT`** a `lectures_sensors` (sense accés a clients ni usuaris).
-- `avigest_consulta`: Només `SELECT` sobre les vistes d'informació.
-- `avigest_backup`: Permís per a `pg_dump`.
+- `avigest_app`: Superusuari del clúster Docker (portal i administració).
+- `avigest_iot`: **Només `INSERT`** a `lectures_sensors` (`BYPASSRLS` per poder ingestir totes les granges).
+- `avigest_consulta`: Només `SELECT`; l'aïllament R3 s'hi aplica via RLS i vistes `security_invoker`.
+- `avigest_backup`: `pg_dump` amb `BYPASSRLS`.
 
 ---
 
@@ -290,13 +304,13 @@ L'script d'automatització està preparat per donar resposta a la **prova presen
 L'script `scripts/automatitzacio-granges/alta_granja.sh`:
 1. Crea la nova granja i naus a la base de dades PostgreSQL de `srv-serveis`.
 2. Crea la unitat organitzativa i l'usuari gestor a OpenLDAP amb `departmentNumber: GRANJA_2`.
-3. Provisiona la regla d'accés a l'alias d'OPNsense per permetre el nou túnel VPN des de `10.1.2.0/24`.
+3. Genera la regla iptables/OPNsense que només deixa MQTT 1883 des de la IP VPN `10.0.100.<10+id_granja>`.
 
 ---
 
 ## 11. Annex d'Ús d'Intel·ligència Artificial
 *En compliment estricte de la Norma 4 de l'enunciat:*
 
-- **Eina utilitzada:** Antigravity / Gemini 3.8 Flash (High).
-- **Finalitat de l'ús:** Eina de suport per al disseny de la topologia de xarxes, diagrames de flux, estructuració de fitxes de decisió i esborranys de configuració.
-- **Mètode de verificació i comprensió:** L'equip (Joan i Mariam) ha definit l'esquema de màquines virtuals, entén cadascuna de les regles de tallafocs d'OPNsense, la separació DMZ-LAN, el flux MQTT de sensors i la lògica de rèplica i backups per poder defensar-ho íntegrament en la sessió oral davant del tribunal.
+- **Eines utilitzades:** Antigravity / Gemini 3.8 Flash (High) per a esborranys de disseny; Cursor (Grok) per a revisió creuada amb l'enunciat i correcció de configuració (rèplica WAL, LDAP, RLS, ingesta MQTT).
+- **Finalitat de l'ús:** Eina de suport per al disseny de la topologia de xarxes, diagrames de flux, estructuració de fitxes de decisió, esborranys de configuració i depuració. No substitueix la comprensió de l'equip.
+- **Mètode de verificació i comprensió:** L'equip (Joan i Mariam) ha definit l'esquema de màquines virtuals, entén les regles de tallafocs, la separació DMZ-LAN, el flux MQTT→ingesta→PostgreSQL, el RLS amb `avigest_consulta` i la lògica de rèplica i backups per poder-ho defensar a l'oral.

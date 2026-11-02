@@ -18,8 +18,7 @@ uid: admin_avigest
 cn: Administrador AviGest
 sn: AviGest
 mail: admin@avigest.cat
-userPassword: {SSHA}5j0XjXoD6B6b7VjS+examplePassHash1
-# Contrasenya en text pla de prova: avigest2026
+userPassword: avigest2026
 description: Administrador global del sistema
 
 # Tècnic de suport AviGest
@@ -32,7 +31,7 @@ uid: tecnic_suport
 cn: Marc Sole
 sn: Sole
 mail: msole@avigest.cat
-userPassword: {SSHA}5j0XjXoD6B6b7VjS+examplePassHash2
+userPassword: avigest2026
 description: Tècnic de suport de camp i manteniment IoT
 
 # -----------------------------------------------------------------------------
@@ -55,7 +54,7 @@ cn: Jaume Balaguer
 sn: Balaguer
 mail: jbalaguer@agroponent.cat
 businessCategory: CLIENT_1
-userPassword: {SSHA}5j0XjXoD6B6b7VjS+examplePassHash3
+userPassword: avigest2026
 description: Administrador de client AgroPonent (gestiona N granges)
 
 # Gestor exclusiu de la Granja Bellpuig (id_granja = 1)
@@ -70,7 +69,7 @@ sn: Pons
 mail: jpons@agroponent.cat
 businessCategory: CLIENT_1
 departmentNumber: GRANJA_1
-userPassword: {SSHA}5j0XjXoD6B6b7VjS+examplePassHash4
+userPassword: avigest2026
 description: Responsable operatiu de Granja Ponent Bellpuig
 
 # Usuari de consulta (veterinari d'AgroPonent)
@@ -84,7 +83,7 @@ cn: Anna Rovira
 sn: Rovira
 mail: arovira@vetponent.cat
 businessCategory: CLIENT_1
-userPassword: {SSHA}5j0XjXoD6B6b7VjS+examplePassHash5
+userPassword: avigest2026
 description: Veterinària consultora (accés de només lectura)
 
 # -----------------------------------------------------------------------------
@@ -107,7 +106,7 @@ cn: Laura Vidal
 sn: Vidal
 mail: lvidal@avicolasegria.cat
 businessCategory: CLIENT_2
-userPassword: {SSHA}5j0XjXoD6B6b7VjS+examplePassHash6
+userPassword: avigest2026
 description: Administradora de client Avícola del Segrià
 
 # Gestor de Granja Alcarràs (id_granja = 3)
@@ -122,5 +121,5 @@ sn: Roca
 mail: proca@avicolasegria.cat
 businessCategory: CLIENT_2
 departmentNumber: GRANJA_3
-userPassword: {SSHA}5j0XjXoD6B6b7VjS+examplePassHash7
+userPassword: avigest2026
 description: Responsable operatiu de Granja Segrià Alcarràs

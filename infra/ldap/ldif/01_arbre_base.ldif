@@ -32,38 +32,4 @@ objectClass: organizationalUnit
 ou: clients
 description: Comptes i usuaris de les empreses clients
 
-# -----------------------------------------------------------------------------
-# Grups de Rols (Requeriment R2)
-# -----------------------------------------------------------------------------
-
-# Rol 1: Administrador de plataforma (AviGest)
-dn: cn=AdminsAviGest,ou=groups,dc=avigest,dc=cat
-objectClass: top
-objectClass: groupOfNames
-cn: AdminsAviGest
-description: Administradors globals de la plataforma AviGest
-member: uid=admin_avigest,ou=avigest,ou=users,dc=avigest,dc=cat
-
-# Rol 2: Administrador de client (N granges)
-dn: cn=AdminsClient,ou=groups,dc=avigest,dc=cat
-objectClass: top
-objectClass: groupOfNames
-cn: AdminsClient
-description: Propietaris o administradors d'empreses clients
-member: uid=jaume_admin,ou=client_agroponent,ou=clients,ou=users,dc=avigest,dc=cat
-
-# Rol 3: Gestor de granja
-dn: cn=GestorsGranja,ou=groups,dc=avigest,dc=cat
-objectClass: top
-objectClass: groupOfNames
-cn: GestorsGranja
-description: Responsables operatius de granges concretes
-member: uid=gestor_bellpuig,ou=client_agroponent,ou=clients,ou=users,dc=avigest,dc=cat
-
-# Rol 4: Usuari de consulta
-dn: cn=UsuarisConsulta,ou=groups,dc=avigest,dc=cat
-objectClass: top
-objectClass: groupOfNames
-cn: UsuarisConsulta
-description: Usuaris amb accés de només lectura (veterinaris, auditories)
-member: uid=veterinari_ponent,ou=client_agroponent,ou=clients,ou=users,dc=avigest,dc=cat
+# Els grups (groupOfNames) es carreguen a 03_grups.ldif, després dels usuaris.

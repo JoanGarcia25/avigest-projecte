@@ -20,13 +20,13 @@ flowchart TD
     end
 
     subgraph Perimetre["fw-seu (OPNsense)"]
-        VPN_In["Punt d'Entrada VPN (10.0.100.1)<br/>Regles 4.4: Només permet pas<br/>al port MQTT 1883/8883 de la LAN"]
+        VPN_In["Punt d'Entrada VPN (10.0.100.1)<br/>Regles 4.4: Només permet pas<br/>al port MQTT 1883 de la LAN"]
     end
 
     subgraph Nucli["LAN seu (10.0.20.0/24)"]
         MQTT_Central["srv-serveis (10.0.20.10)<br/>Broker MQTT Mosquitto"]
-        -->|Ingesta de lectures|
-        PG["PostgreSQL 16 (avigest_db)<br/>+ Rèplica de BD"]
+        -->|avigest_mqtt_ingest|
+        PG["PostgreSQL 16 (avigest_db)<br/>+ Hot Standby WAL :5433"]
         PG -->|Trigger PL/pgSQL| Triggers["fn_control_llindars_sensor()<br/>• Actualitza actuador a ON<br/>• Insereix registre_actuacions<br/>• Insereix alarmes_incidencies"]
     end
 
@@ -52,12 +52,12 @@ flowchart TD
 ### Pas 3: `fw-seu` (Tallafocs OPNsense)
 * És l'únic punt d'entrada des de la VPN (`10.0.100.0/24`).
 * Aplica les regles de tallafocs documentades (4.4):
-  - **Filtre estricte:** Només deixa passar el tràfic provinent de la granja amb destí al port del Broker MQTT de `srv-serveis` (`10.0.20.10:1883/8883`).
+  - **Filtre estricte:** Només deixa passar el tràfic de granja cap a `srv-serveis:1883` (MQTT). El xifratge és el de WireGuard.
   - Qualsevol intent d'accedir directament a PostgreSQL (5432) o LDAP (389) és descartat immediatament (`DROP`).
 
 ### Pas 4: `srv-serveis` (Broker MQTT, PostgreSQL 16 i Rèplica)
 * El broker **Eclipse Mosquitto** rep la lectura.
-* El servei d'ingesta desa el valor a la taula `lectures_sensors` de **PostgreSQL 16**.
+* El contenidor **`avigest_mqtt_ingest`** (`iot/ingestio/mqtt_a_postgres.py`) s'hi subscriu i desa el valor a `lectures_sensors` amb el rol `avigest_iot`.
 * Es dispara el trigger PL/pgSQL **`tg_control_llindars_sensor`**, auditant actuacions i generant alarmes si és procedent.
 * La instància secundària de rèplica manté el registre duplicat per a alta disponibilitat d'aplicació.
 

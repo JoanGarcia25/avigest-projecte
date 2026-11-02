@@ -30,7 +30,8 @@ Quan s'executa `./alta_granja.sh`:
    - Crea el compte d'usuari per al responsable de la granja (`uid=gestor_<granja>`).
    - Assigna els atributs `businessCategory: CLIENT_<ID>` i `departmentNumber: GRANJA_<ID>` per aplicar l'**aïllament multitenant (R3)**.
 3. **Regla de Tallafocs a `fw-seu` (OPNsense / iptables):**
-   - Genera i aplica la regla d'accés per autoritzar el nou túnel VPN (`10.0.100.20` o xarxa `10.1.2.0/24`) amb pas exclusiu cap al Broker MQTT de la LAN (`10.0.20.10:1883/8883`).
+   - Genera la regla d'accés per a la IP VPN `10.0.100.<10+id_granja>` amb pas exclusiu cap a MQTT `10.0.20.10:1883`.
+   - Afegeix l'usuari al grup `cn=GestorsGranja` (no amaga errors d'LDAP).
 4. **Gateway Local i Buffer:**
    - Genera l'estructura de carpetes per al gateway local clonat (`/var/avigest/granges/<codi_explotacio>/telemetria`, `logs`, `config`).
    - Crea el fitxer de variables d'entorn `gateway.env`.
@@ -41,9 +42,9 @@ Quan s'executa `./alta_granja.sh`:
 
 ### Mode 1: Execució Ràpida per Línia de Comandes (Recomanat per a la prova en directe)
 ```bash
-./alta_granja.sh -c 1 -n "Granja 2 Urgell" -e "ES252170004" -a "Camí Vell s/n" -p "Bellpuig" -s 2 -u "gestor_granja2" -r "10.1.2.0/24"
+./alta_granja.sh -c 1 -n "Granja 2 Urgell" -e "ES252170099" -a "Camí Vell s/n" -p "Bellpuig" -s 2 -u "gestor_granja2" -r "10.1.2.0/24"
 ```
-*(Nota: Si no s'especifica el flag `-P`, es genera automàticament una contrasenya aleatòria segura de 12 caràcters).*
+Contrasenya de laboratori del gestor: `avigest2026` (la mateixa que els usuaris LDIF). El codi d'explotació ha de ser **únic** (`ES252170004` ja el fa servir Tàrrega a les dades de prova).
 
 ### Mode 2: Assistent Interactiu per Consola
 ```bash

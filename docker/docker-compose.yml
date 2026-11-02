@@ -7,6 +7,16 @@ services:
     image: postgres:16-alpine
     container_name: avigest_postgres
     restart: unless-stopped
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=replica"
+      - "-c"
+      - "max_wal_senders=5"
+      - "-c"
+      - "max_replication_slots=5"
+      - "-c"
+      - "hot_standby=on"
     environment:
       POSTGRES_DB: avigest_db
       POSTGRES_USER: avigest_app
@@ -16,34 +26,45 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U avigest_app -d avigest_db && psql -U avigest_app -d avigest_db -tAc \"SELECT 1 FROM pg_views WHERE viewname='v_panell_executiu_global'\" | grep -q 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
     networks:
       - avigest_internal
 
   # ============================================================================
-  # 2. Rèplica de la Base de Dades — PostgreSQL 16 Replica (Requeriment 4.6)
-  # Simulació de rèplica en contenidor dins de srv-serveis per al laboratori.
-  # Nota de disseny: Si cau la VM sencer, la redundància s'assumeix amb srv-backup.
+  # 2. Rèplica Hot Standby — streaming replication real (Requeriment 4.6)
+  # Mateixa VM de laboratori: protegeix el procés PostgreSQL, no el disc de la VM.
   # ============================================================================
   postgres_replica:
     image: postgres:16-alpine
     container_name: avigest_postgres_replica
     restart: unless-stopped
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
       POSTGRES_DB: avigest_db
       POSTGRES_USER: avigest_app
       POSTGRES_PASSWORD: avigest_secret_2026
+      PRIMARY_HOST: postgres
+      REPL_USER: replicator
+      REPL_PASSWORD: replicator_pass_2026
     ports:
       - "5433:5432"
     volumes:
       - postgres_replica_data:/var/lib/postgresql/data
+      - ./postgres/replica-entrypoint.sh:/replica-entrypoint.sh:ro
+    entrypoint: ["/bin/sh", "/replica-entrypoint.sh"]
     networks:
       - avigest_internal
 
   # ============================================================================
   # 3. Broker de Missatgeria IoT — Eclipse Mosquitto (MQTT)
-  # Rep lectures de granja1-srv que arriben a través de fw-seu (VPN)
+  # El trànsit de granja ja va xifrat per WireGuard; a laboratori s'usa 1883.
   # ============================================================================
   mosquitto:
     image: eclipse-mosquitto:2.0
@@ -59,8 +80,32 @@ services:
       - avigest_internal
 
   # ============================================================================
+  # 3b. Ingesta MQTT → PostgreSQL (el broker sol no persisteix lectures)
+  # ============================================================================
+  mqtt_ingest:
+    build:
+      context: ../iot/ingestio
+      dockerfile: Dockerfile
+    container_name: avigest_mqtt_ingest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: avigest_iot
+      PGPASSWORD: iot_ingest_pass_2026
+      PGDATABASE: avigest_db
+      MQTT_HOST: mosquitto
+      MQTT_PORT: 1883
+    networks:
+      - avigest_internal
+
+  # ============================================================================
   # 4. Servidor de Directori Centralitzat — OpenLDAP (Requeriment 4.2)
-  # Autentica usuaris de la seu i de les granges remotes
   # ============================================================================
   openldap:
     image: osixia/openldap:1.5.0
@@ -82,7 +127,6 @@ services:
 
   # ============================================================================
   # 5. Eina de Gestió Visual LDAP — phpLDAPadmin
-  # Accés administratiu intern: http://localhost:8081
   # ============================================================================
   phpldapadmin:
     image: osixia/phpldapadmin:0.9.0

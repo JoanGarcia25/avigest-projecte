@@ -60,7 +60,8 @@ L'aïllament s'aplica en dues capes complementàries per garantir la seguretat p
    - Als usuaris de tipus *Admin Client* se'ls vincula el camp `businessCategory: CLIENT_<ID_CLIENT>` (per exemple `CLIENT_1`). L'aplicació web o API valida aquest camp i només retorna dades on `granges.id_client = 1`.
    - Als usuaris de tipus *Gestor Granja* se'ls vincula a més l'atribut `departmentNumber: GRANJA_<ID_GRANJA>` (per exemple `GRANJA_1`). D'aquesta manera, encara que el seu client tingui 5 granges, el gestor només té visibilitat de la granja `1`.
 
-### Capa 2: Aïllament a la Base de Dades i l'API
-- Quan un usuari inicia sessió, el servei d'autenticació obté els seus grups LDAP i els identificadors de client i granja.
-- Totes les consultes SQL executades pel programari filtren obligatòriament amb `WHERE granges.id_client = :client_session` (i si és gestor, s'afegeix `AND granges.id_granja = :granja_session`).
-- Els administradors globals (`cn=AdminsAviGest`) no tenen cap filtre aplicat i tenen visibilitat de suport tècnic global.
+### Capa 2: Aïllament a la Base de Dades (demostrable al laboratori)
+- Un `ldapsearch` amb l'admin **pot llistar tot l'arbre**: LDAP identifica i agrupa, no amaga branques d'altres clients.
+- L'aïllament de dades es prova a PostgreSQL: `psql -U avigest_consulta` + `SELECT sp_set_tenant(1)` o `sp_set_tenant(1, 1)` (només Granja Bellpuig).
+- Quan hi hagi portal web, llegirà `businessCategory` i `departmentNumber` i cridarà `sp_set_tenant` a cada sessió.
+- Els administradors globals (`cn=AdminsAviGest` / rol SQL `avigest_app`) tenen visibilitat de suport tècnic global.

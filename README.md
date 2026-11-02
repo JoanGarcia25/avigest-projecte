@@ -35,11 +35,17 @@ docker compose up -d
 ```
 
 Serveis actius:
-- **PostgreSQL 16 (Base de Dades):** Port `5432` (Usuari: `avigest_app`, Pass: `avigest_secret_2026`, BD: `avigest_db`)
-- **PostgreSQL Rèplica:** Port `5433` (Hot Standby local de demostració)
-- **Broker MQTT Mosquitto:** Port `1883` / `8883` (Recepció de telemetria des de la VPN WireGuard de granja)
-- **OpenLDAP (Directori d'usuaris):** Port `389` / `636` (Base: `dc=avigest,dc=cat`)
-- **phpLDAPadmin (Interfície web LDAP):** `http://localhost:8081` (Login DN: `cn=admin,dc=avigest,dc=cat`, Pass: `admin_ldap_pass_2026`)
+- **PostgreSQL 16 (primari):** Port `5432` (Usuari: `avigest_app`, Pass: `avigest_secret_2026`, BD: `avigest_db`)
+- **PostgreSQL rèplica (Hot Standby):** Port `5433` (streaming replication; només lectura)
+- **Broker MQTT Mosquitto:** Port `1883` (el túnel WireGuard xifra el trànsit de granja)
+- **Ingesta MQTT:** contenidor `avigest_mqtt_ingest` (subscriu `avigest/+/telemetria/#` i fa `INSERT` amb el rol `avigest_iot`)
+- **OpenLDAP:** Port `389` / `636` (Base: `dc=avigest,dc=cat`; usuaris de prova: contrasenya `avigest2026`)
+- **phpLDAPadmin:** `http://localhost:8081` (Login DN: `cn=admin,dc=avigest,dc=cat`, Pass: `admin_ldap_pass_2026`)
+
+Prova RLS (no feu servir `avigest_app`, és superusuari i no filtra files):
+```bash
+docker exec -it avigest_postgres psql -U avigest_consulta -d avigest_db -c "SELECT sp_set_tenant(1); SELECT nom_granja FROM granges;"
+```
 
 ---
 

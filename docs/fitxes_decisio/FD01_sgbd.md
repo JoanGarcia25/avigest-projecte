@@ -22,7 +22,7 @@ El sistema centralitzat d'AviGest a `srv-serveis` requereix un SGBD relacional r
 * **Descripció:** SGBD relacional i d'objectes avançat de codi obert, de referència en entorns empresarials i projectes IoT.
 * **Pros:**
   - **Llenguatge procedural avançat (PL/pgSQL):** Permet escriure triggers rics i procediments d'automatització i auditoria d'accessos sense limitacions.
-  - **Suport excel·lent per a telemetria:** Extensions natives com TimescaleDB per a sèries temporals de sensors i tipus de dades JSON/JSONB.
+  - **Suport excel·lent per a telemetria:** Tipus JSON/JSONB natius i índexs de sèrie temporal. TimescaleDB es deixa com a extensió futura; **no està instal·lada al laboratori**.
   - **Seguretat a nivell de fila (Row-Level Security - RLS):** Aïllament natiu multitenant per motor de dades, ideal per separar granges i clients.
   - **Mecanisme de rèplica nadiu (Streaming Replication):** Permet configurar rèpliques calentes (*Hot Standby*) amb sincronització basada en fitxers WAL (*Write-Ahead Logging*).
 * **Contres:**
@@ -51,7 +51,7 @@ El sistema centralitzat d'AviGest a `srv-serveis` requereix un SGBD relacional r
 3. **Redundància i Rèplica (Fitxa de Decisió / Avaluació):**
    > **Nota d'arquitectura sobre la Rèplica de Base de Dades:**  
    > En el desplegament del laboratori acadèmic, la rèplica de PostgreSQL està allotjada com a contenidor secundari dins de la mateixa màquina virtual `srv-serveis`.  
-   > **Limitació de disseny documentada i defensada davant del tribunal:** Som plenament conscients que tenir la rèplica en un contenidor dins de la mateixa VM **no és una redundància real de maquinari si cau la VM sencera o si falla el disc virtual de `srv-serveis`**. En aquesta topologia de laboratori, la rèplica serveix per protegir el servei davant de fallades del procés PostgreSQL, errors de memòria cau o corrupcions de dades de l'aplicació, i per demostrar la configuració de *Streaming Replication*.  
+   > **Limitació de disseny documentada i defensada davant del tribunal:** Som plenament conscients que tenir la rèplica en un contenidor dins de la mateixa VM **no és una redundància real de maquinari si cau la VM sencera o si falla el disc virtual de `srv-serveis`**. El contenidor `avigest_postgres_replica` (port 5433) sí que fa **streaming replication real** (`pg_basebackup` + `walreceiver`): protegeix la caiguda del procés primari, no la del disc de la VM.  
    > Si cau la VM `srv-serveis` per complet, la continuïtat del servei està garantida per la màquina virtual dedicada independent **`srv-backup`** (`10.0.20.20`), la qual fa còpies transaccionals diàries i les emmagatzema en un segon disc virtual extern (RTO < 30 minuts). En una arquitectura de producció empresarial amb recursos de maquinari suficients, la rèplica de la BD s'allotjaria en una VM pròpia o en un servidor físic separat en un altre rack/CPD.
 
 ---
@@ -59,4 +59,6 @@ El sistema centralitzat d'AviGest a `srv-serveis` requereix un SGBD relacional r
 ## 4. Mètode de verificació
 - **Desplegament en Docker:** Contenidor `postgres:16-alpine` a la màquina `srv-serveis` (LAN: `10.0.20.0/24`).
 - **Validació de triggers:** Execució de lectures de temperatura disparant l'activació de l'actuador i la inserció d'alarma.
-- **Rèplica:** Verificació de l'estat de connexió del procés `walreceiver` i comprovació de lectura a la instància standby.
+- **Rèplica:** `SELECT * FROM pg_stat_replication;` al primari i `SELECT pg_is_in_recovery();` al port 5433 (ha de retornar `t`).
+- **RLS:** connexió amb `avigest_consulta` + `SELECT sp_set_tenant(1)` vs `sp_set_tenant(2)`.
+- **Ingesta MQTT:** publicació al topic `avigest/granja1/telemetria/temperatura` i comprovació de la fila a `lectures_sensors`.

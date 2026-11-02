@@ -1,6 +1,6 @@
 # Model Entitat-Relació (ER) — AviGest S.L.
 
-Aquest document defineix el model de dades relacional per al sistema de gestió de granges avícoles d'AviGest S.L., cobrint tots els requeriments funcionals de l'enunciat (R1 a R7).
+Aquest document defineix el model de dades relacional per al sistema de gestió de granges avícoles d'AviGest S.L., cobrint tots els requeriments funcionals de l'enunciat (R1 a R7) i la traçabilitat auditada a PostgreSQL 16 (Requeriment 4.3).
 
 ---
 
@@ -60,6 +60,8 @@ erDiagram
         DATE data_sortida_real
         INT num_aus_inicials
         INT num_baixes
+        NUMERIC pes_mitja_kg
+        NUMERIC pinso_consumit_kg
         VARCHAR estat
     }
 
@@ -112,6 +114,17 @@ erDiagram
         BOOLEAN resolta
         TIMESTAMP data_generacio
         TIMESTAMP data_resolucio
+        TEXT observacions_resolucio
+    }
+
+    AUDITORIA_CANVIS {
+        BIGINT id_auditoria PK
+        VARCHAR taula
+        VARCHAR operacio
+        VARCHAR usuari_bd
+        JSONB dades_antigues
+        JSONB dades_noves
+        TIMESTAMP data_hora
     }
 ```
 
@@ -119,27 +132,32 @@ erDiagram
 
 ## 2. Descripció de les Entitats i Requeriments Coberts
 
-
 ### 2.1. `CLIENTS` i `GRANGES` (Requeriments R1, R2, R3)
-- **`CLIENTS`**: Empreses propietàries que contracten el servei d'AviGest.
+- **`CLIENTS`**: Empreses ramaderes o integradores propietàries que contracten la plataforma AviGest S.L.
 - **`GRANGES`**: Cada explotació física. Una empresa pot tenir 1 o N granges (`id_client` és clau forana).
-- **Aïllament multitenant (R3)**: Totes les consultes de clients s'executen filtrant per `id_client` o a través de vistes dedicades. Els usuaris gestors de granja s'assignen a un `id_granja` concret.
+- **Aïllament multitenant (R3)**: Implementat mitjançant **Row-Level Security (RLS)** nadiu a PostgreSQL 16. Els usuaris amb rol `avigest_consulta` només tenen visibilitat de les granges del seu client (activat mitjançant `sp_set_tenant(id_client)` o `sp_set_tenant(id_client, id_granja)`).
 
 ### 2.2. `NAUS` i `LOTS_CRIANCA` (Requeriment R6)
-- **`NAUS`**: Estructures de la granja on s'engreixen els pollastres.
-- **`LOTS_CRIANCA`**: Representa el cicle de vida d'una tongada d'animals (entrada de pollets de 1 dia, seguiment, pèrdues/baixes i sortida a escorxador). Permet calcular l'històric de cicles de cada nau.
+- **`NAUS`**: Pavellons físics d'engreix dins de cada granja, amb dimensions i capacitat màxima d'aus.
+- **`LOTS_CRIANCA`**: Representa el cicle de vida d'una tongada d'animals (~45 dies) des de l'entrada de pollets de 1 dia fins a l'escorxador.
+  - Camps de rendiment: `num_aus_inicials`, `num_baixes`, `pes_mitja_kg` i `pinso_consumit_kg`.
+  - Permet calcular l'Índex de Conversió Alimentària (ICA = pinso total / quilos de carn produïts) i el percentatge de mortalitat mitjançant la vista `v_comparativa_lots_rendiment`.
 
 ### 2.3. `SENSORS` i `LECTURES_SENSORS` (Requeriments R4, 4.8)
-- **`SENSORS`**: Catàleg de dispositius instal·lats a cada nau.
-  - Tipus: `temperatura`, `humitat`, `co2`, `amoniac`, `silo_gra`, `consum_aigua`, `consum_pinso`.
-  - Tecnologia: `LoRaWAN` (per a llargues distàncies o elements aïllats com silos) o `RS485` (per a bus de comunicacions cablejat dins de la nau).
+- **`SENSORS`**: Catàleg de dispositius de telemetria instal·lats a cada nau.
+  - Tipus suportats: `temperatura`, `humitat`, `co2`, `amoniac`, `pes_silo`, `llum`, `consum_aigua`.
+  - Tecnologies: `RS485` (Modbus RTU cablejat industrial a naus) i `LoRaWAN` (comunicació de ràdio 868 MHz per a pesatge de silos exteriors).
   - Llindars de tolerància (`llindar_minim` i `llindar_maxim`) utilitzats pels triggers automàtics.
-- **`LECTURES_SENSORS`**: Taula transaccional on arriben les dades telemètriques periòdiques (amb marca de temps `data_hora`, valor i unitat ºC, %, kg, ppm).
+- **`LECTURES_SENSORS`**: Sèrie temporal d'alt volum que emmagatzema les lectures rebudes del broker MQTT Mosquitto a través del servei d'ingesta.
 
 ### 2.4. `ACTUADORS` i `REGISTRE_ACTUACIONS` (Requeriment R5)
-- **`ACTUADORS`**: Equips electromecànics de control ambiental (`ventilador`, `calefactor`, `dosificador_aliment`, `alarma_acustica`).
-- **`REGISTRE_ACTUACIONS`**: Historial auditable de cada canvi d'estat d'un actuador (qui o què l'ha activat: automatitzat per un sensor o manual per un operari).
+- **`ACTUADORS`**: Equips electromecànics de control ambiental (`ventilador`, `calefactor`, `il_luminacio`, `menjadora`, `bomba_aigua`, `alarma_sonora`, `nebulitzador`).
+- **`REGISTRE_ACTUACIONS`**: Historial auditable de cada canvi d'estat d'un actuador (qui o què l'ha activat: automàtic per trigger de sobretemperatura/CO2 o manual per un operari).
 
 ### 2.5. `ALARMES_INCIDENCIES` (Requeriment R7)
-- Taula de notificació d'anomalies (temperatura crítica, fallada de ventilació, silo buit). Registra el moment de detecció, nivell de severitat (`info`, `avis`, `critic`) i si ha estat atesa pel responsable.
+- Taula d'incidències disparades automàticament pel trigger `fn_control_llindars_sensor()` quan es detecten valors fora de rang (cop de calor $\ge 33^\circ\text{C}$, risc d'hipotèrmia $\le 16^\circ\text{C}$, CO2 $\ge 3000\text{ ppm}$, silo buit $\le 500\text{ kg}$).
+- Suporta traçabilitat de resolució amb camps `resolta`, `data_resolucio` i `observacions_resolucio`, gestionat pel procediment `sp_resoldre_alarma()`.
 
+### 2.6. `AUDITORIA_CANVIS` (Requeriment 4.3 / E2 Sec. 7.2)
+- Taula immutable de traçabilitat que emmagatzema els canvis DML (INSERT, UPDATE, DELETE) sobre les entitats mestres (`clients`, `granges`, `naus`, `lots_crianca`, `sensors`, `actuadors`).
+- Disparada de manera transparent pel trigger `fn_auditoria_canvis()`, desant l'estat anterior i posterior en format JSONB juntament amb l'usuari SQL i marca de temps.
