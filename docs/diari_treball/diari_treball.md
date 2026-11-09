@@ -131,6 +131,22 @@
 
 ---
 
+### Sessió 7: Dilluns, 2 de novembre de 2026 (6 hores)
+**Fita:** Validació de la Base de Dades a Docker, Resolució de Bugs de Vistes i Ingesta IoT
+
+- **Objectiu:** Posar en funcionament el contenidor `postgres:16-alpine` a Docker, verificar l'execució atòmica dels 5 scripts d'`initdb/`, depurar la lògica SQL i alinear el disseny amb la nova Guia de Lliuraments E2-E3 facilitada pel professorat.
+- **Treball realitzat:**
+  - **Joan:** Verificació de les regles de tallafocs i aïllament de zones; assistència en el diagrama d'entitat-relació i coordinació de la traçabilitat de la xarxa DMZ cap a PostgreSQL.
+  - **Mariam:**
+    - Desplegament de `avigest_postgres` a Docker Compose.
+    - Detecció i correcció d'un error de subconsulta no agrupada (`ERROR: subquery uses ungrouped column`) a la vista comparativa `v_resum_diari_climatic`, refactoritzant-la amb un `LEFT JOIN` directe net.
+    - Verificació de les 10 taules en 3FN, de les 6 vistes de negoci i validació del trigger `fn_control_llindars_sensor` davant d'una inserció d'estrès tèrmic (35.0 ºC), registrant l'encesa del ventilador a `registre_actuacions` i l'alerta crítica a `alarmes_incidencies`.
+    - Incorporació a l'E2 del catàleg traçable de requeriments funcionals R1–R7, justificació formal de la normalització 3FN i taula de freqüències de mostreig IoT (30s clima, 15m sitges).
+    - Actualització de les seccions de fonts bibliogràfiques a les 5 fitxes de decisió tècnica (FD01 a FD05).
+- **Dedicació:** Joan: 6 h | Mariam: 6 h (Total: 12 h)
+
+---
+
 ## Taula Resum d'Hores Lectives Dedicades
 
 | Sessió | Data | Fase / Fita | Hores Joan | Hores Mariam | Total Sessió |
@@ -142,7 +158,8 @@
 | — | Dilluns 12/10/2026 | *FESTIU (Festa Nacional — Sense classe)* | 0 h | 0 h | **0 h** |
 | **S5** | Dilluns 19/10/2026 | Investigació, proves de concepte i acords E2 | 6 h | 6 h | **12 h** |
 | **S6** | Dilluns 26/10/2026 | Multi-VM (Ubuntu 24.04 + OPNsense), PostgreSQL 16 i avanç E3 | 6 h | 6 h | **12 h** |
-| **TOTAL** | *(Fins al 26/10)* | **6 dilluns lectius x 6 hores** | **36 h** | **36 h** | **72 h** |
+| **S7** | Dilluns 02/11/2026 | Validació PostgreSQL 16 Docker, triggers i adaptació guia E2-E3 | 6 h | 6 h | **12 h** |
+| **TOTAL** | *(Fins al 02/11)* | **7 dilluns lectius x 6 hores** | **42 h** | **42 h** | **84 h** |
 
 ---
 

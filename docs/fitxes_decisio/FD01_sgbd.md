@@ -62,3 +62,11 @@ El sistema centralitzat d'AviGest a `srv-serveis` requereix un SGBD relacional r
 - **Rèplica:** `SELECT * FROM pg_stat_replication;` al primari i `SELECT pg_is_in_recovery();` al port 5433 (ha de retornar `t`).
 - **RLS:** connexió amb `avigest_consulta` + `SELECT sp_set_tenant(1)` vs `sp_set_tenant(2)`.
 - **Ingesta MQTT:** publicació al topic `avigest/granja1/telemetria/temperatura` i comprovació de la fila a `lectures_sensors`.
+
+---
+
+## 5. Fonts consultades
+- Documentació oficial de PostgreSQL 16: *Streaming Replication & WAL Archiving* — [https://www.postgresql.org/docs/16/warm-standby.html](https://www.postgresql.org/docs/16/warm-standby.html)
+- Documentació oficial de PostgreSQL: *Row Security Policies (RLS)* — [https://www.postgresql.org/docs/16/ddl-rowsecurity.html](https://www.postgresql.org/docs/16/ddl-rowsecurity.html)
+- Repositori oficial de la imatge Docker de PostgreSQL (Docker Hub): [https://hub.docker.com/_/postgres](https://hub.docker.com/_/postgres)
+- Comparativa tècnica PostgreSQL vs MySQL per a ingestes de sèries temporals i JSONB: PostgreSQL Global Development Group (2024).

@@ -21,13 +21,15 @@
    - 2.5. Recursos Humans i Mà d'Obra (198h per alumne)
    - 2.6. Balanç Econòmic Consolidat i Cost Marginal per Nova Granja
 3. [Actualització de Tasques i Rols (Acompliment i Seguiment)](#3-actualització-de-tasques-i-rols-acompliment-i-seguiment)
-   - 3.1. Matriu de Responsabilitats
+   - 3.1. Matriu de Responsabilitats i Rols (Model RACI)
    - 3.2. Registre de Fites i Dates d'Acompliment
 4. [Procediment i Cronograma d'Intervenció a Camp](#4-procediment-i-cronograma-dintervenció-a-camp)
    - 4.1. Fases d'Execució a la Granja Pilot
    - 4.2. Protocol de Proves i Acceptació en Camp
 5. [Pla de Contingència i Gestió de Riscos](#5-pla-de-contingència-i-gestió-de-riscos)
-6. [Annex d'Ús d'Intel·ligència Artificial (Norma 4)](#6-annex-dús-dintel·ligència-artificial-norma-4)
+6. [Documentació Associada i Estructura del Repositori Git](#6-documentació-associada-i-estructura-del-repositori-git)
+7. [Annex d'Ús d'Intel·ligència Artificial (Norma 4)](#7-annex-dús-dintel·ligència-artificial-norma-4)
+8. [Bibliografia i Fonts de Preus Consultades](#8-bibliografia-i-fonts-de-preus-consultades)
 
 ---
 
@@ -145,10 +147,23 @@ Quan un client existent o nou contracta una granja addicional de 2 naus:
 
 En compliment directe de la instrucció de l'enunciat (*"marcar dates d'acompliment i qui ho ha fet"*), es detalla el registre oficial d'execució de tasques des de l'inici del projecte fins a la data actual (26 d'octubre) i la planificació d'acompliment fins al 4 de desembre:
 
-### 3.1. Matriu de Responsabilitats
-- **Joan:** Infraestructura de maquinari seu/granges (4.1), Sistema LDAP i permisos (4.2), DMZ i tallafocs OPNsense (4.4), Còpies de seguretat i PRD (4.5), Redundància de dades (4.6).
-- **Mariam:** Model ER i esquema SQL (4.3), Triggers i procediments PL/pgSQL (4.3), Vistes comparatives (4.3), Scripts d'alta automatitzada de granges (4.7), Arquitectura i simulació IoT (4.8).
-- **Compartit (Joan i Mariam):** Estudi de necessitats (E1), Diari de treball setmanal, Fitxes de decisió (FD01-FD05), Pressupostos i maquetació final (E2 i E3).
+### 3.1. Matriu de Responsabilitats i Rols (Model RACI)
+En compliment dels requisits d'organització (RA3), s'estableix la matriu de rols definint qui és el **Responsable directe d'execució (R)**, qui fa la **Revisió creuada de qualitat (A/C)** i qui n'és l'**Informat (I)**:
+
+| Àmbit Tècnic / Tasca | Responsable Execució (R) | Revisió Creuada (A/C) | Responsabilitat Final |
+| :--- | :---: | :---: | :---: |
+| **Infraestructura CPD i Maquinari (4.1)** | **Joan Garcia** | Mariam Solano | Joan Garcia |
+| **Directori Centralitzat LDAP i Rols (4.2)** | **Joan Garcia** | Mariam Solano | Joan Garcia |
+| **Model Relacional ER i DDL PostgreSQL (4.3)** | **Mariam Solano** | Joan Garcia | Mariam Solano |
+| **Triggers PL/pgSQL i Lògica de Negoci (4.3)** | **Mariam Solano** | Joan Garcia | Mariam Solano |
+| **Vistes i Consultes Comparatives SQL (4.3)** | **Mariam Solano** | Joan Garcia | Mariam Solano |
+| **Tallafocs OPNsense, DMZ i Xarxes (4.4)** | **Joan Garcia** | Mariam Solano | Joan Garcia |
+| **Còpies de Seguretat i Servidor PRD (4.5)** | **Joan Garcia** | Mariam Solano | Joan Garcia |
+| **Anàlisi de Redundància i RAID (4.6)** | **Joan Garcia** | Mariam Solano | Joan Garcia |
+| **Script Automatització Alta Granges (4.7)** | **Mariam Solano** | Joan Garcia | Mariam Solano |
+| **Sensòrica IoT, RS485 i LoRaWAN (4.8)** | **Mariam Solano** | Joan Garcia | Mariam Solano |
+| **Pressupostos i Pla Econòmic (E3)** | **Mariam Solano** | Joan Garcia | Ambdós |
+| **Diari de Treball i Control de Versions** | **Ambdós** | Ambdós | Ambdós |
 
 ### 3.2. Registre de Fites i Dates d'Acompliment
 
@@ -240,10 +255,45 @@ gantt
 
 ---
 
-## 6. Annex d'Ús d'Intel·ligència Artificial (Norma 4)
+## 6. Documentació Associada i Estructura del Repositori Git
+
+El desenvolupament, les guies d'intervenció i el control del projecte s'organitzen estrictament dins del repositori Git seguint aquesta estructura de carpetes i responsabilitats de manteniment:
+
+| Carpeta / Ruta al Repositori | Contingut i Propòsit | Responsable de Manteniment |
+| :--- | :--- | :---: |
+| [`bd/sql/`](file:///c:/avigest-projecte-git/bd/sql/) | Esquema DDL en 3FN, dades de prova inicials, vistes i rols de PostgreSQL 16. | **Mariam Solano** |
+| [`bd/procediments-triggers/`](file:///c:/avigest-projecte-git/bd/procediments-triggers/) | Triggers de termòstat automàtic, alarmes i procediments en PL/pgSQL. | **Mariam Solano** |
+| [`bd/model-er/`](file:///c:/avigest-projecte-git/bd/model-er/) | Documentació i diagrames Mermaid del model de dades relacional. | **Mariam Solano** |
+| [`docker/`](file:///c:/avigest-projecte-git/docker/) | `docker-compose.yml`, configuració de Mosquitto i scripts d'arrencada (`initdb/`). | **Joan Garcia / Mariam** |
+| [`infra/dmz-tallafocs/`](file:///c:/avigest-projecte-git/infra/dmz-tallafocs/) | Disseny de la DMZ, polítiques de seguretat i scripts de regles d'OPNsense. | **Joan Garcia** |
+| [`infra/ldap/`](file:///c:/avigest-projecte-git/infra/ldap/) | Arbre base organitzatiu i fitxers LDIF d'usuaris inicials per a OpenLDAP. | **Joan Garcia** |
+| [`infra/backups-prd/`](file:///c:/avigest-projecte-git/infra/backups-prd/) | Scripts d'automatització de còpies (`backup_avigest.sh`) i restauració PRD. | **Joan Garcia** |
+| [`iot/sensors/`](file:///c:/avigest-projecte-git/iot/sensors/) | Simulador IoT en Python (`simulador_iot.py`) i codi C++ ESP32 de referència. | **Mariam Solano** |
+| [`scripts/automatitzacio-granges/`](file:///c:/avigest-projecte-git/scripts/automatitzacio-granges/) | Script bash d'alta automàtica de granges (`alta_granja.sh`) per a la variació. | **Mariam Solano** |
+| [`docs/E2_disseny_tecnic/`](file:///c:/avigest-projecte-git/docs/E2_disseny_tecnic/) | Memòria oficial de Disseny Tècnic del Projecte (Lliurable E2). | **Ambdós** |
+| [`docs/E3_pla_intervencio/`](file:///c:/avigest-projecte-git/docs/E3_pla_intervencio/) | Memòria oficial del Pla d'Intervenció i Pressupostos (Lliurable E3). | **Ambdós** |
+| [`docs/fitxes_decisio/`](file:///c:/avigest-projecte-git/docs/fitxes_decisio/) | Fitxes de decisió tècnica justificades FD01 a FD05 amb fonts oficials. | **Ambdós** |
+| [`docs/diari_treball/`](file:///c:/avigest-projecte-git/docs/diari_treball/) | Diari de treball setmanal d'hores lectives i checklist del projecte. | **Ambdós** |
+
+---
+
+## 7. Annex d'Ús d'Intel·ligència Artificial (Norma 4)
 
 *En compliment estricte de la Norma 4 de les bases del projecte:*
 
 - **Eines utilitzades:** Antigravity / Gemini 3.8 Flash (High).
 - **Àmbit d'aplicació:** Suport en la investigació de referències de maquinari industrial, estructuració i càlcul dels quadres de pressupostos CapEx/OpEx, elaboració de diagrames temporals Mermaid i plantilla de seguiment de fites.
 - **Mètode de verificació i comprensió:** L'equip (Joan Garcia i Mariam Solano) ha revisat, validat i contrastat cadascun dels preus amb proveïdors reals del sector informàtic i ramader català (preus de maquinari de servidor, sensors industrials i tarifes de telecomunicacions). Tots dos membres de l'equip comprenen la justificació de cada partida, les dependències del cronograma i saben defensar qualsevol aspecte econòmic o d'intervenció davant del tribunal docent.
+
+---
+
+## 8. Bibliografia i Fonts de Preus Consultades
+
+1. **Dell Technologies Espanya (2024):** Configurador oficial de servidors rack *Dell PowerEdge R450 1U*, controladora PERC H755 i discos SATA SSD Enterprise. [https://www.dell.com/es-es/work/shop/servidores-de-dell/](https://www.dell.com/es-es/work/shop/servidores-de-dell/)
+2. **Schneider Electric / APC (2024):** *APC Smart-UPS On-Line SRT2200RMXLI 2200VA 2U*. Fitxa tècnica i preus de distribució oficial. [https://www.apc.com/es/es/](https://www.apc.com/es/es/)
+3. **Cisco Systems (2024):** *Cisco Catalyst 1000 Series Switches Data Sheet*. Distribuïdor oficial Ingram Micro. [https://www.cisco.com/](https://www.cisco.com/)
+4. **Advantech Europe (2024):** *UNO-2271G Fanless Industrial PC Datasheet & Online Shop*. [https://www.advantech.com/en-eu](https://www.advantech.com/en-eu)
+5. **Teltonika Networks (2024):** *RUT955 Industrial Cellular Router Specification Sheet*. [https://teltonika-networks.com/](https://teltonika-networks.com/)
+6. **Dragino Technology Co. (2024):** *LPS8N Indoor LoRaWAN Gateway Price List & Documentation*. [https://www.dragino.com/](https://www.dragino.com/)
+7. **RS Components Espanya / Farnell (2024):** Sondes industrials SHT30, sensors de CO2 NDIR Winsen, mòduls relé de carril DIN i caixes estancs de polièster IP66. [https://es.rs-online.com/](https://es.rs-online.com/)
+8. **Convenis Col·lectius del Sector TIC / Consultoria Informàtica de Catalunya (2024):** Tarifes de referència per a tècnics de grau superior en xarxes i sistemes (30 €/hora mà d'obra).

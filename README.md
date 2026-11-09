@@ -67,5 +67,7 @@ docker exec -it avigest_postgres psql -U avigest_consulta -d avigest_db -c "SELE
 - [E3 — Pla d'Intervenció, Recursos, Costos i Rols](docs/E3_pla_intervencio/E3_pla_intervencio.md)
 - [Diari de Treball i Sessions](docs/diari_treball/diari_treball.md)
 - [Guies de Laboratori Virtual (Debian Base i VirtualBox)](docs/Guies_MV/)
+- [Arquitectura i Justificació de la Base de Dades (10 Taules, RLS, Triggers)](bd/explicacio_disseny_base_dades.md)
+- [Model Entitat-Relació (ER)](bd/model-er/model_er.md)
 
 

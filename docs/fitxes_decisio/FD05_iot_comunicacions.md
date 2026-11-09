@@ -44,3 +44,11 @@ Per aïllar correctament la simulació de maquinari del control de la granja, es
 - **Simulació a `granja1-sim`:** Generació de trames Modbus i paquets LoRa cap a `granja1-srv`.
 - **Comprovació de regles locals:** Validació que `granja1-srv` activa el relé del ventilador fins i tot si es desconnecta la interfície de xarxa cap a la seu central.
 - **Ingesta central:** Verificació a `srv-serveis` que les lectures arriben al broker MQTT i es guarden a la taula corresponent de PostgreSQL.
+
+---
+
+## 5. Fonts consultades
+- LoRa Alliance: *LoRaWAN Regional Parameters RP002-1.0.4 (EU868 band & Duty Cycle)* — [https://lora-alliance.org/resource_hub/rp002-1-0-4-regional-parameters/](https://lora-alliance.org/resource_hub/rp002-1-0-4-regional-parameters/)
+- Modbus Organization: *Modbus over Serial Line Specification and Implementation Guide V1.02* — [https://modbus.org/docs/Modbus_over_serial_line_V1_02.pdf](https://modbus.org/docs/Modbus_over_serial_line_V1_02.pdf)
+- Dragino Technology: *LPS8N Indoor LoRaWAN Gateway User Manual & Datasheet* — [https://www.dragino.com/products/lora-lorawan-gateway/item/160-lps8n.html](https://www.dragino.com/products/lora-lorawan-gateway/item/160-lps8n.html)
+- OASIS Standard: *MQTT Version 5.0 / 3.1.1 Specification* — [https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html](https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html)
