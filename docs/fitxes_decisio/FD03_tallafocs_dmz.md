@@ -58,5 +58,13 @@ La seu central d'AviGest conté dades crítiques i privades de múltiples client
 ## 4. Mètode de verificació
 - **Inspecció de regles a la GUI d'OPNsense:** Comprovació de les regles a les pestanyes WAN, DMZ, LAN i WireGuard / VPN.
 - **Prova de trànsit creuat:** Comprovació amb `curl` i `nc` que `dmz-web` no pot obrir connexions arbitràries cap a `srv-backup` ni ports no autoritzats de `srv-serveis`.
+
+---
+
+## 5. Fonts consultades
+- OPNsense Official Documentation: *Firewall Rule Management & NAT Configuration* — [https://docs.opnsense.org/manual/firewall.html](https://docs.opnsense.org/manual/firewall.html)
+- OPNsense Documentation: *WireGuard Road Warrior and Site-to-Site Setup* — [https://docs.opnsense.org/manual/how-tos/wireguard-client.html](https://docs.opnsense.org/manual/how-tos/wireguard-client.html)
+- NIST Special Publication 800-41 Rev. 1: *Guidelines on Firewalls and Firewall Policy* — [https://csrc.nist.gov/publications/detail/sp/800-41/rev-1/final](https://csrc.nist.gov/publications/detail/sp/800-41/rev-1/final)
+- pfSense vs OPNsense Security Comparison: Deciso B.V. Architecture Whitepaper (2024).
 - **Validació de túnel VPN:** Connexió satisfactòria des de `granja1-srv` i comprovació del handshake a OPNsense (`wg show`).
 

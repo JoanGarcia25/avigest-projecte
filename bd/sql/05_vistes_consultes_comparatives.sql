@@ -62,16 +62,16 @@ SELECT
     ROUND(MAX(ls.valor), 2) AS valor_maxim,
     s.unitat_mesura,
     COUNT(ls.id_lectura) AS total_lectures,
-    (SELECT COUNT(*) 
-     FROM alarmes_incidencies a 
-     WHERE a.id_nau = n.id_nau 
-       AND a.id_sensor = s.id_sensor 
-       AND DATE(a.data_generacio) = DATE(ls.data_hora)) AS total_alarmes_dia
+    COUNT(a.id_alarma) AS total_alarmes_dia
 FROM lectures_sensors ls
 JOIN sensors s ON ls.id_sensor = s.id_sensor
 JOIN naus n ON s.id_nau = n.id_nau
 JOIN granges g ON n.id_granja = g.id_granja
 JOIN clients c ON g.id_client = c.id_client
+LEFT JOIN alarmes_incidencies a 
+       ON a.id_nau = n.id_nau 
+      AND a.id_sensor = s.id_sensor 
+      AND DATE(a.data_generacio) = DATE(ls.data_hora)
 GROUP BY c.id_client, c.nom_empresa, g.nom_granja, n.id_nau, n.codi_nau, s.id_sensor, s.tipus_sensor, s.unitat_mesura, DATE(ls.data_hora)
 ORDER BY data_lectura DESC, g.nom_granja, n.codi_nau;
 

@@ -1,0 +1,118 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0">
+  <diagram id="avigest-iot-flux-v2" name="Arquitectura i Flux IoT End-to-End">
+    <mxGraphModel dx="1644" dy="864" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="980" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title-iot" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontStyle=1;fontColor=#1E3A8A;" value="AviGest S.L. — Arquitectura i Flux de Dades IoT End-to-End (Camp a Base de Dades)" vertex="1">
+          <mxGeometry height="40" width="900" x="150" y="15" as="geometry" />
+        </mxCell>
+        <mxCell id="box-capa1" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#FEF2F2;strokeColor=#F87171;fontStyle=1;fontColor=#991B1B;startSize=28;" value="CAPA 1: SENSÒRICA I ACTUADORS EN ENTORN HOSTIL (Camp / Naus / Silos)" vertex="1">
+          <mxGeometry height="135" width="1120" x="40" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="iot-temp" parent="box-capa1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF1F2;strokeColor=#E11D48;fontColor=#881337;" value="&lt;b&gt;Sondes Clima (SHT30 / XY-MD02)&lt;/b&gt;&lt;br&gt;Temperatura i Humitat&lt;br&gt;Filtre sinteritzat antipols/plomissol&lt;br&gt;&lt;font color=&quot;#DC2626&quot;&gt;&lt;b&gt;Mostreig: Cada 30 segons&lt;/b&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="235" x="25" y="38" as="geometry" />
+        </mxCell>
+        <mxCell id="iot-co2" parent="box-capa1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF1F2;strokeColor=#E11D48;fontColor=#881337;" value="&lt;b&gt;Sensor CO2 (Senseair S8 NDIR)&lt;/b&gt;&lt;br&gt;Qualitat de l&#39;aire a nivell d&#39;aus&lt;br&gt;0 a 5.000 ppm (±50 ppm)&lt;br&gt;&lt;font color=&quot;#DC2626&quot;&gt;&lt;b&gt;Mostreig: Cada 60 segons&lt;/b&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="235" x="285" y="38" as="geometry" />
+        </mxCell>
+        <mxCell id="iot-silo" parent="box-capa1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#3B82F6;fontColor=#1E40AF;" value="&lt;b&gt;Pesatge de Sitges (4x Cèl·lules)&lt;/b&gt;&lt;br&gt;Extensometria a potes de silo&lt;br&gt;0 a 20.000 kg (Transductor IP67)&lt;br&gt;&lt;font color=&quot;#2563EB&quot;&gt;&lt;b&gt;Mostreig: Cada 15 min (LoRa)&lt;/b&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="245" x="545" y="38" as="geometry" />
+        </mxCell>
+        <mxCell id="iot-actuadors" parent="box-capa1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#92400E;" value="&lt;b&gt;Actuadors Electromecànics&lt;/b&gt;&lt;br&gt;• Ventiladors d&#39;extracció (Motors)&lt;br&gt;• Calefactors industrials de gas&lt;br&gt;Control per relés 16A amb aïllament" vertex="1">
+          <mxGeometry height="80" width="280" x="815" y="38" as="geometry" />
+        </mxCell>
+        <mxCell id="box-capa2" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#FFFBEB;strokeColor=#FCD34D;fontStyle=1;fontColor=#92400E;startSize=28;" value="CAPA 2: COMUNICACIONS DE CAMP (Bus Sèrie Diferencial vs Ràdio Llarg Abast)" vertex="1">
+          <mxGeometry height="115" width="1120" x="40" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="comm-rs485" parent="box-capa2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#F59E0B;fontColor=#78350F;" value="&lt;b&gt;Bus Sèrie RS485 Diferencial (Modbus RTU)&lt;/b&gt;&lt;br&gt;Cable apantallat FTP Cat6 amb aïlladors galvànics optoacoblats&lt;br&gt;&lt;i&gt;Immune a paràsits de motors i tempestes elèctriques rurals (Interior Naus)&lt;/i&gt;" vertex="1">
+          <mxGeometry height="60" width="495" x="25" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="comm-lora" parent="box-capa2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#60A5FA;fontColor=#1E3A8A;" value="&lt;b&gt;Xarxa LoRaWAN 868 MHz (Gateway Dragino LPS8N)&lt;/b&gt;&lt;br&gt;Enllaç ràdio sense fils de llarg abast (2-3 km) sense rases ni cables exteriors&lt;br&gt;&lt;i&gt;Compliment estricte del Duty Cycle europeu (&amp;lt; 1%) per a silos aïllats&lt;/i&gt;" vertex="1">
+          <mxGeometry height="60" width="550" x="545" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="box-capa3" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#F5F3FF;strokeColor=#C4B5FD;fontStyle=1;fontColor=#5B21B6;startSize=28;" value="CAPA 3: EDGE COMPUTING LOCAL — Gateway Industrial Advantech (granja1-srv: 10.1.1.10)" vertex="1">
+          <mxGeometry height="145" width="1120" x="40" y="390" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-broker" parent="box-capa3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE9FE;strokeColor=#8B5CF6;fontColor=#4C1D95;" value="&lt;b&gt;Broker MQTT Local (Mosquitto)&lt;/b&gt;&lt;br&gt;Recepció trames JSON:&lt;br&gt;&lt;code&gt;avigest/granja1/nau1/telemetria&lt;/code&gt;" vertex="1">
+          <mxGeometry height="85" width="290" x="25" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-logic" parent="box-capa3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEE2E2;strokeColor=#EF4444;fontColor=#991B1B;strokeWidth=2;" value="&lt;b&gt;Lògica de Decisió Autònoma (Temps Real)&lt;/b&gt;&lt;br&gt;• Comprova llindars: Si Temp &amp;gt; 31ºC:&lt;br&gt;  &lt;b&gt;Activa Relé Ventilador (ON) en &amp;lt; 2s&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#DC2626&quot;&gt;&lt;b&gt;Funciona fins i tot sense connexió a Internet!&lt;/b&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="85" width="375" x="345" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-buffer" parent="box-capa3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DEF7EC;strokeColor=#31C48D;fontColor=#03543F;" value="&lt;b&gt;Cua Store-and-Forward (Resiliència)&lt;/b&gt;&lt;br&gt;• Guarda les lectures a memòria flaix local&lt;br&gt;• Fins a &lt;b&gt;72 hores d&#39;autonomia&lt;/b&gt; si cau VPN&lt;br&gt;• Sincronització automàtica quan torna la xarxa" vertex="1">
+          <mxGeometry height="85" width="345" x="750" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="box-capa4" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#F3F4F6;strokeColor=#9CA3AF;fontStyle=1;fontColor=#374151;startSize=28;" value="CAPA 4: TRANSPORT SEGUR I PERÍMETRE — Túnel WireGuard + Tallafocs OPNsense (fw-seu)" vertex="1">
+          <mxGeometry height="95" width="1120" x="40" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="vpn-bar" parent="box-capa4" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0E7FF;strokeColor=#6366F1;fontColor=#312E81;align=center;" value="&lt;b&gt;Túnel VPN WireGuard Xifrat (10.0.100.10 &amp;rarr; 10.0.100.1)&lt;/b&gt; sobre Router 4G amb Doble SIM (Failover automàtic)&lt;br&gt;Regla OPNsense R-08: &lt;font color=&quot;#059669&quot;&gt;&lt;b&gt;NOMÉS es permet port TCP 1883 (MQTT Broker)&lt;/b&gt;&lt;/font&gt;. La granja té vetat l&#39;accés directe a la BD i a LDAP." vertex="1">
+          <mxGeometry height="42" width="1070" x="25" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="box-capa5" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#6EE7B7;fontStyle=1;fontColor=#065F46;startSize=28;" value="CAPA 5: SEU CENTRAL — Ingesta, Triggers i Consolidació a PostgreSQL 16 (srv-serveis: 10.0.20.10)" vertex="1">
+          <mxGeometry height="140" width="1120" x="40" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="bd-ingest" parent="box-capa5" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1FAE5;strokeColor=#10B981;fontColor=#064E3B;" value="&lt;b&gt;Broker Central + Ingestor&lt;/b&gt;&lt;br&gt;Recepció de trames MQTT&lt;br&gt;Usuari: &lt;code&gt;avigest_iot&lt;/code&gt;&lt;br&gt;Inserció a &lt;code&gt;lectures_sensors&lt;/code&gt;" vertex="1">
+          <mxGeometry height="82" width="255" x="25" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="bd-triggers" parent="box-capa5" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF2F2;strokeColor=#EF4444;fontColor=#991B1B;" value="&lt;b&gt;Triggers PL/pgSQL (&lt;code&gt;fn_control_llindars&lt;/code&gt;)&lt;/b&gt;&lt;br&gt;• Comprovació de llindars de risc&lt;br&gt;• Genera acció a &lt;code&gt;registre_actuacions&lt;/code&gt;&lt;br&gt;• Dispara alarma crítica a &lt;code&gt;alarmes_incidencies&lt;/code&gt; si Temp &amp;gt; 33ºC o CO2 &amp;gt; 3.000 ppm" vertex="1">
+          <mxGeometry height="82" width="415" x="310" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="bd-views" parent="box-capa5" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E0F2FE;strokeColor=#0284C7;fontColor=#0369A1;" value="&lt;b&gt;Vistes Comparatives &amp; RLS&lt;/b&gt;&lt;br&gt;• &lt;code&gt;v_resum_diari_climatic&lt;/code&gt;&lt;br&gt;• &lt;code&gt;v_estat_silos_gra&lt;/code&gt;&lt;br&gt;• &lt;code&gt;v_panell_executiu_global&lt;/code&gt;&lt;br&gt;Aïllament per tenant amb &lt;code&gt;sp_set_tenant()&lt;/code&gt;" vertex="1">
+          <mxGeometry height="82" width="340" x="755" y="42" as="geometry" />
+        </mxCell>
+        <mxCell id="fletxa-1-2" edge="1" parent="1" source="iot-temp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#D97706;" target="comm-rs485">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fletxa-silo-2" edge="1" parent="1" source="iot-silo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#2563EB;" target="comm-lora">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fletxa-2-3" edge="1" parent="1" source="comm-rs485" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#7C3AED;entryX=0.3;entryY=0;entryDx=0;entryDy=0;" target="edge-broker">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="230" y="386" />
+              <mxPoint x="152" y="386" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fletxa-lora-3" edge="1" parent="1" source="comm-lora" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#7C3AED;entryX=0.7;entryY=0;entryDx=0;entryDy=0;flowAnimation=0;" target="edge-broker">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="860" y="350" />
+              <mxPoint x="268" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fletxa-edge-act" edge="1" parent="1" source="edge-logic" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2.5;strokeColor=#DC2626;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="iot-actuadors">
+          <mxGeometry relative="1" x="0.0007" as="geometry">
+            <Array as="points">
+              <mxPoint x="770" y="474.5" />
+              <mxPoint x="770" y="420" />
+              <mxPoint x="1155" y="420" />
+              <mxPoint x="1155" y="148" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lbl-rele-edge" parent="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontColor=#DC2626;fontStyle=1;fillColor=#FFF1F2;rounded=1;strokeColor=#E11D48;" value="Comanda Directa de Relé (ON/OFF en local)" vertex="1">
+          <mxGeometry height="22" width="240" x="840" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="fletxa-4-5" edge="1" parent="1" source="vpn-bar" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#059669;exitX=0.15;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="bd-ingest">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fletxa-5-trig" edge="1" parent="1" source="bd-ingest" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#059669;" target="bd-triggers">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fletxa-5-views" edge="1" parent="1" source="bd-triggers" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#0284C7;" target="bd-views">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="4U0NLrGjoSj9tw5xn9RI-1" edge="1" parent="1" style="endArrow=classic;html=1;rounded=0;exitX=0.394;exitY=1.005;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.804;entryY=0.01;entryDx=0;entryDy=0;entryPerimeter=0;strokeColor=#666666;strokeWidth=2;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=11;fontColor=default;labelBackgroundColor=default;fillColor=#f5f5f5;" value="">
+          <mxGeometry height="50" relative="1" width="50" x="0.0105" as="geometry">
+            <Array as="points" />
+            <mxPoint x="960.6499999999999" y="516.995" as="sourcePoint" />
+            <mxPoint x="959.9999999999998" y="609.9899999999999" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

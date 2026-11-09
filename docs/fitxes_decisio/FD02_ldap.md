@@ -65,3 +65,11 @@ El sistema AviGest requereix un servei d'identitat i autenticació centralitzat 
 - **Prova en contenidor:** Desplegament del servei OpenLDAP amb el domini `dc=avigest,dc=cat`.
 - **Importació LDIF:** Càrrega satisfactòria dels fitxers de definició de branques i usuaris de prova dels 4 rols.
 - **Validació de consultes:** Comprovació mitjançant la comanda `ldapsearch` i navegació interactiva des de phpLDAPadmin al port `8081`.
+
+---
+
+## 5. Fonts consultades
+- OpenLDAP Project: *OpenLDAP Software 2.6 Administrator's Guide* — [https://www.openldap.org/doc/admin26/](https://www.openldap.org/doc/admin26/)
+- IETF RFC 4511: *Lightweight Directory Access Protocol (LDAP): The Protocol* — [https://datatracker.ietf.org/doc/html/rfc4511](https://datatracker.ietf.org/doc/html/rfc4511)
+- IETF RFC 2798: *Definition of the inetOrgPerson LDAP Object Class* — [https://datatracker.ietf.org/doc/html/rfc2798](https://datatracker.ietf.org/doc/html/rfc2798)
+- Documentació phpLDAPadmin Project: [https://phpldapadmin.sourceforge.net/wiki/index.php/Main_Page](https://phpldapadmin.sourceforge.net/wiki/index.php/Main_Page)

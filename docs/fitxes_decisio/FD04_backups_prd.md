@@ -51,3 +51,11 @@ Cal garantir la continuïtat de negoci i la protecció de les dades mitjançant:
 ## 4. Mètode de verificació
 - **Execució del buidatge des de `srv-backup`:** Comprovació que `pg_dump` s'executa correctament sobre `srv-serveis:5432`.
 - **Escriptura al segon disc:** Verificació de la creació del paquet `.tar.gz` al punt de muntatge del segon disc `/mnt/disc-extern-backup/`.
+
+---
+
+## 5. Fonts consultades
+- PostgreSQL Documentation: *Backup and Restore — pg_dump & Continuous Archiving* — [https://www.postgresql.org/docs/16/backup.html](https://www.postgresql.org/docs/16/backup.html)
+- OpenLDAP 2.6 Administrator's Guide: *Backing up the Directory (slapcat)* — [https://www.openldap.org/doc/admin26/maintenance.html#Backing%20up%20the%20directory](https://www.openldap.org/doc/admin26/maintenance.html#Backing%20up%20the%20directory)
+- Cybersecurity and Infrastructure Security Agency (CISA): *Data Backup Options (3-2-1 Rule)* — [https://www.cisa.gov/news-events/news/data-backup-options](https://www.cisa.gov/news-events/news/data-backup-options)
+- ISO/IEC 27031: *Guidelines for information and communication technology readiness for business continuity (RTO & RPO metrics)*.

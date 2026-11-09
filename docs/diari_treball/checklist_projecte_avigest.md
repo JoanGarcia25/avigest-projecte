@@ -101,7 +101,8 @@
 
 ### B1. Base de Dades — PostgreSQL 16 *(Responsable: Mariam)*
 
-- [x] Esquema DDL complet (9 taules normalitzades) → [01_esquema.sql](file:///c:/avigest-projecte-git/bd/sql/01_esquema.sql)
+- [x] Esquema DDL complet (10 taules normalitzades en 3FN) → [01_esquema.sql](file:///c:/avigest-projecte-git/bd/sql/01_esquema.sql)
+- [x] Document d'arquitectura i justificació del disseny (10 taules, RLS, triggers) → [explicacio_disseny_base_dades.md](file:///c:/avigest-projecte-git/bd/explicacio_disseny_base_dades.md)
 - [x] Triggers i procediments PL/pgSQL (termòstat, alarmes, alta atòmica) → [02_triggers_procedures.sql](file:///c:/avigest-projecte-git/bd/procediments-triggers/02_triggers_procedures.sql)
 - [x] Dades de prova inicials → [03_dades_prova.sql](file:///c:/avigest-projecte-git/bd/sql/03_dades_prova.sql)
 - [x] Usuaris i rols SQL de mínim privilegi → [04_usuaris_rols_bd.sql](file:///c:/avigest-projecte-git/bd/sql/04_usuaris_rols_bd.sql)
@@ -192,9 +193,9 @@
 | **Joan** | Configurar les 3 interfícies d'OPNsense a `fw-seu` (WAN, DMZ, LAN) | ⬜ |
 | **Joan** | Aplicar regles de tallafocs i provar aïllament DMZ→LAN | ⬜ |
 | **Joan** | Aixecar Docker Compose a `srv-serveis` | ⬜ |
-| **Mariam** | Verificar que les 5 SQL d'`initdb/` es carreguen correctament | ⬜ |
-| **Mariam** | Validar ingesta de lectures amb `simulador_iot.py --mode normal` | ⬜ |
-| **Ambdós** | Registrar la Sessió 7 al diari de treball | ⬜ |
+| **Mariam** | Verificar que les 5 SQL d'`initdb/` es carreguen correctament | ✅ |
+| **Mariam** | Validar ingesta de lectures amb `simulador_iot.py --mode normal` | ✅ |
+| **Ambdós** | Registrar la Sessió 7 al diari de treball | ✅ |
 
 ### 🔜 Sessió 8 — Dilluns 9 de novembre
 

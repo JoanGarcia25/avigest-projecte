@@ -1,0 +1,179 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0">
+  <diagram id="avigest-ldap-v2" name="Arbre LDAP DIT">
+    <mxGraphModel dx="1178" dy="619" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title-ldap" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;fontColor=#1E3A8A;" value="AviGest S.L. — Arbre Organitzatiu del Directori Centralitzat OpenLDAP (DIT)" vertex="1">
+          <mxGeometry height="40" width="860" x="150" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="root-ldap" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1E3A8A;strokeColor=#1E40AF;fontColor=#FFFFFF;fontSize=14;fontStyle=1;" value="&lt;b&gt;dc=avigest,dc=cat&lt;/b&gt;&lt;br&gt;&lt;i&gt;Base del Directori Central&lt;/i&gt;" vertex="1">
+          <mxGeometry height="50" width="240" x="460" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="ou-avigest" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#3B82F6;fontColor=#1E40AF;fontSize=11;" value="&lt;b&gt;ou=avigest&lt;/b&gt;&lt;br&gt;Personal Seu Central AviGest" vertex="1">
+          <mxGeometry height="45" width="220" x="50" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="user-admin" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#93C5FD;fontColor=#1E3A8A;align=left;spacingLeft=10;fontSize=10;" value="&lt;b&gt;uid=admin_avigest&lt;/b&gt;&lt;br&gt;cn=Joan Garcia&lt;br&gt;&lt;font color=&quot;#DC2626&quot;&gt;&lt;b&gt;Rol: AdminsAviGest&lt;/b&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="220" x="50" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="user-suport" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#93C5FD;fontColor=#1E3A8A;align=left;spacingLeft=10;fontSize=10;" value="&lt;b&gt;uid=tecnic_suport&lt;/b&gt;&lt;br&gt;cn=Mariam Solano&lt;br&gt;&lt;font color=&quot;#DC2626&quot;&gt;&lt;b&gt;Rol: AdminsAviGest&lt;/b&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="220" x="50" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="ou-groups" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#F59E0B;fontColor=#92400E;fontSize=11;" value="&lt;b&gt;ou=groups&lt;/b&gt;&lt;br&gt;Grups de Seguretat i Rols Globals" vertex="1">
+          <mxGeometry height="45" width="210" x="300" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="grp-admins" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFBEB;strokeColor=#FCD34D;fontColor=#78350F;align=left;spacingLeft=8;fontSize=10;" value="&lt;b&gt;cn=AdminsAviGest&lt;/b&gt; (posixGroup)&lt;br&gt;Accés total / Administració" vertex="1">
+          <mxGeometry height="40" width="210" x="300" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="grp-clients" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFBEB;strokeColor=#FCD34D;fontColor=#78350F;align=left;spacingLeft=8;fontSize=10;" value="&lt;b&gt;cn=AdminsClient&lt;/b&gt; (posixGroup)&lt;br&gt;Gestió multitenant de N granges" vertex="1">
+          <mxGeometry height="40" width="210" x="300" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="grp-gestors" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFBEB;strokeColor=#FCD34D;fontColor=#78350F;align=left;spacingLeft=8;fontSize=10;" value="&lt;b&gt;cn=GestorsGranja&lt;/b&gt; (posixGroup)&lt;br&gt;Operari d&#39;una única explotació" vertex="1">
+          <mxGeometry height="40" width="210" x="300" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="grp-consulta" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFBEB;strokeColor=#FCD34D;fontColor=#78350F;align=left;spacingLeft=8;fontSize=10;" value="&lt;b&gt;cn=UsuarisConsulta&lt;/b&gt; (posixGroup)&lt;br&gt;Auditoria / veterinaris (ReadOnly)" vertex="1">
+          <mxGeometry height="40" width="210" x="300" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="ou-clients" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1FAE5;strokeColor=#10B981;fontColor=#065F46;fontSize=11;" value="&lt;b&gt;ou=clients&lt;/b&gt;&lt;br&gt;Empreses Integradores (Multitenant)" vertex="1">
+          <mxGeometry height="45" width="580" x="540" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="ou-c1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#6EE7B7;fontColor=#047857;fontSize=11;" value="&lt;b&gt;ou=client_agroponent&lt;/b&gt; (Client ID: 1)&lt;br&gt;Empresa integradora AgroPonent S.L." vertex="1">
+          <mxGeometry height="45" width="370" x="540" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="user-c1-admin" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0FDF4;strokeColor=#A7F3D0;fontColor=#064E3B;align=left;spacingLeft=8;fontSize=10;" value="&lt;b&gt;uid=jaume_admin&lt;/b&gt; (Admin Client)&lt;br&gt;&lt;font color=&quot;#059669&quot;&gt;&lt;b&gt;businessCategory: CLIENT_1&lt;/b&gt;&lt;/font&gt;&lt;br&gt;Visualitza totes dues granges: &lt;b&gt;Bellpuig i Mollerussa&lt;/b&gt;" vertex="1">
+          <mxGeometry height="50" width="370" x="540" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="ou-c1-g1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEE2E2;strokeColor=#F87171;fontColor=#991B1B;fontSize=10;" value="&lt;b&gt;Granja 1: Bellpuig&lt;/b&gt; (id_granja: 1)&lt;br&gt;2 Naus en producció" vertex="1">
+          <mxGeometry height="40" width="175" x="540" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="user-c1-g1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF1F2;strokeColor=#FECDD3;fontColor=#881337;align=left;spacingLeft=6;fontSize=9;" value="&lt;b&gt;uid=gestor_bellpuig&lt;/b&gt;&lt;br&gt;cn=Jordi Pons&lt;br&gt;&lt;font color=&quot;#DC2626&quot;&gt;&lt;b&gt;departmentNumber: GRANJA_1&lt;/b&gt;&lt;/font&gt;&lt;br&gt;Només veu Granja Bellpuig" vertex="1">
+          <mxGeometry height="60" width="175" x="540" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="ou-c1-g2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEE2E2;strokeColor=#F87171;fontColor=#991B1B;fontSize=10;" value="&lt;b&gt;Granja 2: Mollerussa&lt;/b&gt; (id_granja: 2)&lt;br&gt;1 Nau en producció" vertex="1">
+          <mxGeometry height="40" width="175" x="735" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="user-c1-g2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF1F2;strokeColor=#FECDD3;fontColor=#881337;align=left;spacingLeft=6;fontSize=9;" value="&lt;b&gt;uid=gestor_mollerussa&lt;/b&gt;&lt;br&gt;cn=Carles Miró&lt;br&gt;&lt;font color=&quot;#DC2626&quot;&gt;&lt;b&gt;departmentNumber: GRANJA_2&lt;/b&gt;&lt;/font&gt;&lt;br&gt;Només veu Granja Mollerussa" vertex="1">
+          <mxGeometry height="60" width="175" x="735" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="ou-c2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ECFDF5;strokeColor=#6EE7B7;fontColor=#047857;fontSize=11;" value="&lt;b&gt;ou=client_segria&lt;/b&gt; (Client ID: 2)&lt;br&gt;Avícola del Segrià S.A." vertex="1">
+          <mxGeometry height="45" width="190" x="930" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="user-c2-admin" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0FDF4;strokeColor=#A7F3D0;fontColor=#064E3B;align=left;spacingLeft=8;fontSize=10;" value="&lt;b&gt;uid=laura_admin&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#059669&quot;&gt;&lt;b&gt;businessCategory: CLIENT_2&lt;/b&gt;&lt;/font&gt;&lt;br&gt;Admin Client Segrià" vertex="1">
+          <mxGeometry height="50" width="190" x="930" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="ou-c2-g1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEE2E2;strokeColor=#F87171;fontColor=#991B1B;fontSize=10;" value="&lt;b&gt;Granja 3: Alcarràs&lt;/b&gt; (id_granja: 3)&lt;br&gt;2 Naus en producció" vertex="1">
+          <mxGeometry height="40" width="190" x="930" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="user-c2-g1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF1F2;strokeColor=#FECDD3;fontColor=#881337;align=left;spacingLeft=6;fontSize=9;" value="&lt;b&gt;uid=gestor_alcarras&lt;/b&gt;&lt;br&gt;cn=Pere Roca&lt;br&gt;&lt;font color=&quot;#DC2626&quot;&gt;&lt;b&gt;departmentNumber: GRANJA_3&lt;/b&gt;&lt;/font&gt;&lt;br&gt;Només veu Granja Alcarràs" vertex="1">
+          <mxGeometry height="60" width="190" x="930" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="box-rls-ldap" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;align=left;spacingLeft=15;fontSize=10;" value="&lt;b&gt;Mecanisme d&#39;Aïllament Multitenant R3 (OpenLDAP &amp;rarr; PostgreSQL RLS):&lt;/b&gt;&lt;br&gt;• &lt;b&gt;Administrador AgroPonent (uid=jaume_admin):&lt;/b&gt; Té &lt;b&gt;businessCategory: CLIENT_1&lt;/b&gt; &amp;rarr; Executa &lt;code&gt;sp_set_tenant(1, NULL)&lt;/code&gt; i gestiona les seves dues granges (&lt;b&gt;Bellpuig i Mollerussa&lt;/b&gt;).&lt;br&gt;• &lt;b&gt;Gestor de Bellpuig (uid=gestor_bellpuig):&lt;/b&gt; Té &lt;b&gt;departmentNumber: GRANJA_1&lt;/b&gt; &amp;rarr; Executa &lt;code&gt;sp_set_tenant(1, 1)&lt;/code&gt; i el motor RLS li impedeix veure Mollerussa o Alcarràs.&lt;br&gt;• &lt;b&gt;Gestor de Mollerussa (uid=gestor_mollerussa):&lt;/b&gt; Té &lt;b&gt;departmentNumber: GRANJA_2&lt;/b&gt; &amp;rarr; Executa &lt;code&gt;sp_set_tenant(1, 2)&lt;/code&gt; per visualitzar exclusivament la nau de Mollerussa." vertex="1">
+          <mxGeometry height="80" width="1070" x="50" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="line-root-avigest" edge="1" parent="1" source="root-ldap" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#3B82F6;" target="ou-avigest">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="line-root-groups" edge="1" parent="1" source="root-ldap" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#F59E0B;" target="ou-groups">
+          <mxGeometry relative="1" x="-0.05" as="geometry">
+            <Array as="points">
+              <mxPoint x="570" y="140" />
+              <mxPoint x="405" y="140" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="line-root-clients" edge="1" parent="1" source="root-ldap" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#10B981;" target="ou-clients">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="580" y="140" />
+              <mxPoint x="830" y="140" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="line-avigest-u1" edge="1" parent="1" source="ou-avigest" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#93C5FD;" target="user-admin">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="line-avigest-u2" edge="1" parent="1" source="user-admin" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#93C5FD;" target="user-suport">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="160" y="300" />
+              <mxPoint x="160" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="line-clients-c1" edge="1" parent="1" source="ou-clients" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6EE7B7;" target="ou-c1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="830" y="220" />
+              <mxPoint x="725" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="line-clients-c2" edge="1" parent="1" source="ou-clients" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6EE7B7;" target="ou-c2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="830" y="220" />
+              <mxPoint x="1025" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="line-c1-admin" edge="1" parent="1" source="ou-c1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#A7F3D0;" target="user-c1-admin">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="730" y="290" />
+              <mxPoint x="730" y="290" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="line-c1-g1" edge="1" parent="1" source="user-c1-admin" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F87171;" target="ou-c1-g1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="725" y="350" />
+              <mxPoint x="627.5" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="line-c1-g2" edge="1" parent="1" source="user-c1-admin" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F87171;" target="ou-c1-g2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="725" y="350" />
+              <mxPoint x="822.5" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="line-g1-user" edge="1" parent="1" source="ou-c1-g1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FECDD3;" target="user-c1-g1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="630" y="400" />
+              <mxPoint x="630" y="400" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="line-g2-user" edge="1" parent="1" source="ou-c1-g2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FECDD3;" target="user-c1-g2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="822.5" y="400" />
+              <mxPoint x="822.5" y="400" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="line-c2-admin" edge="1" parent="1" source="ou-c2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#A7F3D0;" target="user-c2-admin">
+          <mxGeometry relative="1" x="-0.0667" as="geometry">
+            <Array as="points">
+              <mxPoint x="1025" y="280" />
+              <mxPoint x="1025" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="line-c2-g1" edge="1" parent="1" source="user-c2-admin" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#F87171;" target="ou-c2-g1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="line-g3-user" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FECDD3;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1024.5" y="400" as="sourcePoint" />
+            <mxPoint x="1024.5" y="410" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
