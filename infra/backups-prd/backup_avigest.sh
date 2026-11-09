@@ -7,7 +7,7 @@
 #
 # Descripció:
 # Executat des de la màquina virtual dedicada srv-backup (10.0.20.20):
-#   1. Extreu el buidatge transaccional de PostgreSQL 16 des de srv-serveis (10.0.20.10).
+#   1. Extreu el buidatge transaccional de MariaDB 10.11 des de srv-serveis (10.0.20.10).
 #   2. Extreu l'arbre d'usuaris i grups d'OpenLDAP des de srv-serveis (10.0.20.10).
 #   3. Comprimeix els arxius en un tar.gz datat amb hash SHA-256.
 #   4. Copia el paquet al segon disc virtual muntat (/mnt/disc-extern-backup)
@@ -26,12 +26,12 @@ TIMESTAMP="$(date +'%Y%m%d_%H%M%S')"
 ARCHIVE_NAME="backup_avigest_${TIMESTAMP}.tar.gz"
 RETENTION_DAYS=30
 
-# Dades de connexió cap a srv-serveis
+# Dades de connexió cap a srv-serveis (MariaDB 10.11)
 SRV_SERVEIS_HOST="10.0.20.10"
-PG_PORT="5432"
-PG_DB="avigest_db"
-PG_USER="avigest_backup"
-export PGPASSWORD="${PGPASSWORD:-backup_secret_pass_2026}"
+DB_PORT="3306"
+DB_NAME="avigest_db"
+DB_USER="avigest_backup"
+DB_PASS="${DB_PASS:-backup_secret_pass_2026}"
 
 LDAP_PORT="389"
 LDAP_BASE="dc=avigest,dc=cat"
@@ -52,23 +52,24 @@ log "=== INICI CÒPIA DE SEGURETAT CENTRALITZADA (srv-backup -> srv-serveis) ===
 log "======================================================================"
 
 # ------------------------------------------------------------------------------
-# 1. Buidatge Transaccional de PostgreSQL 16 (srv-serveis:5432)
+# 1. Buidatge Transaccional de MariaDB 10.11 (srv-serveis:3306)
 # ------------------------------------------------------------------------------
-log "[1/5] Realitzant buidatge de la base de dades PostgreSQL 16..."
+log "[1/5] Realitzant buidatge de la base de dades MariaDB 10.11..."
 
-# Comprovem si s'executa amb client pg_dump directe o mitjançant Docker
-if command -v pg_dump &>/dev/null; then
-    pg_dump -h "${SRV_SERVEIS_HOST}" -p "${PG_PORT}" -U "${PG_USER}" -d "${PG_DB}" \
-        --clean --if-exists --format=plain > "${TEMP_DIR}/avigest_db.sql"
+if command -v mariadb-dump &>/dev/null; then
+    mariadb-dump -h "${SRV_SERVEIS_HOST}" -P "${DB_PORT}" -u "${DB_USER}" -p"${DB_PASS}" \
+        --single-transaction --quick --routines --triggers --events "${DB_NAME}" > "${TEMP_DIR}/avigest_db.sql"
+elif command -v mysqldump &>/dev/null; then
+    mysqldump -h "${SRV_SERVEIS_HOST}" -P "${DB_PORT}" -u "${DB_USER}" -p"${DB_PASS}" \
+        --single-transaction --quick --routines --triggers --events "${DB_NAME}" > "${TEMP_DIR}/avigest_db.sql"
 else
-    # Fallback si s'executa a través de docker a srv-serveis
-    docker exec avigest_postgres pg_dump -U avigest_app -d avigest_db > "${TEMP_DIR}/avigest_db.sql"
+    docker exec avigest_mariadb mariadb-dump -u avigest_app -pavigest_secret_2026 --single-transaction --routines --triggers avigest_db > "${TEMP_DIR}/avigest_db.sql"
 fi
 
 if [[ -s "${TEMP_DIR}/avigest_db.sql" ]]; then
-    log "  -> Dump de PostgreSQL completat correctament ($(du -h "${TEMP_DIR}/avigest_db.sql" | cut -f1))."
+    log "  -> Dump de MariaDB completat correctament ($(du -h "${TEMP_DIR}/avigest_db.sql" | cut -f1))."
 else
-    log "  -> [ERROR] El dump de PostgreSQL és buit o la connexió ha fallat!"
+    log "  -> [ERROR] El dump de MariaDB és buit o la connexió ha fallat!"
     rm -rf "${TEMP_DIR}"
     exit 1
 fi
@@ -99,32 +100,30 @@ fi
 # ------------------------------------------------------------------------------
 log "[3/5] Empaquetant arxius i calculant hash d'integritat..."
 tar -czf "${BACKUP_LOCAL_DIR}/${ARCHIVE_NAME}" -C "${TEMP_DIR}" avigest_db.sql avigest_ldap.ldif
-sha256sum "${BACKUP_LOCAL_DIR}/${ARCHIVE_NAME}" > "${BACKUP_LOCAL_DIR}/${ARCHIVE_NAME}.sha256"
-
-log "  -> Arxiu creat: ${BACKUP_LOCAL_DIR}/${ARCHIVE_NAME} ($(du -h "${BACKUP_LOCAL_DIR}/${ARCHIVE_NAME}" | cut -f1))"
-log "  -> SHA-256: $(cat "${BACKUP_LOCAL_DIR}/${ARCHIVE_NAME}.sha256" | cut -d' ' -f1)"
-
-# ------------------------------------------------------------------------------
-# 4. Còpia al Segon Disc Simulat (Ubicació Externa / Off-site)
-# ------------------------------------------------------------------------------
-log "[4/5] Copiant l'arxiu al segon disc virtual simulat (${EXTERNAL_DISK_MOUNT})..."
-if [[ -d "${EXTERNAL_DISK_MOUNT}" ]]; then
-    cp "${BACKUP_LOCAL_DIR}/${ARCHIVE_NAME}" "${EXTERNAL_DISK_MOUNT}/avigest_backups/"
-    cp "${BACKUP_LOCAL_DIR}/${ARCHIVE_NAME}.sha256" "${EXTERNAL_DISK_MOUNT}/avigest_backups/"
-    log "  -> [OK] Còpia al segon disc virtual completada amb èxit."
-else
-    log "  -> [AVÍS] El segon disc (${EXTERNAL_DISK_MOUNT}) no està muntat. Es manté només la còpia local."
-fi
-
-# ------------------------------------------------------------------------------
-# 5. Neteja de Temporals i Política de Retenció (30 dies)
-# ------------------------------------------------------------------------------
-log "[5/5] Aplicant retenció de ${RETENTION_DAYS} dies i netejant temporals..."
 rm -rf "${TEMP_DIR}"
 
-find "${BACKUP_LOCAL_DIR}" -name "backup_avigest_*.tar.gz*" -type f -mtime +"${RETENTION_DAYS}" -delete
+(cd "${BACKUP_LOCAL_DIR}" && sha256sum "${ARCHIVE_NAME}" > "${ARCHIVE_NAME}.sha256")
+log "  -> Paquet generat: ${ARCHIVE_NAME} ($(du -h "${BACKUP_LOCAL_DIR}/${ARCHIVE_NAME}" | cut -f1))"
+
+# ------------------------------------------------------------------------------
+# 4. Sincronització amb el Disc Extern Simulat (/mnt/disc-extern-backup)
+# ------------------------------------------------------------------------------
+log "[4/5] Replicant la còpia al segon disc virtual de srv-backup (Estratègia 3-2-1)..."
 if [[ -d "${EXTERNAL_DISK_MOUNT}/avigest_backups" ]]; then
-    find "${EXTERNAL_DISK_MOUNT}/avigest_backups" -name "backup_avigest_*.tar.gz*" -type f -mtime +"${RETENTION_DAYS}" -delete
+    cp "${BACKUP_LOCAL_DIR}/${ARCHIVE_NAME}" "${EXTERNAL_DISK_MOUNT}/avigest_backups/"
+    cp "${BACKUP_LOCAL_DIR}/${ARCHIVE_NAME}.sha256" "${EXTERNAL_DISK_MOUNT}/avigest_backups/"
+    log "  -> [OK] Còpia duplicada amb èxit al volum separat."
+else
+    log "  -> [AVÍS] Punt de muntatge extern no disponible; la còpia només s'ha desat en local."
 fi
 
-log "=== CÒPIA DE SEGURETAT FINALITZADA AMB ÈXIT ==="
+# ------------------------------------------------------------------------------
+# 5. Política de Purga i Retenció (Rotació de còpies antigues > 30 dies)
+# ------------------------------------------------------------------------------
+log "[5/5] Netejant còpies més antigues de ${RETENTION_DAYS} dies..."
+find "${BACKUP_LOCAL_DIR}" -name "backup_avigest_*.tar.gz*" -mtime +"${RETENTION_DAYS}" -delete
+if [[ -d "${EXTERNAL_DISK_MOUNT}/avigest_backups" ]]; then
+    find "${EXTERNAL_DISK_MOUNT}/avigest_backups" -name "backup_avigest_*.tar.gz*" -mtime +"${RETENTION_DAYS}" -delete
+fi
+
+log "=== CÒPIA DE SEGURETAT FINALITZADA SATISFACTÒRIAMENT ==="

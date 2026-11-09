@@ -1,71 +1,82 @@
 -- =============================================================================
--- AviGest S.L. — Esquema de Base de Dades (PostgreSQL 16)
+-- AviGest S.L. — Esquema de Base de Dades (MariaDB 10.11 LTS)
 -- Fitxer: bd/sql/01_esquema.sql / docker/initdb/01_esquema.sql
--- Descripció: Creació de taules, claus primàries, foranes, índexs i restriccions.
+-- Descripció: Creació de base de dades, taules, claus primàries, foranes,
+--             índexs i restriccions InnoDB.
 -- Mòdul: ASIX - Projecte (Requeriments R1 a R7 i Requeriment 4.3)
 -- =============================================================================
 
--- Desactivar/netejar taules existents en ordre invers de dependència
-DROP TABLE IF EXISTS auditoria_canvis CASCADE;
-DROP TABLE IF EXISTS alarmes_incidencies CASCADE;
-DROP TABLE IF EXISTS registre_actuacions CASCADE;
-DROP TABLE IF EXISTS lectures_sensors CASCADE;
-DROP TABLE IF EXISTS actuadors CASCADE;
-DROP TABLE IF EXISTS sensors CASCADE;
-DROP TABLE IF EXISTS lots_crianca CASCADE;
-DROP TABLE IF EXISTS naus CASCADE;
-DROP TABLE IF EXISTS granges CASCADE;
-DROP TABLE IF EXISTS clients CASCADE;
+CREATE DATABASE IF NOT EXISTS avigest_db
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+
+USE avigest_db;
+
+-- Desactivar verificació de claus foranes durant la neteja inicial
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS auditoria_canvis;
+DROP TABLE IF EXISTS alarmes_incidencies;
+DROP TABLE IF EXISTS registre_actuacions;
+DROP TABLE IF EXISTS lectures_sensors;
+DROP TABLE IF EXISTS actuadors;
+DROP TABLE IF EXISTS sensors;
+DROP TABLE IF EXISTS lots_crianca;
+DROP TABLE IF EXISTS naus;
+DROP TABLE IF EXISTS granges;
+DROP TABLE IF EXISTS clients;
+
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- -----------------------------------------------------------------------------
 -- 1. Taula CLIENTS (Requeriment R1)
 -- Representa l'empresa o integradora ramadera propietària de les explotacions.
 -- -----------------------------------------------------------------------------
 CREATE TABLE clients (
-    id_client SERIAL PRIMARY KEY,
+    id_client INT AUTO_INCREMENT PRIMARY KEY,
     nif VARCHAR(20) NOT NULL UNIQUE,
     nom_empresa VARCHAR(100) NOT NULL,
-    nom_contacte VARCHAR(100),
-    telefon VARCHAR(20),
+    nom_contacte VARCHAR(100) NULL,
+    telefon VARCHAR(20) NULL,
     email VARCHAR(100) NOT NULL,
     actiu BOOLEAN NOT NULL DEFAULT TRUE,
-    data_alta TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+    data_alta DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
 -- 2. Taula GRANGES (Requeriment R1 i R3)
 -- Cada granja pertany a un únic client (aïllament multitenant per disseny).
 -- -----------------------------------------------------------------------------
 CREATE TABLE granges (
-    id_granja SERIAL PRIMARY KEY,
+    id_granja INT AUTO_INCREMENT PRIMARY KEY,
     id_client INT NOT NULL,
     nom_granja VARCHAR(100) NOT NULL,
     codi_explotacio VARCHAR(30) NOT NULL UNIQUE,
-    adreca VARCHAR(150),
-    poblacio VARCHAR(100),
+    adreca VARCHAR(150) NULL,
+    poblacio VARCHAR(100) NULL,
     activa BOOLEAN NOT NULL DEFAULT TRUE,
-    data_alta TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    data_alta DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_granges_client FOREIGN KEY (id_client)
-        REFERENCES clients(id_client) ON DELETE RESTRICT
-);
+        REFERENCES clients(id_client) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
--- 3. Taula NAUS
+-- 3. Taula NAUS (Requeriment R2 i R6)
 -- Pavellons físics dins de la granja on s'allotgen els lots d'engreix.
 -- -----------------------------------------------------------------------------
 CREATE TABLE naus (
-    id_nau SERIAL PRIMARY KEY,
+    id_nau INT AUTO_INCREMENT PRIMARY KEY,
     id_granja INT NOT NULL,
     codi_nau VARCHAR(20) NOT NULL,
     capacitat_aus INT NOT NULL CHECK (capacitat_aus > 0),
-    longitud_metres NUMERIC(6,2),
-    amplada_metres NUMERIC(6,2),
+    longitud_metres DECIMAL(6,2) NULL,
+    amplada_metres DECIMAL(6,2) NULL,
     activa BOOLEAN NOT NULL DEFAULT TRUE,
-    data_alta TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    data_alta DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_naus_granja FOREIGN KEY (id_granja)
-        REFERENCES granges(id_granja) ON DELETE CASCADE,
+        REFERENCES granges(id_granja) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT uq_granja_codinau UNIQUE (id_granja, codi_nau)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
 -- 4. Taula LOTS_CRIANCA (Requeriment R6)
@@ -73,120 +84,120 @@ CREATE TABLE naus (
 -- Permet el seguiment de mortalitat, consum de pinso i càlcul de l'ICA.
 -- -----------------------------------------------------------------------------
 CREATE TABLE lots_crianca (
-    id_lot SERIAL PRIMARY KEY,
+    id_lot INT AUTO_INCREMENT PRIMARY KEY,
     id_nau INT NOT NULL,
     codi_lot VARCHAR(50) NOT NULL UNIQUE,
     data_entrada DATE NOT NULL,
     data_sortida_prevista DATE NOT NULL,
-    data_sortida_real DATE,
+    data_sortida_real DATE NULL,
     num_aus_inicials INT NOT NULL CHECK (num_aus_inicials > 0),
     num_baixes INT NOT NULL DEFAULT 0 CHECK (num_baixes >= 0),
-    pes_mitja_kg NUMERIC(4,2) CHECK (pes_mitja_kg > 0),
-    pinso_consumit_kg NUMERIC(10,2) CHECK (pinso_consumit_kg >= 0),
-    estat VARCHAR(20) NOT NULL DEFAULT 'en_curs' CHECK (estat IN ('en_curs', 'finalitzat', 'cancel_lat')),
+    pes_mitja_kg DECIMAL(4,2) NULL CHECK (pes_mitja_kg IS NULL OR pes_mitja_kg > 0),
+    pinso_consumit_kg DECIMAL(10,2) NULL CHECK (pinso_consumit_kg IS NULL OR pinso_consumit_kg >= 0),
+    estat ENUM('en_curs', 'finalitzat', 'cancel_lat') NOT NULL DEFAULT 'en_curs',
     CONSTRAINT fk_lots_nau FOREIGN KEY (id_nau)
-        REFERENCES naus(id_nau) ON DELETE RESTRICT
-);
+        REFERENCES naus(id_nau) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
 -- 5. Taula SENSORS (Requeriment R4, 4.8)
 -- Dispositius de telemetria ambiental i d'estoc (RS485 Modbus a naus, LoRaWAN a silos).
 -- -----------------------------------------------------------------------------
 CREATE TABLE sensors (
-    id_sensor SERIAL PRIMARY KEY,
+    id_sensor INT AUTO_INCREMENT PRIMARY KEY,
     id_nau INT NOT NULL,
     codi_sensor VARCHAR(30) NOT NULL UNIQUE,
-    tipus_sensor VARCHAR(30) NOT NULL CHECK (tipus_sensor IN ('temperatura', 'humitat', 'co2', 'pes_silo', 'llum', 'consum_aigua', 'amoniac')),
-    tecnologia VARCHAR(20) NOT NULL DEFAULT 'RS485' CHECK (tecnologia IN ('RS485', 'LoRaWAN', 'Modbus', 'Analogic', 'Zigbee', 'Virtual')),
+    tipus_sensor ENUM('temperatura', 'humitat', 'co2', 'pes_silo', 'llum', 'consum_aigua', 'amoniac') NOT NULL,
+    tecnologia ENUM('RS485', 'LoRaWAN', 'Modbus', 'Analogic', 'Zigbee', 'Virtual') NOT NULL DEFAULT 'RS485',
     unitat_mesura VARCHAR(15) NOT NULL,
-    llindar_minim NUMERIC(6,2),
-    llindar_maxim NUMERIC(6,2),
+    llindar_minim DECIMAL(6,2) NULL,
+    llindar_maxim DECIMAL(6,2) NULL,
     actiu BOOLEAN NOT NULL DEFAULT TRUE,
-    data_alta TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    data_alta DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_sensors_nau FOREIGN KEY (id_nau)
-        REFERENCES naus(id_nau) ON DELETE CASCADE
-);
+        REFERENCES naus(id_nau) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
 -- 6. Taula ACTUADORS (Requeriment R5)
 -- Maquinària de climatització i confort animal (ventiladors, calefactors, etc.).
 -- -----------------------------------------------------------------------------
 CREATE TABLE actuadors (
-    id_actuador SERIAL PRIMARY KEY,
+    id_actuador INT AUTO_INCREMENT PRIMARY KEY,
     id_nau INT NOT NULL,
     codi_actuador VARCHAR(30) NOT NULL UNIQUE,
-    tipus_actuador VARCHAR(30) NOT NULL CHECK (tipus_actuador IN ('ventilador', 'calefactor', 'il_luminacio', 'menjadora', 'bomba_aigua', 'alarma_sonora', 'nebulitzador')),
-    mode_operacio VARCHAR(15) NOT NULL DEFAULT 'automatic' CHECK (mode_operacio IN ('automatic', 'manual', 'aturat')),
-    estat_actual VARCHAR(5) NOT NULL DEFAULT 'OFF' CHECK (estat_actual IN ('ON', 'OFF')),
+    tipus_actuador ENUM('ventilador', 'calefactor', 'il_luminacio', 'menjadora', 'bomba_aigua', 'alarma_sonora', 'nebulitzador') NOT NULL,
+    mode_operacio ENUM('automatic', 'manual', 'aturat') NOT NULL DEFAULT 'automatic',
+    estat_actual ENUM('ON', 'OFF') NOT NULL DEFAULT 'OFF',
     actiu BOOLEAN NOT NULL DEFAULT TRUE,
-    data_alta TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    data_alta DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_actuadors_nau FOREIGN KEY (id_nau)
-        REFERENCES naus(id_nau) ON DELETE CASCADE
-);
+        REFERENCES naus(id_nau) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
 -- 7. Taula LECTURES_SENSORS (Requeriment R4 i R5)
--- Sèrie temporal d'alt volum rebuda del broker MQTT i Edge Computing.
+-- Sèrie temporal d'alt volum rebuda del broker MQTT Mosquitto i Edge Computing.
 -- -----------------------------------------------------------------------------
 CREATE TABLE lectures_sensors (
-    id_lectura BIGSERIAL PRIMARY KEY,
+    id_lectura BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_sensor INT NOT NULL,
-    valor NUMERIC(8,2) NOT NULL,
-    data_hora TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    valor DECIMAL(8,2) NOT NULL,
+    data_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_lectures_sensor FOREIGN KEY (id_sensor)
-        REFERENCES sensors(id_sensor) ON DELETE CASCADE
-);
+        REFERENCES sensors(id_sensor) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
 -- 8. Taula REGISTRE_ACTUACIONS (Requeriment R5)
 -- Registre cronològic d'activacions i desconnexions d'actuadors amb causa auditable.
 -- -----------------------------------------------------------------------------
 CREATE TABLE registre_actuacions (
-    id_registre BIGSERIAL PRIMARY KEY,
+    id_registre BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_actuador INT NOT NULL,
-    accio VARCHAR(10) NOT NULL CHECK (accio IN ('ON', 'OFF')),
+    accio ENUM('ON', 'OFF') NOT NULL,
     motiu VARCHAR(255) NOT NULL,
-    disparat_per_sensor_id INT,
-    data_hora TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    disparat_per_sensor_id INT NULL,
+    data_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_reg_actuador FOREIGN KEY (id_actuador)
-        REFERENCES actuadors(id_actuador) ON DELETE CASCADE,
+        REFERENCES actuadors(id_actuador) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT fk_reg_sensor FOREIGN KEY (disparat_per_sensor_id)
-        REFERENCES sensors(id_sensor) ON DELETE SET NULL
-);
+        REFERENCES sensors(id_sensor) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
 -- 9. Taula ALARMES_INCIDENCIES (Requeriment R7)
--- Alertes de camp disparades automàticament per triggers PL/pgSQL davant d'anomalies.
+-- Alertes de camp disparades automàticament per triggers davant d'anomalies tèrmiques o CO2.
 -- -----------------------------------------------------------------------------
 CREATE TABLE alarmes_incidencies (
-    id_alarma BIGSERIAL PRIMARY KEY,
+    id_alarma BIGINT AUTO_INCREMENT PRIMARY KEY,
     id_nau INT NOT NULL,
-    id_sensor INT,
-    nivell_gravetat VARCHAR(15) NOT NULL CHECK (nivell_gravetat IN ('info', 'avis', 'critic')),
+    id_sensor INT NULL,
+    nivell_gravetat ENUM('info', 'avis', 'critic') NOT NULL,
     missatge VARCHAR(255) NOT NULL,
     resolta BOOLEAN NOT NULL DEFAULT FALSE,
-    data_generacio TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    data_resolucio TIMESTAMP WITH TIME ZONE,
-    observacions_resolucio TEXT,
+    data_generacio DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    data_resolucio DATETIME NULL,
+    observacions_resolucio TEXT NULL,
     CONSTRAINT fk_alarmes_nau FOREIGN KEY (id_nau)
-        REFERENCES naus(id_nau) ON DELETE CASCADE,
+        REFERENCES naus(id_nau) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT fk_alarmes_sensor FOREIGN KEY (id_sensor)
-        REFERENCES sensors(id_sensor) ON DELETE SET NULL
-);
+        REFERENCES sensors(id_sensor) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
 -- 10. Taula AUDITORIA_CANVIS (Requeriment 4.3 / E2 Sec. 7.2)
--- Registre de traçabilitat de canvis DML (INSERT, UPDATE, DELETE) en taules de gestió.
+-- Registre de traçabilitat de canvis DML (INSERT, UPDATE, DELETE) en format JSON.
 -- -----------------------------------------------------------------------------
 CREATE TABLE auditoria_canvis (
-    id_auditoria BIGSERIAL PRIMARY KEY,
+    id_auditoria BIGINT AUTO_INCREMENT PRIMARY KEY,
     taula VARCHAR(50) NOT NULL,
-    operacio VARCHAR(10) NOT NULL CHECK (operacio IN ('INSERT', 'UPDATE', 'DELETE')),
-    usuari_bd VARCHAR(50) NOT NULL DEFAULT CURRENT_USER,
-    dades_antigues JSONB,
-    dades_noves JSONB,
-    data_hora TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
+    operacio ENUM('INSERT', 'UPDATE', 'DELETE') NOT NULL,
+    usuari_bd VARCHAR(100) NOT NULL DEFAULT (CURRENT_USER()),
+    dades_antigues JSON NULL,
+    dades_noves JSON NULL,
+    data_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
 -- Índexs de rendiment per a consultes analítiques i sèries temporals

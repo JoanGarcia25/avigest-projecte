@@ -15,8 +15,8 @@ Aquest script s'executa a la màquina 'granja1-sim' (10.1.1.20) i simula:
 Opcions d'enviament:
   1. MQTT (recomanat): Envia trames JSON al broker local de granja1-srv (10.1.1.10)
      o directament al broker central de srv-serveis (10.0.20.10:1883).
-  2. SQL Directe: Prova d'inserció directa a PostgreSQL 16 (srv-serveis: 10.0.20.10)
-     per validar el funcionament dels triggers PL/pgSQL i l'activació de ventiladors.
+  2. SQL Directe: Prova d'inserció directa a MariaDB 10.11 (srv-serveis: 10.0.20.10:3306)
+     per validar el funcionament dels triggers trg_control_llindars_sensor.
 
 Ús:
   python3 simulador_iot.py --mode normal
@@ -35,13 +35,13 @@ import argparse
 import subprocess
 from datetime import datetime
 
-# Configuració per defecte cap a srv-serveis (PostgreSQL 16)
+# Configuració per defecte cap a srv-serveis (MariaDB 10.11 LTS)
 CONFIG_CONN = {
-    "host": os.getenv("PGHOST", "10.0.20.10"),
-    "port": os.getenv("PGPORT", "5432"),
-    "user": os.getenv("PGUSER", "avigest_iot"),
-    "password": os.getenv("PGPASSWORD", "iot_ingest_pass_2026"),
-    "database": os.getenv("PGDATABASE", "avigest_db")
+    "host": os.getenv("DB_HOST", "10.0.20.10"),
+    "port": os.getenv("DB_PORT", "3306"),
+    "user": os.getenv("DB_USER", "avigest_iot"),
+    "password": os.getenv("DB_PASSWORD", "iot_ingest_pass_2026"),
+    "database": os.getenv("DB_NAME", "avigest_db")
 }
 
 # Sensors configurats al sistema
@@ -92,32 +92,30 @@ SENSORS_CONFIG = [
     }
 ]
 
-def executar_sql_postgres(sql):
-    """Executa una ordre SQL contra PostgreSQL (directament o via docker)."""
+def executar_sql_mariadb(sql):
+    """Executa una ordre SQL contra MariaDB (directament via mariadb/mysql o via docker)."""
     host = CONFIG_CONN["host"]
     user = CONFIG_CONN["user"]
     pwd = CONFIG_CONN["password"]
     db = CONFIG_CONN["database"]
     port = CONFIG_CONN["port"]
 
-    # 1. Client psql si està disponible
-    psql_bin = shutil.which("psql")
-    if psql_bin:
-        env = os.environ.copy()
-        env["PGPASSWORD"] = pwd
-        cmd = [psql_bin, "-h", host, "-p", str(port), "-U", user, "-d", db, "-c", sql]
+    # 1. Client mariadb o mysql si està disponible al sistema
+    client_bin = shutil.which("mariadb") or shutil.which("mysql")
+    if client_bin:
+        cmd = [client_bin, "-h", host, "-P", str(port), "-u", user, f"-p{pwd}", "-D", db, "-e", sql]
         try:
-            res = subprocess.run(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=5)
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=5)
             if res.returncode == 0:
                 return True, res.stdout.strip()
             return False, res.stderr.strip()
         except Exception as e:
             return False, str(e)
 
-    # 2. Docker local si s'executa a srv-serveis
+    # 2. Docker local si s'executa directament a srv-serveis
     docker_bin = shutil.which("docker")
     if docker_bin:
-        cmd = ["docker", "exec", "-e", f"PGPASSWORD={pwd}", "-i", "avigest_postgres", "psql", "-U", user, "-d", db, "-c", sql]
+        cmd = ["docker", "exec", "-i", "avigest_mariadb", "mariadb", "-u", user, f"-p{pwd}", "-D", db, "-e", sql]
         try:
             res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=5)
             if res.returncode == 0:
@@ -151,19 +149,19 @@ def enviar_telemetria_mqtt(broker_ip, sensor_id, tipus, valor, unitat):
 
 def comprovar_estat_actuadors():
     sql = "SELECT a.id_actuador, n.codi_nau, a.tipus_actuador, a.estat_actual FROM actuadors a JOIN naus n ON a.id_nau = n.id_nau WHERE a.tipus_actuador = 'ventilador';"
-    ok, out = executar_sql_postgres(sql)
+    ok, out = executar_sql_mariadb(sql)
     if ok:
-        print("\n--- Estat Actual dels Actuadors (PostgreSQL) ---")
+        print("\n--- Estat Actual dels Actuadors (MariaDB) ---")
         print(out)
-        print("------------------------------------------------")
+        print("---------------------------------------------")
 
 def comprovar_alarmes_recents():
     sql = "SELECT id_alarma, id_nau, nivell_gravetat, missatge, data_generacio FROM alarmes_incidencies ORDER BY data_generacio DESC LIMIT 3;"
-    ok, out = executar_sql_postgres(sql)
+    ok, out = executar_sql_mariadb(sql)
     if ok and out:
-        print("\n--- Darreres Alarmes Generades per Triggers ---")
+        print("\n--- Darreres Alarmes Generades per Triggers (MariaDB) ---")
         print(out)
-        print("-------------------------------------------------")
+        print("---------------------------------------------------------")
 
 def main():
     parser = argparse.ArgumentParser(description="Simulador IoT AviGest (ESP32 / Modbus / LoRaWAN)")
@@ -176,7 +174,7 @@ def main():
     CONFIG_CONN["host"] = args.host
 
     print("======================================================================")
-    print("  AviGest S.L. — Simulador IoT (granja1-sim -> granja1-srv / seu)     ")
+    print("  AviGest S.L. — Simulador IoT (granja1-sim -> granja1-srv / MariaDB) ")
     print(f"  Mode seleccionat: {args.mode.upper()}")
     print("======================================================================")
 
@@ -186,15 +184,15 @@ def main():
             v_min, v_max = s["normal_range"]
             val = random.uniform(v_min, v_max)
             sql = f"INSERT INTO lectures_sensors (id_sensor, valor) VALUES ({s['id_sensor']}, {val:.2f});"
-            ok, out = executar_sql_postgres(sql)
-            print(f"  -> [{s['tecnologia']}] {s['granja']} ({s['nau']}) {s['tipus']}: {val:.2f} {s['unitat']} | PG: {'OK' if ok else 'Simulat'}")
+            ok, out = executar_sql_mariadb(sql)
+            print(f"  -> [{s['tecnologia']}] {s['granja']} ({s['nau']}) {s['tipus']}: {val:.2f} {s['unitat']} | MariaDB: {'OK' if ok else 'Simulat'}")
             time.sleep(0.5)
 
     elif args.mode == "alarma":
         print("[CRÍTIC] Simulant cop de calor extrem a NAU-01 (> 31 ºC)...")
         temp_perillosa = 33.80
         sql = f"INSERT INTO lectures_sensors (id_sensor, valor) VALUES (1, {temp_perillosa:.2f});"
-        ok, out = executar_sql_postgres(sql)
+        ok, out = executar_sql_mariadb(sql)
         print(f"  -> INJECTADA LECTURA: 33.80 ºC al Sensor #1 (Llindar màxim: 31.00 ºC)")
         time.sleep(1)
         comprovar_estat_actuadors()

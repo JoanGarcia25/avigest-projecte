@@ -30,7 +30,7 @@ flowchart TD
     end
 
     subgraph LAN_Net["LAN seu (10.0.20.0/24)"]
-        Srv_Serveis["srv-serveis (10.0.20.10)<br/>Ubuntu 24.04 + Docker Engine:<br/>PostgreSQL 16 + Rèplica<br/>Mosquitto MQTT + OpenLDAP"]
+        Srv_Serveis["srv-serveis (10.0.20.10)<br/>Ubuntu 24.04 + Docker Engine:<br/>MariaDB 10.11 LTS + Rèplica GTID<br/>Mosquitto MQTT + OpenLDAP"]
         Srv_Backup["srv-backup (10.0.20.20)<br/>Ubuntu 24.04: Còpies amb cron<br/>2n Disc virtual simulat (/mnt)"]
     end
 
@@ -42,7 +42,7 @@ flowchart TD
     Client --> Internet
     Internet ==>|HTTPS (443) només des d'IPs autoritzades| FW
     FW -->|Port 443/80| DMZ_Web
-    DMZ_Web ==>|NOMÉS SQL:5432 i LDAPS:636/389| Srv_Serveis
+    DMZ_Web ==>|NOMÉS SQL:3306 i LDAPS:636/389| Srv_Serveis
     DMZ_Web -.->|BLOQUEJAT TOTA LA RESTA: DROP| LAN_Net
 
     Granja1_Sim -->|Dades de camp| Granja1_Srv
@@ -85,7 +85,7 @@ Totes les 5 màquines virtuals de serveis comparteixen el mateix sistema operati
 | **`pc-client`** | Client contractant que accedeix des d'Internet | Host físic / VM Ubuntu | 1 vCPU / 1 GB / 10 GB | **Adaptador 1:** Xarxa NAT (`internet-lab` / `NAT`) | DHCP (`10.0.2.x`) o IP física |
 | **`fw-seu`** | Tallafocs perimetral de 3 potes, NAT i VPN | **OPNsense** (FreeBSD Appliance) | 2 vCPU / 2 GB / 20 GB | **Adaptador 1:** Xarxa NAT (`internet-lab`)<br/>**Adaptador 2:** Xarxa interna (`dmz`)<br/>**Adaptador 3:** Xarxa interna (`lan-seu`) | **WAN:** DHCP (`10.0.2.1` gw)<br/>**DMZ:** `10.0.10.1`<br/>**LAN:** `10.0.20.1`<br/>**VPN:** `10.0.100.1` |
 | **`dmz-web`** | Nginx, proxy invers, WAF i relay SMTP | **Ubuntu Server 24.04** (clon) | 1 vCPU / 1 GB / 10 GB | **Adaptador 1:** Xarxa interna (`dmz`) | `10.0.10.10`<br/>(GW: `10.0.10.1`) |
-| **`srv-serveis`** | PostgreSQL 16 + Rèplica, Mosquitto, OpenLDAP | **Ubuntu Server 24.04** (clon) + Docker | 2 vCPU / 4 GB / 40 GB | **Adaptador 1:** Xarxa interna (`lan-seu`) | `10.0.20.10`<br/>(GW: `10.0.20.1`) |
+| **`srv-serveis`** | MariaDB 10.11 LTS + Rèplica GTID, Mosquitto, OpenLDAP | **Ubuntu Server 24.04** (clon) + Docker | 2 vCPU / 4 GB / 40 GB | **Adaptador 1:** Xarxa interna (`lan-seu`) | `10.0.20.10`<br/>(GW: `10.0.20.1`) |
 | **`srv-backup`** | Servidor de backups dedicat amb cron i 2n disc | **Ubuntu Server 24.04** (clon) | 1 vCPU / 1 GB / 10 GB + 20 GB | **Adaptador 1:** Xarxa interna (`lan-seu`) | `10.0.20.20`<br/>(GW: `10.0.20.1`) |
 | **`granja1-srv`**| Gateway Edge: VPN, MQTT local, actuadors | **Ubuntu Server 24.04** (clon) | 1 vCPU / 1 GB / 10 GB | **Adaptador 1:** Xarxa interna (`lan-granja1`)<br/>**Adaptador 2:** Xarxa NAT (`internet-lab`) | **LAN:** `10.1.1.10`<br/>**VPN:** `10.0.100.10` (o `.2`) |
 | **`granja1-sim`**| Simulador de sensors ESP32 i silos LoRaWAN | **Ubuntu Server 24.04** (clon) | 1 vCPU / 1 GB / 10 GB | **Adaptador 1:** Xarxa interna (`lan-granja1`) | `10.1.1.20`<br/>(GW: `10.1.1.10`) |
@@ -223,17 +223,17 @@ Per unificar la gestió i complir l'encàrrec docent, es prepara una única màq
    - Rep el paquet a través de la interfície VPN WireGuard.
    - Aplica les regles del tallafocs: **l'únic trànsit permès des de la VPN cap a la LAN és el port del Broker MQTT (`srv-serveis:1883/8883`)**. Qualsevol altre trànsit és bloquejat i registrat.
 4. **`srv-serveis` (Nucli Central):**
-   - El broker MQTT Mosquitto rep la lectura i el servei d'ingesta la persisteix a la base de dades **PostgreSQL 16**.
-   - Els triggers PL/pgSQL avaluen els llindars i generen les alertes a `alarmes_incidencies` si escau.
+   - El broker MQTT Mosquitto rep la lectura i el servei d'ingesta la persisteix a la base de dades **MariaDB 10.11 LTS**.
+   - Els triggers MariaDB avaluen els llindars i generen les alertes a `alarmes_incidencies` si escau.
    - La base de dades alimenta la rèplica de continuïtat.
    - OpenLDAP manté els comptes d'usuaris i rols per a les autenticacions.
 5. **`srv-backup` (Còpies i PRD):**
-   - Executa les tasques programades mitjançant `cron` (a les 02:00 AM) connectant-se a `srv-serveis` per extreure el buidatge de la BD (`pg_dump`) i LDAP (`slapcat`).
+   - Executa les tasques programades mitjançant `cron` (a les 02:00 AM) connectant-se a `srv-serveis` per extreure el buidatge de la BD (`mariadb-dump`) i LDAP (`slapcat`).
    - Copia els arxius a un segon disc virtual separat muntat a `/mnt/disc-extern-backup/` simulant la ubicació física externa (Estratègia 3-2-1).
 6. **`dmz-web` (Accés Client):**
    - El client es connecta des de `pc-client` (o navegador host) per Internet/HTTPS.
    - OPNsense comprova la llista blanca d'IPs de clients contractats.
-   - Si és autoritzat, la connexió arriba a `dmz-web`, que passa pel proxy invers Nginx i consulta a `srv-serveis` les dades estrictament necessàries per PostgreSQL (5432) i LDAP (389/636).
+   - Si és autoritzat, la connexió arriba a `dmz-web`, que passa pel proxy invers Nginx i consulta a `srv-serveis` les dades estrictament necessàries per MariaDB (3306) i LDAP (389/636).
 
 ---
 
@@ -242,14 +242,14 @@ Per unificar la gestió i complir l'encàrrec docent, es prepara una única màq
 ### 5.1. Regles del Tallafocs OPNsense (`fw-seu`)
 - **Aïllament estricte DMZ -> LAN:**
   * La DMZ **mai no pot iniciar connexions cap a la LAN**, excepte allò estrictament necessari:
-    - `dmz-web` -> `srv-serveis:5432` (PostgreSQL)
+    - `dmz-web` -> `srv-serveis:3306` (MariaDB)
     - `dmz-web` -> `srv-serveis:389/636` (OpenLDAP / LDAPS)
   * Qualsevol altre intent d'iniciar trànsit cap a la LAN (com ara intents cap a `srv-backup`, SSH, etc.) és **bloquejat i registrat al log**.
 - **Aïllament VPN -> LAN:**
   * Des de la VPN (`granja1-srv`) **només es permet trànsit cap al Broker MQTT de `srv-serveis` (port 1883/8883)**. La granja mai té accés a la BD ni a LDAP directament.
 
 ### 5.2. Redundància de la Base de Dades (Justificació de disseny — FD01)
-- Al laboratori, la rèplica de PostgreSQL està allotjada com a contenidor secundari dins de `srv-serveis`.
+- Al laboratori, la rèplica de MariaDB està allotjada com a contenidor secundari dins de `srv-serveis`.
 - **Aquesta limitació està documentada formalment:** Si cau el procés o es corrompen les dades, la rèplica protegeix el servei; però si cau la màquina virtual `srv-serveis` sencera, la redundància s'assumeix mitjançant el servidor independent `srv-backup`. En producció real, la rèplica s'allotjaria en una VM pròpia o servidor físic separat.
 
 ---
@@ -269,7 +269,7 @@ Durant la defensa o sessió presencial, quan el professor demani afegir una sego
      ./alta_granja.sh -c 1 -n "Granja 2 Urgell" -e "ES252170004" -a "Camí Vell s/n" -p "Bellpuig" -s 2 -u "gestor_granja2" -r "10.1.2.0/24"
      ```
    - L'script en un segon:
-     1. Crea l'esquema, naus, sensors i actuadors a PostgreSQL.
+     1. Crea l'esquema, naus, sensors i actuadors a MariaDB.
      2. Crea l'usuari gestor a OpenLDAP (`departmentNumber: GRANJA_2`).
      3. Afegeix la regla al tallafocs per autoritzar el nou túnel VPN (`10.0.100.20`).
      4. Genera la configuració local per al gateway clonat.

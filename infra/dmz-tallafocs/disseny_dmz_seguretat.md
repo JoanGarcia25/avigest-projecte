@@ -26,7 +26,7 @@ flowchart TD
     end
 
     subgraph LAN_Net["LAN seu (10.0.20.0/24)"]
-        Srv_Serveis["srv-serveis<br/>Docker: OpenLDAP<br/>PostgreSQL + rèplica<br/>Broker MQTT"]
+        Srv_Serveis["srv-serveis<br/>Docker: OpenLDAP<br/>MariaDB 10.11 + rèplica<br/>Broker MQTT"]
         Srv_Backup["srv-backup<br/>Còpies amb cron<br/>Disc extern simulat"]
     end
 
@@ -38,7 +38,7 @@ flowchart TD
     Client --> Internet
     Internet ==>|Trànsit WAN només des d'IPs de clients| FW
     FW -->|Port 443/80| DMZ_Web
-    DMZ_Web ==>|NOMÉS SQL:5432 i LDAP:389| Srv_Serveis
+    DMZ_Web ==>|NOMÉS SQL:3306 i LDAP:389| Srv_Serveis
     DMZ_Web -.->|BLOQUEJAT TOTA LA RESTA: DROP| LAN_Net
 
     Granja1_Sim -->|Dades de camp| Granja1_Srv
@@ -59,7 +59,7 @@ flowchart TD
 | **`fw-seu` (LAN)** | LAN seu | `10.0.20.1/24` | Gateway de seguretat per a la xarxa interna de serveis. |
 | **`fw-seu` (VPN)** | VPN Server | `10.0.100.1/24` | Pila de terminació de túnels VPN de les granges remotes. |
 | **`dmz-web`** | DMZ | `10.0.10.10/24` | Proxy invers Nginx, WAF, Portal Web i Relay SMTP. |
-| **`srv-serveis`** | LAN seu | `10.0.20.10/24` | PostgreSQL (5432), OpenLDAP (389/636) i Broker MQTT (1883/8883). |
+| **`srv-serveis`** | LAN seu | `10.0.20.10/24` | MariaDB 10.11 (3306), OpenLDAP (389/636) i Broker MQTT (1883/8883). |
 | **`srv-backup`** | LAN seu | `10.0.20.20/24` | Servidor de backups amb cron i segon disc virtual muntat. |
 | **`granja1-srv`** | Granja 1 | `10.1.1.10/24` (i IP VPN `10.0.100.10`) | Client VPN, MQTT local, regles d'actuadors i buffer. |
 | **`granja1-sim`** | Granja 1 | `10.1.1.20/24` | Simulador ESP32, bus RS485 Modbus i servidor ChirpStack LoRa. |
@@ -83,7 +83,7 @@ Totes les regles segueixen el principi de mínim privilegi amb política per def
 
 | Origen | Destí | Port / Protocol | Acció | Justificació Tècnica |
 | :--- | :--- | :--- | :---: | :--- |
-| `dmz-web` (`10.0.10.10`) | `srv-serveis` (`10.0.20.10`) | TCP 5432 (PostgreSQL) | **PASS** | El portal web allotjat a la DMZ necessita consultar dades de clients i granges. |
+| `dmz-web` (`10.0.10.10`) | `srv-serveis` (`10.0.20.10`) | TCP 3306 (MariaDB) | **PASS** | El portal web allotjat a la DMZ necessita consultar dades de clients i granges. |
 | `dmz-web` (`10.0.10.10`) | `srv-serveis` (`10.0.20.10`) | TCP 389 / 636 (OpenLDAP) | **PASS** | El portal web necessita validar les credencials d'inici de sessió dels usuaris contra el directori central. |
 | `dmz-web` (`10.0.10.10`) | **LAN seu (`10.0.20.0/24`)** | **Qualsevol altre port** | **BLOCK / DROP** | **Aïllament fonamental:** Si el servidor web de la DMZ és vulnerat, l'atacant té completament prohibit escanejar o connectar-se a `srv-backup`, accedir per SSH a `srv-serveis` o atacar altres serveis interns. |
 | `dmz-web` (`10.0.10.10`) | WAN (Internet) | TCP 25 / 587 (SMTP) | **PASS** | Sortida controlada per a l'enviament de correus d'alarma (Relay SMTP). |
@@ -97,5 +97,5 @@ Totes les regles segueixen el principi de mínim privilegi amb política per def
 ### 3.4. Interfície LAN (`10.0.20.0/24`)
 | Origen | Destí | Port / Protocol | Acció | Justificació Tècnica |
 | :--- | :--- | :--- | :---: | :--- |
-| `srv-backup` (`10.0.20.20`) | `srv-serveis` (`10.0.20.10`) | TCP 5432 (PostgreSQL) i TCP 389/636 (LDAP) | **PASS** | `srv-backup` necessita extreure els buidatges transaccionals per a les còpies de seguretat nocturnes. |
+| `srv-backup` (`10.0.20.20`) | `srv-serveis` (`10.0.20.10`) | TCP 3306 (MariaDB) i TCP 389/636 (LDAP) | **PASS** | `srv-backup` necessita extreure els buidatges transaccionals per a les còpies de seguretat nocturnes. |
 | `srv-serveis` / `srv-backup` | WAN (Internet) | TCP 80, 443 / UDP 123 (NTP) | **PASS** | Actualitzacions oficials de paquets i sincronització horària de rellotge (NTP). |

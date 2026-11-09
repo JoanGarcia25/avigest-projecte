@@ -26,8 +26,8 @@ flowchart TD
     subgraph Nucli["LAN seu (10.0.20.0/24)"]
         MQTT_Central["srv-serveis (10.0.20.10)<br/>Broker MQTT Mosquitto"]
         -->|avigest_mqtt_ingest|
-        PG["PostgreSQL 16 (avigest_db)<br/>+ Hot Standby WAL :5433"]
-        PG -->|Trigger PL/pgSQL| Triggers["fn_control_llindars_sensor()<br/>• Actualitza actuador a ON<br/>• Insereix registre_actuacions<br/>• Insereix alarmes_incidencies"]
+        MDB["MariaDB 10.11 LTS (avigest_db)<br/>+ Standby GTID :3307"]
+        MDB -->|Trigger MariaDB| Triggers["trg_control_llindars_sensor<br/>• Actualitza actuador a ON<br/>• Insereix registre_actuacions<br/>• Insereix alarmes_incidencies"]
     end
 
     Srv ==>|Túnel xifrat VPN| VPN_In
@@ -53,12 +53,12 @@ flowchart TD
 * És l'únic punt d'entrada des de la VPN (`10.0.100.0/24`).
 * Aplica les regles de tallafocs documentades (4.4):
   - **Filtre estricte:** Només deixa passar el tràfic de granja cap a `srv-serveis:1883` (MQTT). El xifratge és el de WireGuard.
-  - Qualsevol intent d'accedir directament a PostgreSQL (5432) o LDAP (389) és descartat immediatament (`DROP`).
+  - Qualsevol intent d'accedir directament a MariaDB (3306) o LDAP (389) és descartat immediatament (`DROP`).
 
-### Pas 4: `srv-serveis` (Broker MQTT, PostgreSQL 16 i Rèplica)
+### Pas 4: `srv-serveis` (Broker MQTT, MariaDB 10.11 LTS i Rèplica GTID)
 * El broker **Eclipse Mosquitto** rep la lectura.
-* El contenidor **`avigest_mqtt_ingest`** (`iot/ingestio/mqtt_a_postgres.py`) s'hi subscriu i desa el valor a `lectures_sensors` amb el rol `avigest_iot`.
-* Es dispara el trigger PL/pgSQL **`tg_control_llindars_sensor`**, auditant actuacions i generant alarmes si és procedent.
+* El contenidor **`avigest_mqtt_ingest`** (`iot/ingestio/mqtt_a_mariadb.py`) s'hi subscriu i desa el valor a `lectures_sensors` amb el rol `avigest_iot`.
+* Es dispara el trigger MariaDB **`trg_control_llindars_sensor`**, auditant actuacions i generant alarmes si és procedent.
 * La instància secundària de rèplica manté el registre duplicat per a alta disponibilitat d'aplicació.
 
 ### Pas 5: `srv-backup` (Còpies de seguretat)

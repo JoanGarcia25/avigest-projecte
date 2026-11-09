@@ -1,9 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Servei d'ingesta MQTT → PostgreSQL (Requeriment 4.8).
-S'executa a srv-serveis, subscriu avigest/+/telemetria/# i INSERT a lectures_sensors
-amb el rol avigest_iot. El trigger de llindars s'executa via SECURITY DEFINER.
+==============================================================================
+AviGest S.L. — Servei d'ingesta MQTT → MariaDB (Requeriment 4.8)
+Fitxer: iot/ingestio/mqtt_a_mariadb.py
+Mòdul: ASIX - Projecte
+Responsable: Mariam (Base de Dades, IoT i Automatització)
+
+Descripció:
+S'executa a srv-serveis (contenidor avigest_mqtt_ingest).
+Subscriu el topic avigest/+/telemetria/# i fa INSERT a lectures_sensors
+amb l'usuari dedicat avigest_iot.
+El trigger trg_control_llindars_sensor s'activa automàticament a MariaDB.
+==============================================================================
 """
 import json
 import os
@@ -11,29 +20,29 @@ import sys
 import time
 
 import paho.mqtt.client as mqtt
-import psycopg2
+import pymysql
 
-PG = {
-    "host": os.getenv("PGHOST", "postgres"),
-    "port": int(os.getenv("PGPORT", "5432")),
-    "user": os.getenv("PGUSER", "avigest_iot"),
-    "password": os.getenv("PGPASSWORD", "iot_ingest_pass_2026"),
-    "dbname": os.getenv("PGDATABASE", "avigest_db"),
+DB_CONFIG = {
+    "host": os.getenv("DB_HOST", "mariadb"),
+    "port": int(os.getenv("DB_PORT", "3306")),
+    "user": os.getenv("DB_USER", "avigest_iot"),
+    "password": os.getenv("DB_PASSWORD", "iot_ingest_pass_2026"),
+    "database": os.getenv("DB_NAME", "avigest_db"),
+    "autocommit": True,
 }
 MQTT_HOST = os.getenv("MQTT_HOST", "mosquitto")
 MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
 MQTT_TOPIC = os.getenv("MQTT_TOPIC", "avigest/+/telemetria/#")
 
 
-def connectar_pg():
+def connectar_db():
     while True:
         try:
-            conn = psycopg2.connect(**PG)
-            conn.autocommit = True
-            print(f"[ingest] PostgreSQL a {PG['host']}:{PG['port']} OK", flush=True)
+            conn = pymysql.connect(**DB_CONFIG)
+            print(f"[ingest] MariaDB a {DB_CONFIG['host']}:{DB_CONFIG['port']} OK", flush=True)
             return conn
         except Exception as exc:
-            print(f"[ingest] Esperant PostgreSQL: {exc}", flush=True)
+            print(f"[ingest] Esperant MariaDB ({DB_CONFIG['host']}:{DB_CONFIG['port']}): {exc}", flush=True)
             time.sleep(3)
 
 
@@ -50,7 +59,7 @@ def inserir_lectura(conn, payload):
 
 
 def main():
-    conn = connectar_pg()
+    conn = connectar_db()
 
     def on_connect(client, userdata, flags, rc):
         print(f"[ingest] MQTT {MQTT_HOST}:{MQTT_PORT} rc={rc}", flush=True)
@@ -59,8 +68,7 @@ def main():
     def on_message(client, userdata, msg):
         nonlocal conn
         try:
-            if conn.closed:
-                conn = connectar_pg()
+            conn.ping(reconnect=True)
             inserir_lectura(conn, msg.payload.decode("utf-8"))
         except Exception as exc:
             print(f"[ingest] Error: {exc} payload={msg.payload!r}", flush=True)
@@ -68,7 +76,7 @@ def main():
                 conn.close()
             except Exception:
                 pass
-            conn = connectar_pg()
+            conn = connectar_db()
 
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id="avigest-mqtt-ingest")
     client.on_connect = on_connect
@@ -88,3 +96,4 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         sys.exit(0)
+

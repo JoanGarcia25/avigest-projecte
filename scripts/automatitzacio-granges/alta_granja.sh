@@ -32,9 +32,10 @@ VPN_IP_ASSIGNADA=""
 BASE_DATA_DIR="/var/avigest/granges"
 
 HOST_SERVEIS="${HOST_SERVEIS:-10.0.20.10}"
-PG_USER="avigest_app"
-PG_PASS="avigest_secret_2026"
-PG_DB="avigest_db"
+DB_PORT="3306"
+DB_USER="avigest_app"
+DB_PASS="avigest_secret_2026"
+DB_NAME="avigest_db"
 LDAP_BIND_DN="cn=admin,dc=avigest,dc=cat"
 LDAP_PASS="admin_ldap_pass_2026"
 
@@ -99,12 +100,14 @@ fi
 
 executar_sql() {
     local sql="$1"
-    if command -v psql &>/dev/null; then
-        PGPASSWORD="${PG_PASS}" psql -h "${HOST_SERVEIS}" -U "${PG_USER}" -d "${PG_DB}" -v ON_ERROR_STOP=1 -t -A -c "${sql}"
-    elif command -v docker &>/dev/null && docker ps --format '{{.Names}}' | grep -q '^avigest_postgres$'; then
-        docker exec -i avigest_postgres psql -U avigest_app -d avigest_db -v ON_ERROR_STOP=1 -t -A -c "${sql}"
+    if command -v mariadb &>/dev/null; then
+        mariadb -h "${HOST_SERVEIS}" -P "${DB_PORT}" -u "${DB_USER}" -p"${DB_PASS}" -D "${DB_NAME}" -sN -e "${sql}"
+    elif command -v mysql &>/dev/null; then
+        mysql -h "${HOST_SERVEIS}" -P "${DB_PORT}" -u "${DB_USER}" -p"${DB_PASS}" -D "${DB_NAME}" -sN -e "${sql}"
+    elif command -v docker &>/dev/null && docker ps --format '{{.Names}}' | grep -q '^avigest_mariadb$'; then
+        docker exec -i avigest_mariadb mariadb -u "${DB_USER}" -p"${DB_PASS}" -D "${DB_NAME}" -sN -e "${sql}"
     else
-        log_err "No s'ha trobat psql ni el contenidor avigest_postgres. Abortant."
+        log_err "No s'ha trobat client mariadb/mysql ni el contenidor avigest_mariadb. Abortant."
         exit 1
     fi
 }
@@ -137,15 +140,15 @@ echo ""
 log_info "Iniciant el provisionament complet de '${NOM_GRANJA}'..."
 
 # ------------------------------------------------------------------------------
-# 1. Alta a PostgreSQL
+# 1. Alta a MariaDB 10.11
 # ------------------------------------------------------------------------------
-log_info "[1/4] Creant esquema, naus, sensors i actuadors a PostgreSQL..."
+log_info "[1/4] Creant esquema, naus, sensors i actuadors a MariaDB..."
 
-SQL_QUERY="SELECT sp_alta_granja_completa(${CLIENT_ID}::int, '$(sql_escape "${NOM_GRANJA}")', '$(sql_escape "${CODI_EXPLOTACIO}")', '$(sql_escape "${ADRECA}")', '$(sql_escape "${POBLACIO}")', ${NUM_NAUS}::int);"
-NOVA_GRANJA_ID="$(executar_sql "${SQL_QUERY}" | tr -d '[:space:]')"
+SQL_QUERY="CALL sp_alta_granja_completa(${CLIENT_ID}, '$(sql_escape "${NOM_GRANJA}")', '$(sql_escape "${CODI_EXPLOTACIO}")', '$(sql_escape "${ADRECA}")', '$(sql_escape "${POBLACIO}")', ${NUM_NAUS}, @id_out); SELECT @id_out;"
+NOVA_GRANJA_ID="$(executar_sql "${SQL_QUERY}" | tail -n 1 | tr -d '[:space:]')"
 
 if [[ -z "${NOVA_GRANJA_ID}" || ! "${NOVA_GRANJA_ID}" =~ ^[0-9]+$ ]]; then
-    log_err "PostgreSQL no ha retornat un id_granja vàlid ('${NOVA_GRANJA_ID}')."
+    log_err "MariaDB no ha retornat un id_granja vàlid ('${NOVA_GRANJA_ID}')."
     exit 1
 fi
 
@@ -158,7 +161,7 @@ if [[ -z "${VPN_IP_ASSIGNADA}" ]]; then
     VPN_IP_ASSIGNADA="10.0.100.${VPN_OCTET}"
 fi
 
-log_ok "Granja registrada a PostgreSQL amb ID: #${NOVA_GRANJA_ID}"
+log_ok "Granja registrada a MariaDB amb ID: #${NOVA_GRANJA_ID}"
 log_ok "  -> S'han creat ${NUM_NAUS} naus amb sensors i actuadors."
 
 # ------------------------------------------------------------------------------

@@ -19,7 +19,7 @@ El Pla de Recuperació davant de Desastres (*Disaster Recovery Plan*) d'AviGest 
 * **Objectiu formal:** **RTO ≤ 30 minuts**.
 * **Justificació tècnica:**
   - Els serveis centrals a `srv-serveis` estan empaquetats en contenidors Docker declaratius (`docker-compose.yml`).
-  - L'arrencada d'un servidor de recanvi des de zero, la descàrrega de les imatges i la injecció dels fitxers `.sql` (PostgreSQL) i `.ldif` (OpenLDAP) mitjançant l'script `restaurar_avigest.sh` requereix **menys de 10 minuts**.
+  - L'arrencada d'un servidor de recanvi des de zero, la descàrrega de les imatges i la injecció dels fitxers `.sql` (MariaDB) i `.ldif` (OpenLDAP) mitjançant l'script `restaurar_avigest.sh` requereix **menys de 10 minuts**.
 
 ---
 
@@ -28,8 +28,8 @@ El Pla de Recuperació davant de Desastres (*Disaster Recovery Plan*) d'AviGest 
 | Paràmetre | Especificació | Justificació |
 | :--- | :--- | :--- |
 | **Arquitectura de Servidor** | **VM dedicada `srv-backup` (`10.0.20.20/24`)**. | Aïllament físic/virtual respecte al servidor de producció `srv-serveis`. Si cau la VM de serveis, el backup no queda afectat. |
-| **Abast de la còpia** | Base de dades PostgreSQL 16 (`avigest_db`) + Directori OpenLDAP (`dc=avigest,dc=cat`) + arxius de configuració. | Còpia integral i coherent de tot l'estat del sistema. |
-| **Mètode tècnic** | Buidatge transaccional en calent (`pg_dump`) + exportació d'arbre OpenLDAP (`ldapsearch`/`slapcat`). | No interromp la recepció de telemetria MQTT ni bloqueja consultes web. |
+| **Abast de la còpia** | Base de dades MariaDB 10.11 (`avigest_db`) + Directori OpenLDAP (`dc=avigest,dc=cat`) + arxius de configuració. | Còpia integral i coherent de tot l'estat del sistema. |
+| **Mètode tècnic** | Buidatge transaccional en calent (`mariadb-dump` / `mysqldump`) + exportació d'arbre OpenLDAP (`ldapsearch`/`slapcat`). | No interromp la recepció de telemetria MQTT ni bloqueja consultes web. |
 | **Periodicitat** | **Diària, a les 02:00 h AM** (mitjançant `crontab`). | Hora de mínima activitat administrativa a les granges. |
 | **Empaquetament** | Fitxer comprimit `backup_avigest_YYYYMMDD_HHMMSS.tar.gz` amb suma de verificació SHA-256. | Garanteix la integritat del fitxer davant de corrupcions de disc. |
 | **Ubicació local** | Disc principal de la VM a `/var/backups/avigest/`. | Restauració immediata en cas d'error humà. |
@@ -41,7 +41,7 @@ El Pla de Recuperació davant de Desastres (*Disaster Recovery Plan*) d'AviGest 
 ## 3. Relació entre la Rèplica de BD i el Servidor de Backup
 
 > **Nota Crítica de Disseny (Avaluació i Tribunal):**  
-> Al diagrama d'arquitectura, la rèplica de PostgreSQL està configurada com a contenidor secundari dins de `srv-serveis`. Aquesta rèplica protegeix eficaçment davant de caigudes del servei o bloquejos de processos, però **no representa una redundància real de maquinari si cau la màquina virtual sencera**.  
+> Al diagrama d'arquitectura, la rèplica de MariaDB està configurada com a contenidor secundari dins de `srv-serveis`. Aquesta rèplica protegeix eficaçment davant de caigudes del servei o bloquejos de processos, però **no representa una redundància real de maquinari si cau la màquina virtual sencera**.  
 > Per aquest motiu, la continuïtat del negoci descansa sobre la màquina virtual independent **`srv-backup`**, que extreu periòdicament les dades i les desa en un segon disc virtual extern, garantint la restauració total en menys de 30 minuts.
 
 ---
@@ -74,9 +74,9 @@ El Pla de Recuperació davant de Desastres (*Disaster Recovery Plan*) d'AviGest 
 
 5. **Pas 5: Verificació del servei restablert**
    - Comprovar els contenidors actius: `docker compose ps`
-   - Comprovar les lectures a PostgreSQL:
+   - Comprovar les lectures a MariaDB:
      ```bash
-     docker exec avigest_postgres psql -U avigest_app -d avigest_db -c "SELECT count(*) FROM lectures_sensors;"
+     docker exec avigest_mariadb mariadb -u avigest_app -pavigest_secret_2026 -D avigest_db -e "SELECT count(*) FROM lectures_sensors;"
      ```
    - Comprovar l'autenticació LDAP:
      ```bash

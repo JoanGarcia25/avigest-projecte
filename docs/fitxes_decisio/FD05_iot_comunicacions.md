@@ -43,7 +43,7 @@ Per aïllar correctament la simulació de maquinari del control de la granja, es
 ## 4. Mètode de verificació
 - **Simulació a `granja1-sim`:** Generació de trames Modbus i paquets LoRa cap a `granja1-srv`.
 - **Comprovació de regles locals:** Validació que `granja1-srv` activa el relé del ventilador fins i tot si es desconnecta la interfície de xarxa cap a la seu central.
-- **Ingesta central:** Verificació a `srv-serveis` que les lectures arriben al broker MQTT i es guarden a la taula corresponent de PostgreSQL.
+- **Ingesta central:** Verificació a `srv-serveis` que les lectures arriben al broker MQTT i es guarden a la taula corresponent de MariaDB.
 
 ---
 

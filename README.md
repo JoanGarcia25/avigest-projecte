@@ -12,7 +12,7 @@ La infraestructura d'AviGest es desplega mitjançant un conjunt coordinat de 6 m
 - **`pc-client`:** Navegador web de prova de l'empresa client connectada a través d'Internet (NAT).
 - **`fw-seu`:** Tallafocs perimetral OPNsense de 3 interfícies físiques (WAN, DMZ `10.0.10.0/24`, LAN `10.0.20.0/24`) i servidor VPN WireGuard (`10.0.100.0/24`).
 - **`dmz-web`:** Proxy invers Nginx, WAF i relay SMTP (`10.0.10.10` a Ubuntu 24.04). Únic servei exposat a Internet sota llista blanca d'IPs de clients.
-- **`srv-serveis`:** Nucli intern de la seu (`10.0.20.10` a Ubuntu 24.04): PostgreSQL 16 + Rèplica, Broker MQTT Mosquitto i OpenLDAP.
+- **`srv-serveis`:** Nucli intern de la seu (`10.0.20.10` a Ubuntu 24.04): MariaDB 10.11 LTS + Rèplica GTID, Broker MQTT Mosquitto i OpenLDAP.
 - **`srv-backup`:** Servidor dedicat de còpies de seguretat (`10.0.20.20` a Ubuntu 24.04) amb cron nocturn i un segon disc virtual simulat (/mnt).
 - **`granja1-srv`:** Gateway de camp (`10.1.1.10` a Ubuntu 24.04 / VPN WireGuard `10.0.100.10`): regles locals d'actuadors (>31ºC), buffer *store-and-forward* i client VPN.
 - **`granja1-sim`:** Simulador de camp (`10.1.1.20` a Ubuntu 24.04): ESP32 (RS485 Modbus) i silos LoRaWAN (ChirpStack).
@@ -35,23 +35,23 @@ docker compose up -d
 ```
 
 Serveis actius:
-- **PostgreSQL 16 (primari):** Port `5432` (Usuari: `avigest_app`, Pass: `avigest_secret_2026`, BD: `avigest_db`)
-- **PostgreSQL rèplica (Hot Standby):** Port `5433` (streaming replication; només lectura)
+- **MariaDB 10.11 LTS (primari):** Port `3306` (Usuari: `avigest_app`, Pass: `avigest_secret_2026`, BD: `avigest_db`)
+- **MariaDB rèplica (Read-only standby):** Port `3307` (rèplica GTID; només lectura)
 - **Broker MQTT Mosquitto:** Port `1883` (el túnel WireGuard xifra el trànsit de granja)
 - **Ingesta MQTT:** contenidor `avigest_mqtt_ingest` (subscriu `avigest/+/telemetria/#` i fa `INSERT` amb el rol `avigest_iot`)
 - **OpenLDAP:** Port `389` / `636` (Base: `dc=avigest,dc=cat`; usuaris de prova: contrasenya `avigest2026`)
 - **phpLDAPadmin:** `http://localhost:8081` (Login DN: `cn=admin,dc=avigest,dc=cat`, Pass: `admin_ldap_pass_2026`)
 
-Prova RLS (no feu servir `avigest_app`, és superusuari i no filtra files):
+Prova d'aïllament multitenant (vistes i context de sessió):
 ```bash
-docker exec -it avigest_postgres psql -U avigest_consulta -d avigest_db -c "SELECT sp_set_tenant(1); SELECT nom_granja FROM granges;"
+docker exec -it avigest_mariadb mariadb -u avigest_consulta -pavigest_secret_2026 avigest_db -e "CALL sp_set_tenant(1); SELECT nom_granja FROM v_tenant_granges;"
 ```
 
 ---
 
 ## 3. Fitxes de Decisió Tècnica Oficials
 
-1. [FD01 — Elecció del SGBD (PostgreSQL 16 amb Streaming Replication)](docs/fitxes_decisio/FD01_sgbd.md)
+1. [FD01 — Elecció del SGBD (MariaDB 10.11 LTS amb Rèplica GTID)](docs/fitxes_decisio/FD01_sgbd.md)
 2. [FD02 — Servidor d'Usuaris Centralitzat (OpenLDAP + phpLDAPadmin)](docs/fitxes_decisio/FD02_ldap.md)
 3. [FD03 — Tallafocs OPNsense i DMZ amb Llista Blanca de clients](docs/fitxes_decisio/FD03_tallafocs_dmz.md)
 4. [FD04 — Estratègia de Còpies de Seguretat (srv-backup dedicat + 2n disc)](docs/fitxes_decisio/FD04_backups_prd.md)

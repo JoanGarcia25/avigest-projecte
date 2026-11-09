@@ -154,8 +154,8 @@ En compliment dels requisits d'organització (RA3), s'estableix la matriu de rol
 | :--- | :---: | :---: | :---: |
 | **Infraestructura CPD i Maquinari (4.1)** | **Joan Garcia** | Mariam Solano | Joan Garcia |
 | **Directori Centralitzat LDAP i Rols (4.2)** | **Joan Garcia** | Mariam Solano | Joan Garcia |
-| **Model Relacional ER i DDL PostgreSQL (4.3)** | **Mariam Solano** | Joan Garcia | Mariam Solano |
-| **Triggers PL/pgSQL i Lògica de Negoci (4.3)** | **Mariam Solano** | Joan Garcia | Mariam Solano |
+| **Model Relacional ER i DDL MariaDB (4.3)** | **Mariam Solano** | Joan Garcia | Mariam Solano |
+| **Triggers SQL i Lògica de Negoci (4.3)** | **Mariam Solano** | Joan Garcia | Mariam Solano |
 | **Vistes i Consultes Comparatives SQL (4.3)** | **Mariam Solano** | Joan Garcia | Mariam Solano |
 | **Tallafocs OPNsense, DMZ i Xarxes (4.4)** | **Joan Garcia** | Mariam Solano | Joan Garcia |
 | **Còpies de Seguretat i Servidor PRD (4.5)** | **Joan Garcia** | Mariam Solano | Joan Garcia |
@@ -172,13 +172,13 @@ En compliment dels requisits d'organització (RA3), s'estableix la matriu de rol
 | **Constitució de l'equip i rols** | E0 | Joan / Mariam | 14/09/2026 | **14/09/2026** | **Completat** | Document [E0_divisio_tasques_rols.md](../E0_divisio_tasques_rols.md) i Gantt inicial. |
 | **Estudi de necessitats i mercat** | E1 | Joan / Mariam | 28/09/2026 | **28/09/2026** | **Completat** | Document PDF [E1_estudi_necessitats](../E1_estudi_necessitats_joangarcia_mariamsolano%20(2).pdf) lliurat. |
 | **Defensa oral E1** | E1 | Joan / Mariam | 05/10/2026 | **05/10/2026** | **Completat** | Presentació i defensa davant del professorat. |
-| **Fitxa FD01: SGBD Central** | 4.3, 4.6 | Mariam | 19/10/2026 | **19/10/2026** | **Completat** | Decisió PostgreSQL 16 + Streaming Replication. |
+| **Fitxa FD01: SGBD Central** | 4.3, 4.6 | Mariam | 19/10/2026 | **19/10/2026** | **Completat** | Decisió MariaDB 10.11 LTS + Rèplica GTID. |
 | **Fitxa FD02: Directori LDAP** | 4.2 | Joan | 19/10/2026 | **19/10/2026** | **Completat** | Decisió OpenLDAP + 4 rols i aïllament de granges. |
 | **Fitxa FD03: DMZ i Tallafocs** | 4.4 | Joan | 19/10/2026 | **19/10/2026** | **Completat** | Decisió OPNsense amb 3 interfícies i llista blanca. |
 | **Fitxa FD04: Còpies de Seguretat** | 4.5 | Joan | 19/10/2026 | **19/10/2026** | **Completat** | Decisió `srv-backup` dedicat + segon disc simulat. |
 | **Fitxa FD05: Comunicacions IoT** | 4.8 | Mariam | 19/10/2026 | **19/10/2026** | **Completat** | Model híbrid RS485 (naus) + LoRaWAN (silos). |
 | **Redisseny Topologia 7 VMs** | Global | Joan / Mariam | 26/10/2026 | **26/10/2026** | **Completat** | Separació neta `pc-client`, `fw-seu`, `dmz-web`, `srv-serveis`, `srv-backup`, `granja1-srv`, `granja1-sim`. |
-| **Migració DDL i Triggers a PG16** | 4.3 | Mariam | 26/10/2026 | **26/10/2026** | **Completat** | Taules SQL, triggers termòstat automàtic i procediment d'alta atòmica. |
+| **Implementació DDL i Triggers a MariaDB** | 4.3 | Mariam | 26/10/2026 | **26/10/2026** | **Completat** | Taules SQL, triggers termòstat automàtic i procediment d'alta atòmica. |
 | **Vistes i consultes comparatives** | 4.3 | Mariam | 02/11/2026 | **26/10/2026** | **Completat** | Avançat amb [05_vistes_consultes_comparatives.sql](../../bd/sql/05_vistes_consultes_comparatives.sql). |
 | **Configuració de regles OPNsense** | 4.4 | Joan | 02/11/2026 | *Planificat* | *En curs* | Desplegament de regles a la VM `fw-seu` de laboratori. |
 | **Desplegament i proves OpenLDAP** | 4.2 | Joan | 09/11/2026 | *Planificat* | Pendent | Validació amb `ldapsearch` i phpLDAPadmin. |
@@ -261,9 +261,9 @@ El desenvolupament, les guies d'intervenció i el control del projecte s'organit
 
 | Carpeta / Ruta al Repositori | Contingut i Propòsit | Responsable de Manteniment |
 | :--- | :--- | :---: |
-| [`bd/sql/`](file:///c:/avigest-projecte-git/bd/sql/) | Esquema DDL en 3FN, dades de prova inicials, vistes i rols de PostgreSQL 16. | **Mariam Solano** |
-| [`bd/procediments-triggers/`](file:///c:/avigest-projecte-git/bd/procediments-triggers/) | Triggers de termòstat automàtic, alarmes i procediments en PL/pgSQL. | **Mariam Solano** |
-| [`bd/model-er/`](file:///c:/avigest-projecte-git/bd/model-er/) | Documentació i diagrames Mermaid del model de dades relacional. | **Mariam Solano** |
+| [`bd/sql/`](file:///c:/avigest-projecte-git/bd/sql/) | Esquema DDL en 3FN, dades de prova inicials, vistes i rols de MariaDB 10.11 LTS. | **Mariam Solano** |
+| [`bd/procediments-triggers/`](file:///c:/avigest-projecte-git/bd/procediments-triggers/) | Triggers de termòstat automàtic, alarmes i procediments en MariaDB SQL. | **Mariam Solano** |
+| [`bd/model-er/`](file:///c:/avigest-projecte-git/bd/model-er/) | Documentació i diagrames del model de dades relacional (Dia i gràfic). | **Mariam Solano** |
 | [`docker/`](file:///c:/avigest-projecte-git/docker/) | `docker-compose.yml`, configuració de Mosquitto i scripts d'arrencada (`initdb/`). | **Joan Garcia / Mariam** |
 | [`infra/dmz-tallafocs/`](file:///c:/avigest-projecte-git/infra/dmz-tallafocs/) | Disseny de la DMZ, polítiques de seguretat i scripts de regles d'OPNsense. | **Joan Garcia** |
 | [`infra/ldap/`](file:///c:/avigest-projecte-git/infra/ldap/) | Arbre base organitzatiu i fitxers LDIF d'usuaris inicials per a OpenLDAP. | **Joan Garcia** |

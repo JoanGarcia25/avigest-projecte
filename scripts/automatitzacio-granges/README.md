@@ -17,7 +17,7 @@ Aquest script automatitza completament el procés en pocs segons.
 ## 2. Què fa l'Script amb una sola ordre?
 
 Quan s'executa `./alta_granja.sh`:
-1. **Base de Dades PostgreSQL 16 (`srv-serveis`):** Invoca la funció `sp_alta_granja_completa` que:
+1. **Base de Dades MariaDB 10.11 (`srv-serveis`):** Invoca el procediment `sp_alta_granja_completa` que:
    - Insereix el registre de la nova granja a la taula `granges`.
    - Crea les naus sol·licitades (ex: `NAU-01`, `NAU-02`).
    - Provisiona els sensors per defecte a cada nau:

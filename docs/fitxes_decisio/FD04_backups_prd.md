@@ -9,7 +9,7 @@
 
 ## 1. Descripció de la necessitat
 Cal garantir la continuïtat de negoci i la protecció de les dades mitjançant:
-- Còpies periòdiques automatitzades de la base de dades PostgreSQL i del directori OpenLDAP de `srv-serveis`.
+- Còpies periòdiques automatitzades de la base de dades MariaDB i del directori OpenLDAP de `srv-serveis`.
 - **Aïllament del servei de backup:** Executar les còpies des d'un servidor independent (`srv-backup`) per evitar que una incidència a `srv-serveis` afecti el repositori de recuperació.
 - **Simulació d'emmagatzematge extern:** Emmagatzematge en un segon disc virtual independent muntat exclusivament per a les còpies de seguretat.
 - Definició formal d'RTO/RPO i script de restauració validat.
@@ -19,11 +19,11 @@ Cal garantir la continuïtat de negoci i la protecció de les dades mitjançant:
 ## 2. Alternatives avaluades
 
 ### Alternativa 1: Servidor dedicat `srv-backup` amb scripts orquestrats per Cron (Escollida)
-* **Descripció:** Màquina virtual dedicada a la LAN (`srv-backup`) que executa tasques programades mitjançant `cron` per abocar la BD PostgreSQL i l'arbre LDAP de `srv-serveis` a través de xarxa xifrada, i copiar-los a un segon disc virtual simulant la ubicació externa.
+* **Descripció:** Màquina virtual dedicada a la LAN (`srv-backup`) que executa tasques programades mitjançant `cron` per abocar la BD MariaDB i l'arbre LDAP de `srv-serveis` a través de xarxa xifrada, i copiar-los a un segon disc virtual simulant la ubicació externa.
 * **Pros:**
   - **Aïllament de fallades:** Si la màquina `srv-serveis` pateix una caiguda o un atac, les còpies estan físicament protegides a `srv-backup`.
   - **Suport independent (Model 3-2-1):** El segon disc virtual dedicat permet simular la ubicació externa/NAS.
-  - **Simplicitat i màxim control:** Eines estàndard (`pg_dump`, `slapcat`/`ldapsearch`, `tar`, `gzip`, `cron`). Fàcilment auditable.
+  - **Simplicitat i màxim control:** Eines estàndard (`mariadb-dump`, `slapcat`/`ldapsearch`, `tar`, `gzip`, `cron`). Fàcilment auditable.
 * **Contres:**
   - Requereix recursos per a una màquina virtual dedicada addicional.
 
@@ -49,13 +49,13 @@ Cal garantir la continuïtat de negoci i la protecció de les dades mitjançant:
 ---
 
 ## 4. Mètode de verificació
-- **Execució del buidatge des de `srv-backup`:** Comprovació que `pg_dump` s'executa correctament sobre `srv-serveis:5432`.
+- **Execució del buidatge des de `srv-backup`:** Comprovació que `mariadb-dump` s'executa correctament sobre `srv-serveis:3306`.
 - **Escriptura al segon disc:** Verificació de la creació del paquet `.tar.gz` al punt de muntatge del segon disc `/mnt/disc-extern-backup/`.
 
 ---
 
 ## 5. Fonts consultades
-- PostgreSQL Documentation: *Backup and Restore — pg_dump & Continuous Archiving* — [https://www.postgresql.org/docs/16/backup.html](https://www.postgresql.org/docs/16/backup.html)
+- MariaDB Documentation: *Backup and Restore — mariadb-dump & Binary Logs* — [https://mariadb.com/kb/en/mariadb-dump/](https://mariadb.com/kb/en/mariadb-dump/)
 - OpenLDAP 2.6 Administrator's Guide: *Backing up the Directory (slapcat)* — [https://www.openldap.org/doc/admin26/maintenance.html#Backing%20up%20the%20directory](https://www.openldap.org/doc/admin26/maintenance.html#Backing%20up%20the%20directory)
 - Cybersecurity and Infrastructure Security Agency (CISA): *Data Backup Options (3-2-1 Rule)* — [https://www.cisa.gov/news-events/news/data-backup-options](https://www.cisa.gov/news-events/news/data-backup-options)
 - ISO/IEC 27031: *Guidelines for information and communication technology readiness for business continuity (RTO & RPO metrics)*.

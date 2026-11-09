@@ -113,16 +113,16 @@
       * `pc-client`: Client extern / navegador de prova del client contractant (Host físic / NAT).
       * `fw-seu`: Tallafocs perimetral OPNsense de 3 interfícies físiques (WAN, DMZ `10.0.10.0/24`, LAN `10.0.20.0/24`) i servidor VPN WireGuard (`10.0.100.0/24`).
       * `dmz-web`: DMZ (`10.0.10.10`, Ubuntu 24.04) amb proxy invers Nginx, WAF i relay SMTP, accessible només per llista blanca d'IPs.
-      * `srv-serveis`: LAN (`10.0.20.10`, Ubuntu 24.04) amb Docker Engine: PostgreSQL 16 + Rèplica, Broker MQTT Mosquitto i OpenLDAP.
+      * `srv-serveis`: LAN (`10.0.20.10`, Ubuntu 24.04) amb Docker Engine: MariaDB 10.11 LTS + Rèplica GTID, Broker MQTT Mosquitto i OpenLDAP.
       * `srv-backup`: LAN (`10.0.20.20`, Ubuntu 24.04) VM dedicada de còpies amb cron nocturn i segon disc virtual simulat (/mnt).
       * `granja1-srv`: Camp (`10.1.1.10`, Ubuntu 24.04 / VPN WireGuard `10.0.100.10`) amb MQTT local, regles d'actuadors (>31ºC), búfer store-and-forward i client VPN.
       * `granja1-sim`: Camp (`10.1.1.20`, Ubuntu 24.04) simulador d'ESP32 per RS485 Modbus i silos per LoRaWAN ChirpStack.
   - **Joan:**
     - Elaboració de la documentació de desplegament de màquines virtuals i pujada de les guies de referència a `docs/Guies_MV/` ([Guia del laboratori virtual d'AviGest.pdf](../Guies_MV/Guia%20del%20laboratori%20virtual%20d’AviGest.pdf) i [guia_desplegament_maquines_virtuals.md](../guia_desplegament_maquines_virtuals.md) amb les configuracions de Netplan YAML).
-    - Disseny i documentació de les regles de tallafocs OPNsense a [disseny_dmz_seguretat.md](../../infra/dmz-tallafocs/disseny_dmz_seguretat.md) i [firewall_regles.sh](../../infra/dmz-tallafocs/firewall_regles.sh), amb aïllament estricte DMZ -> LAN (només TCP 5432 i LDAPS permesos) i pas de VPN WireGuard a Broker MQTT.
+    - Disseny i documentació de les regles de tallafocs OPNsense a [disseny_dmz_seguretat.md](../../infra/dmz-tallafocs/disseny_dmz_seguretat.md) i [firewall_regles.sh](../../infra/dmz-tallafocs/firewall_regles.sh), amb aïllament estricte DMZ -> LAN (només TCP 3306 i LDAPS permesos) i pas de VPN WireGuard a Broker MQTT.
     - Configuració del servidor dedicat `srv-backup` i del pla de recuperació PRD amb el segon disc virtual simulat ([pla_recuperacio_desastres_prd.md](../../infra/backups-prd/pla_recuperacio_desastres_prd.md)).
   - **Mariam:**
-    - Migració completa de la base de dades a **PostgreSQL 16**: conversió de taules DDL, triggers de termòstat automàtic en PL/pgSQL i procediments d'alta atòmica de granges.
+    - Migració completa de la base de dades a **MariaDB 10.11 LTS**: conversió de taules DDL InnoDB, triggers de termòstat automàtic en MariaDB SQL i procediments d'alta atòmica de granges.
     - Desenvolupament de les 4 vistes i consultes comparatives de negoci ([05_vistes_consultes_comparatives.sql](../../bd/sql/05_vistes_consultes_comparatives.sql)).
     - Redacció i estructuració del lliurable [E3_pla_intervencio.md](../E3_pla_intervencio/E3_pla_intervencio.md): pressupostos CapEx/OpEx, matriu d'acompliment de fites amb dates reals i cronograma d'intervenció a camp.
     - Actualització de [FD01_sgbd.md](../fitxes_decisio/FD01_sgbd.md) documentant formalment la limitació de la rèplica de BD en contenidor dins de `srv-serveis` i la seva mitigació mitjançant `srv-backup`.
@@ -134,13 +134,13 @@
 ### Sessió 7: Dilluns, 2 de novembre de 2026 (6 hores)
 **Fita:** Validació de la Base de Dades a Docker, Resolució de Bugs de Vistes i Ingesta IoT
 
-- **Objectiu:** Posar en funcionament el contenidor `postgres:16-alpine` a Docker, verificar l'execució atòmica dels 5 scripts d'`initdb/`, depurar la lògica SQL i alinear el disseny amb la nova Guia de Lliuraments E2-E3 facilitada pel professorat.
+- **Objectiu:** Posar en funcionament el contenidor `mariadb:10.11` a Docker, verificar l'execució atòmica dels 5 scripts d'`initdb/`, depurar la lògica SQL i alinear el disseny amb la nova Guia de Lliuraments E2-E3 facilitada pel professorat.
 - **Treball realitzat:**
-  - **Joan:** Verificació de les regles de tallafocs i aïllament de zones; assistència en el diagrama d'entitat-relació i coordinació de la traçabilitat de la xarxa DMZ cap a PostgreSQL.
+  - **Joan:** Verificació de les regles de tallafocs i aïllament de zones; assistència en el diagrama d'entitat-relació i coordinació de la traçabilitat de la xarxa DMZ cap a MariaDB.
   - **Mariam:**
-    - Desplegament de `avigest_postgres` a Docker Compose.
+    - Desplegament de `avigest_mariadb` a Docker Compose.
     - Detecció i correcció d'un error de subconsulta no agrupada (`ERROR: subquery uses ungrouped column`) a la vista comparativa `v_resum_diari_climatic`, refactoritzant-la amb un `LEFT JOIN` directe net.
-    - Verificació de les 10 taules en 3FN, de les 6 vistes de negoci i validació del trigger `fn_control_llindars_sensor` davant d'una inserció d'estrès tèrmic (35.0 ºC), registrant l'encesa del ventilador a `registre_actuacions` i l'alerta crítica a `alarmes_incidencies`.
+    - Verificació de les 10 taules en 3FN, de les 6 vistes de negoci i validació del trigger `trg_control_llindars_sensor` davant d'una inserció d'estrès tèrmic (35.0 ºC), registrant l'encesa del ventilador a `registre_actuacions` i l'alerta crítica a `alarmes_incidencies`.
     - Incorporació a l'E2 del catàleg traçable de requeriments funcionals R1–R7, justificació formal de la normalització 3FN i taula de freqüències de mostreig IoT (30s clima, 15m sitges).
     - Actualització de les seccions de fonts bibliogràfiques a les 5 fitxes de decisió tècnica (FD01 a FD05).
 - **Dedicació:** Joan: 6 h | Mariam: 6 h (Total: 12 h)
@@ -157,8 +157,8 @@
 | **S4** | Dilluns 05/10/2026 | Defenses orals E1 (1h 30m prep + 10m defensa + torns companys) | 6 h | 6 h | **12 h** |
 | — | Dilluns 12/10/2026 | *FESTIU (Festa Nacional — Sense classe)* | 0 h | 0 h | **0 h** |
 | **S5** | Dilluns 19/10/2026 | Investigació, proves de concepte i acords E2 | 6 h | 6 h | **12 h** |
-| **S6** | Dilluns 26/10/2026 | Multi-VM (Ubuntu 24.04 + OPNsense), PostgreSQL 16 i avanç E3 | 6 h | 6 h | **12 h** |
-| **S7** | Dilluns 02/11/2026 | Validació PostgreSQL 16 Docker, triggers i adaptació guia E2-E3 | 6 h | 6 h | **12 h** |
+| **S6** | Dilluns 26/10/2026 | Multi-VM (Ubuntu 24.04 + OPNsense), MariaDB 10.11 LTS i avanç E3 | 6 h | 6 h | **12 h** |
+| **S7** | Dilluns 02/11/2026 | Validació MariaDB 10.11 Docker, triggers i adaptació guia E2-E3 | 6 h | 6 h | **12 h** |
 | **TOTAL** | *(Fins al 02/11)* | **7 dilluns lectius x 6 hores** | **42 h** | **42 h** | **84 h** |
 
 ---
@@ -192,11 +192,11 @@ gantt
 
 1. **Sessió 7 (Dilluns, 2 de novembre):**
    - **Joan:** Implementació de la configuració d'interfícies i regles a l'entorn virtual d'OPNsense (`fw-seu`) i proves d'aïllament DMZ.
-   - **Mariam:** Validació de la ingesta de dades a PostgreSQL 16 a través del broker MQTT central.
+   - **Mariam:** Validació de la ingesta de dades a MariaDB 10.11 LTS a través del broker MQTT central.
 
 2. **Sessió 8 (Dilluns, 9 de novembre):**
    - **Joan:** Desplegament de l'arbre LDAP a `srv-serveis` i validació d'autenticació per a usuaris de granja i de seu central.
-   - **Mariam:** Proves d'estrès dels triggers PL/pgSQL davant d'incidències tèrmiques amb el simulador IoT.
+   - **Mariam:** Proves d'estrès dels triggers MariaDB davant d'incidències tèrmiques amb el simulador IoT.
 
 3. **Sessió 9 (Dilluns, 16 de novembre):**
    - **Joan:** Proves de còpia i restauració amb `srv-backup` i validació del segon disc simulat (RTO < 30 min).

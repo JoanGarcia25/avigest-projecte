@@ -1,33 +1,31 @@
 services:
   # ============================================================================
-  # 1. Base de Dades Central — PostgreSQL 16 LTS (Requeriment 4.3)
+  # 1. Base de Dades Central — MariaDB 10.11 LTS (Requeriment 4.3)
   # Allotjada a srv-serveis (LAN seu: 10.0.20.10)
   # ============================================================================
-  postgres:
-    image: postgres:16-alpine
-    container_name: avigest_postgres
+  mariadb:
+    image: mariadb:10.11
+    container_name: avigest_mariadb
     restart: unless-stopped
     command:
-      - "postgres"
-      - "-c"
-      - "wal_level=replica"
-      - "-c"
-      - "max_wal_senders=5"
-      - "-c"
-      - "max_replication_slots=5"
-      - "-c"
-      - "hot_standby=on"
+      - "mariadbd"
+      - "--server-id=1"
+      - "--log-bin=mariadb-bin"
+      - "--binlog-format=ROW"
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_unicode_ci"
     environment:
-      POSTGRES_DB: avigest_db
-      POSTGRES_USER: avigest_app
-      POSTGRES_PASSWORD: avigest_secret_2026
+      MARIADB_ROOT_PASSWORD: root_secret_2026
+      MARIADB_DATABASE: avigest_db
+      MARIADB_USER: avigest_app
+      MARIADB_PASSWORD: avigest_secret_2026
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mariadb_data:/var/lib/mysql
       - ./initdb:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U avigest_app -d avigest_db && psql -U avigest_app -d avigest_db -tAc \"SELECT 1 FROM pg_views WHERE viewname='v_panell_executiu_global'\" | grep -q 1"]
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "root", "-proot_secret_2026", "--silent"]
       interval: 5s
       timeout: 5s
       retries: 30
@@ -36,28 +34,27 @@ services:
       - avigest_internal
 
   # ============================================================================
-  # 2. Rèplica Hot Standby — streaming replication real (Requeriment 4.6)
-  # Mateixa VM de laboratori: protegeix el procés PostgreSQL, no el disc de la VM.
+  # 2. Rèplica MariaDB Hot Standby — Replicació GTID (Requeriment 4.6)
+  # Allotjada a srv-serveis en port alternatiu 3307
   # ============================================================================
-  postgres_replica:
-    image: postgres:16-alpine
-    container_name: avigest_postgres_replica
+  mariadb_replica:
+    image: mariadb:10.11
+    container_name: avigest_mariadb_replica
     restart: unless-stopped
     depends_on:
-      postgres:
+      mariadb:
         condition: service_healthy
     environment:
-      POSTGRES_DB: avigest_db
-      POSTGRES_USER: avigest_app
-      POSTGRES_PASSWORD: avigest_secret_2026
-      PRIMARY_HOST: postgres
+      MARIADB_ROOT_PASSWORD: root_secret_2026
+      PRIMARY_HOST: mariadb
+      PRIMARY_PORT: 3306
       REPL_USER: replicator
       REPL_PASSWORD: replicator_pass_2026
     ports:
-      - "5433:5432"
+      - "3307:3306"
     volumes:
-      - postgres_replica_data:/var/lib/postgresql/data
-      - ./postgres/replica-entrypoint.sh:/replica-entrypoint.sh:ro
+      - mariadb_replica_data:/var/lib/mysql
+      - ./mariadb/replica-entrypoint.sh:/replica-entrypoint.sh:ro
     entrypoint: ["/bin/sh", "/replica-entrypoint.sh"]
     networks:
       - avigest_internal
@@ -80,7 +77,7 @@ services:
       - avigest_internal
 
   # ============================================================================
-  # 3b. Ingesta MQTT → PostgreSQL (el broker sol no persisteix lectures)
+  # 3b. Ingesta MQTT → MariaDB (el broker sol no persisteix lectures)
   # ============================================================================
   mqtt_ingest:
     build:
@@ -89,16 +86,16 @@ services:
     container_name: avigest_mqtt_ingest
     restart: unless-stopped
     depends_on:
-      postgres:
+      mariadb:
         condition: service_healthy
       mosquitto:
         condition: service_started
     environment:
-      PGHOST: postgres
-      PGPORT: 5432
-      PGUSER: avigest_iot
-      PGPASSWORD: iot_ingest_pass_2026
-      PGDATABASE: avigest_db
+      DB_HOST: mariadb
+      DB_PORT: 3306
+      DB_USER: avigest_iot
+      DB_PASSWORD: iot_ingest_pass_2026
+      DB_NAME: avigest_db
       MQTT_HOST: mosquitto
       MQTT_PORT: 1883
     networks:
@@ -143,10 +140,10 @@ services:
       - avigest_internal
 
 volumes:
-  postgres_data:
-    name: avigest_postgres_data
-  postgres_replica_data:
-    name: avigest_postgres_replica_data
+  mariadb_data:
+    name: avigest_mariadb_data
+  mariadb_replica_data:
+    name: avigest_mariadb_replica_data
   mosquitto_data:
     name: avigest_mosquitto_data
   mosquitto_log:

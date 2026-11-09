@@ -36,7 +36,7 @@
 - [x] Seguretat Perimetral: OPNsense, DMZ i Tallafocs (Secció 5 — Req 4.4)
 - [x] Directori Centralitzat LDAP i 4 rols (Secció 6 — Req 4.2)
 - [x] Model Entitat-Relació incrustat amb diagrama Mermaid ER (Secció 7.1 — Req 4.3)
-- [x] Triggers PL/pgSQL documentats (Secció 7.2 — Req 4.3)
+- [x] Triggers MariaDB documentats (Secció 7.2 — Req 4.3)
 - [x] Vistes i consultes comparatives documentades (Secció 7.3 — Req 4.3)
 - [x] Rols SQL de mínim privilegi (Secció 7.4 — Req 4.3)
 - [x] Arquitectura IoT: RS485 + LoRaWAN + MQTT i Edge Computing (Secció 8.1 — Req 4.8)
@@ -80,7 +80,7 @@
 - [x] Sessió 4 — 05/10/2026: Defenses orals E1
 - [x] *12/10/2026 — FESTIU (sense classe)*
 - [x] Sessió 5 — 19/10/2026: Investigació, POCs i acords de disseny
-- [x] Sessió 6 — 26/10/2026: Redisseny multi-VM, PostgreSQL 16 i OPNsense
+- [x] Sessió 6 — 26/10/2026: Redisseny multi-VM, MariaDB 10.11 LTS i OPNsense
 - [ ] **Sessió 7 — 02/11/2026:** Regles OPNsense i ingesta MQTT *(Joan + Mariam)*
 - [ ] **Sessió 8 — 09/11/2026:** LDAP i proves d'estrès IoT *(Joan + Mariam)*
 - [ ] **Sessió 9 — 16/11/2026:** Backups, PRD i Store-and-Forward *(Joan + Mariam)*
@@ -89,7 +89,7 @@
 
 ### A5. Fitxes de Decisió Tècnica
 
-- [x] [FD01 — SGBD: PostgreSQL 16 + Rèplica](file:///c:/avigest-projecte-git/docs/fitxes_decisio/FD01_sgbd.md) *(Mariam)*
+- [x] [FD01 — SGBD: MariaDB 10.11 LTS + Rèplica GTID](file:///c:/avigest-projecte-git/docs/fitxes_decisio/FD01_sgbd.md) *(Mariam)*
 - [x] [FD02 — Directori: OpenLDAP + phpLDAPadmin](file:///c:/avigest-projecte-git/docs/fitxes_decisio/FD02_ldap.md) *(Joan)*
 - [x] [FD03 — Tallafocs: OPNsense amb DMZ i Llista Blanca](file:///c:/avigest-projecte-git/docs/fitxes_decisio/FD03_tallafocs_dmz.md) *(Joan)*
 - [x] [FD04 — Còpies: srv-backup dedicat + 2n disc](file:///c:/avigest-projecte-git/docs/fitxes_decisio/FD04_backups_prd.md) *(Joan)*
@@ -99,11 +99,11 @@
 
 ## 🔧 B. CODI I CONFIGURACIONS TÈCNIQUES
 
-### B1. Base de Dades — PostgreSQL 16 *(Responsable: Mariam)*
+### B1. Base de Dades — MariaDB 10.11 LTS *(Responsable: Mariam)*
 
 - [x] Esquema DDL complet (10 taules normalitzades en 3FN) → [01_esquema.sql](file:///c:/avigest-projecte-git/bd/sql/01_esquema.sql)
 - [x] Document d'arquitectura i justificació del disseny (10 taules, RLS, triggers) → [explicacio_disseny_base_dades.md](file:///c:/avigest-projecte-git/bd/explicacio_disseny_base_dades.md)
-- [x] Triggers i procediments PL/pgSQL (termòstat, alarmes, alta atòmica) → [02_triggers_procedures.sql](file:///c:/avigest-projecte-git/bd/procediments-triggers/02_triggers_procedures.sql)
+- [x] Triggers i procediments SQL MariaDB (termòstat, alarmes, alta atòmica) → [02_triggers_procedures.sql](file:///c:/avigest-projecte-git/bd/procediments-triggers/02_triggers_procedures.sql)
 - [x] Dades de prova inicials → [03_dades_prova.sql](file:///c:/avigest-projecte-git/bd/sql/03_dades_prova.sql)
 - [x] Usuaris i rols SQL de mínim privilegi → [04_usuaris_rols_bd.sql](file:///c:/avigest-projecte-git/bd/sql/04_usuaris_rols_bd.sql)
 - [x] Vistes comparatives de negoci (mortalitat, climàtic, silos, panell executiu) → [05_vistes_consultes_comparatives.sql](file:///c:/avigest-projecte-git/bd/sql/05_vistes_consultes_comparatives.sql)
@@ -113,7 +113,7 @@
 
 ### B2. Docker Compose — Entorn `srv-serveis` *(Responsable: Joan + Mariam)*
 
-- [x] `docker-compose.yml` amb PostgreSQL 16, Rèplica, MQTT Mosquitto, OpenLDAP i phpLDAPadmin → [docker-compose.yml](file:///c:/avigest-projecte-git/docker/docker-compose.yml)
+- [x] `docker-compose.yml` amb MariaDB 10.11 LTS, Rèplica, MQTT Mosquitto, OpenLDAP i phpLDAPadmin → [docker-compose.yml](file:///c:/avigest-projecte-git/docker/docker-compose.yml)
 - [x] Configuració Mosquitto → [mosquitto.conf](file:///c:/avigest-projecte-git/docker/mosquitto.conf)
 - [x] Scripts d'inicialització BD dins de `docker/initdb/` (01 a 05)
 - [ ] **Aixecar Docker Compose a la VM `srv-serveis` i verificar que tots els serveis arranquen sense errors** *(Sessió 7)*
@@ -151,7 +151,7 @@
 - [x] Simulador IoT Python complet → [simulador_iot.py](file:///c:/avigest-projecte-git/iot/sensors/simulador_iot.py)
 - [x] Codi de referència ESP32 Arduino → [codi_esp32_referencia.ino](file:///c:/avigest-projecte-git/iot/sensors/codi_esp32_referencia.ino)
 - [x] Arquitectura del flux de dades documentada → [arquitectura_flux_dades.md](file:///c:/avigest-projecte-git/iot/comunicacions/arquitectura_flux_dades.md)
-- [ ] **Executar `python3 simulador_iot.py --mode normal` i veure lectures a PostgreSQL** *(Sessió 7-8)*
+- [ ] **Executar `python3 simulador_iot.py --mode normal` i veure lectures a MariaDB** *(Sessió 7-8)*
 - [ ] **Executar `python3 simulador_iot.py --mode alarma` i verificar que el trigger activa el ventilador i genera l'alarma** *(Sessió 8)*
 - [ ] **Provar mode MQTT: `simulador_iot.py --mode mqtt --broker 10.1.1.10`** *(Sessió 8)*
 - [ ] **Prova de resiliència Store-and-Forward: tallar la VPN de `granja1-srv`, acumular lectures 30 min, reconnectar i verificar sincronització sense pèrdues** *(Sessió 9)*
@@ -161,7 +161,7 @@
 - [x] Script d'alta automatitzada → [alta_granja.sh](file:///c:/avigest-projecte-git/scripts/automatitzacio-granges/alta_granja.sh)
 - [x] Documentació de l'script → [README.md](file:///c:/avigest-projecte-git/scripts/automatitzacio-granges/README.md)
 - [ ] **Executar l'script per crear la Granja 2 (`10.1.2.0/24`) com a prova de variació** *(Sessió 10)*
-- [ ] **Verificar que ha creat: la granja + naus a PostgreSQL, l'OU + usuari a LDAP i la regla al firewall** *(Sessió 10)*
+- [ ] **Verificar que ha creat: la granja + naus a MariaDB, l'OU + usuari a LDAP i la regla al firewall** *(Sessió 10)*
 
 ---
 
@@ -215,7 +215,7 @@
 | **Joan** | Executar `backup_avigest.sh` + prova de restauració completa | ⬜ |
 | **Joan** | Mesurar el RTO real (objectiu: < 30 minuts) | ⬜ |
 | **Mariam** | Prova Store-and-Forward: desconnectar VPN 30 min, reconnectar | ⬜ |
-| **Mariam** | Verificar que cap lectura s'ha perdut (recompte a PostgreSQL) | ⬜ |
+| **Mariam** | Verificar que cap lectura s'ha perdut (recompte a MariaDB) | ⬜ |
 | **Ambdós** | Registrar la Sessió 9 al diari de treball | ⬜ |
 
 ### 🔜 Sessió 10 — Dilluns 23 de novembre

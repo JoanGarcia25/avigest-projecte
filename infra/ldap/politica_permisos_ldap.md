@@ -62,6 +62,6 @@ L'aïllament s'aplica en dues capes complementàries per garantir la seguretat p
 
 ### Capa 2: Aïllament a la Base de Dades (demostrable al laboratori)
 - Un `ldapsearch` amb l'admin **pot llistar tot l'arbre**: LDAP identifica i agrupa, no amaga branques d'altres clients.
-- L'aïllament de dades es prova a PostgreSQL: `psql -U avigest_consulta` + `SELECT sp_set_tenant(1)` o `sp_set_tenant(1, 1)` (només Granja Bellpuig).
+- L'aïllament de dades es prova a MariaDB: `mariadb -u avigest_consulta -pavigest_secret_2026 avigest_db` + `CALL sp_set_tenant(1); SELECT * FROM v_tenant_granges;` o `CALL sp_set_tenant(1, 1);` (només Granja Bellpuig).
 - Quan hi hagi portal web, llegirà `businessCategory` i `departmentNumber` i cridarà `sp_set_tenant` a cada sessió.
 - Els administradors globals (`cn=AdminsAviGest` / rol SQL `avigest_app`) tenen visibilitat de suport tècnic global.

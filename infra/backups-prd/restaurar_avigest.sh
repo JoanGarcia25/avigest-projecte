@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# AviGest S.L. — Script de Restauració davant Desastres (PostgreSQL + OpenLDAP)
+# AviGest S.L. — Script de Restauració davant Desastres (MariaDB + OpenLDAP)
 # Fitxer: infra/backups-prd/restaurar_avigest.sh
 # Mòdul: ASIX - Projecte (Requeriment 4.5: PRD)
 # Responsable: Joan (Infraestructura, Xarxa i Seguretat)
@@ -54,18 +54,20 @@ if [[ ! -f "${TEMP_RESTORE_DIR}/avigest_db.sql" ]] || [[ ! -f "${TEMP_RESTORE_DI
     exit 1
 fi
 
-# 3. Restauració a PostgreSQL 16 (srv-serveis: 10.0.20.10)
-echo "[3/4] Restaurant esquema i dades a PostgreSQL 16..."
-if command -v psql &>/dev/null; then
-    PGPASSWORD="${PGPASSWORD:-avigest_secret_2026}" psql -h 10.0.20.10 -p 5432 -U avigest_app -d avigest_db < "${TEMP_RESTORE_DIR}/avigest_db.sql"
-elif docker ps --format '{{.Names}}' | grep -q "avigest_postgres"; then
-    docker exec -i avigest_postgres psql -U avigest_app -d avigest_db < "${TEMP_RESTORE_DIR}/avigest_db.sql"
+# 3. Restauració a MariaDB 10.11 (srv-serveis: 10.0.20.10:3306)
+echo "[3/4] Restaurant esquema i dades a MariaDB 10.11..."
+if command -v mariadb &>/dev/null; then
+    mariadb -h 10.0.20.10 -P 3306 -u avigest_app -pavigest_secret_2026 avigest_db < "${TEMP_RESTORE_DIR}/avigest_db.sql"
+elif command -v mysql &>/dev/null; then
+    mysql -h 10.0.20.10 -P 3306 -u avigest_app -pavigest_secret_2026 avigest_db < "${TEMP_RESTORE_DIR}/avigest_db.sql"
+elif docker ps --format '{{.Names}}' | grep -q "avigest_mariadb"; then
+    docker exec -i avigest_mariadb mariadb -u avigest_app -pavigest_secret_2026 avigest_db < "${TEMP_RESTORE_DIR}/avigest_db.sql"
 else
-    echo "[AVÍS] No s'ha pogut connectar a PostgreSQL directament. Inseriu manualment avigest_db.sql."
+    echo "[AVÍS] No s'ha pogut connectar a MariaDB directament. Inseriu manualment avigest_db.sql."
 fi
-echo "  -> [OK] Base de dades PostgreSQL restaurada correctament."
+echo "  -> [OK] Base de dades MariaDB restaurada correctament."
 
-# 4. Restauració al Directori OpenLDAP (srv-serveis: 10.0.20.10)
+# 4. Restauració al Directori OpenLDAP (srv-serveis: 10.0.20.10:389)
 echo "[4/4] Restaurant l'arbre d'usuaris a OpenLDAP..."
 if command -v ldapadd &>/dev/null; then
     ldapadd -h 10.0.20.10 -p 389 -x -D "cn=admin,dc=avigest,dc=cat" -w "admin_ldap_pass_2026" -c -f "${TEMP_RESTORE_DIR}/avigest_ldap.ldif" || true

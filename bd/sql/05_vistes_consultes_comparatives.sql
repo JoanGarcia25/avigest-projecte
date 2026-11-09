@@ -1,17 +1,17 @@
 -- =============================================================================
--- AviGest S.L. — Vistes i Consultes Comparatives d'Explotació (PostgreSQL 16)
+-- AviGest S.L. — Vistes i Consultes Comparatives d'Explotació (MariaDB 10.11 LTS)
 -- Fitxer: bd/sql/05_vistes_consultes_comparatives.sql / docker/initdb/05_vistes_consultes_comparatives.sql
 -- Mòdul: ASIX - Projecte (Requeriment 4.3 i Requeriments Funcionals R3, R4, R6, R7)
 -- Responsable: Mariam (Base de Dades, IoT i Automatització)
 -- =============================================================================
 
+USE avigest_db;
+
 -- -----------------------------------------------------------------------------
 -- 1. VISTA: Comparativa de Rendiment, Mortalitat i ICA de Lots de Criança (R6)
 -- Avaluació d'eficiència zootècnica, mortalitat i índex de conversió alimentària.
--- Definida amb 'security_invoker = true' per respectar l'aïllament R3.
 -- -----------------------------------------------------------------------------
-CREATE OR REPLACE VIEW v_comparativa_lots_rendiment
-WITH (security_invoker = true) AS
+CREATE OR REPLACE SQL SECURITY INVOKER VIEW v_comparativa_lots_rendiment AS
 SELECT 
     c.id_client,
     c.nom_empresa,
@@ -28,11 +28,8 @@ SELECT
     l.num_aus_inicials,
     l.num_baixes,
     (l.num_aus_inicials - l.num_baixes) AS num_aus_finals_estimades,
-    ROUND((l.num_baixes::numeric / NULLIF(l.num_aus_inicials, 0) * 100), 2) AS percentatge_mortalitat,
-    CASE 
-        WHEN l.data_sortida_real IS NOT NULL THEN (l.data_sortida_real - l.data_entrada)
-        ELSE (CURRENT_DATE - l.data_entrada)
-    END AS dies_de_cicle,
+    ROUND((l.num_baixes / NULLIF(l.num_aus_inicials, 0) * 100), 2) AS percentatge_mortalitat,
+    DATEDIFF(COALESCE(l.data_sortida_real, CURRENT_DATE), l.data_entrada) AS dies_de_cicle,
     l.pes_mitja_kg,
     l.pinso_consumit_kg,
     ROUND(((l.num_aus_inicials - l.num_baixes) * l.pes_mitja_kg), 2) AS kg_carn_produits,
@@ -48,8 +45,7 @@ ORDER BY l.data_entrada DESC;
 -- 2. VISTA: Resum Diari i Mitjanes de Telemetria per Nau (R4)
 -- Agrupació estadística per dia per avaluar condicions climàtiques i estrès tèrmic.
 -- -----------------------------------------------------------------------------
-CREATE OR REPLACE VIEW v_resum_diari_climatic
-WITH (security_invoker = true) AS
+CREATE OR REPLACE SQL SECURITY INVOKER VIEW v_resum_diari_climatic AS
 SELECT 
     c.id_client,
     c.nom_empresa,
@@ -62,7 +58,7 @@ SELECT
     ROUND(MAX(ls.valor), 2) AS valor_maxim,
     s.unitat_mesura,
     COUNT(ls.id_lectura) AS total_lectures,
-    COUNT(a.id_alarma) AS total_alarmes_dia
+    COUNT(DISTINCT a.id_alarma) AS total_alarmes_dia
 FROM lectures_sensors ls
 JOIN sensors s ON ls.id_sensor = s.id_sensor
 JOIN naus n ON s.id_nau = n.id_nau
@@ -79,8 +75,7 @@ ORDER BY data_lectura DESC, g.nom_granja, n.codi_nau;
 -- 3. VISTA: Monitoratge i Estat de Silos de Gra (R4 i R7)
 -- Control del pes de pinso romanent per anticipar comandes logístiques de cooperativa.
 -- -----------------------------------------------------------------------------
-CREATE OR REPLACE VIEW v_estat_silos_gra
-WITH (security_invoker = true) AS
+CREATE OR REPLACE SQL SECURITY INVOKER VIEW v_estat_silos_gra AS
 SELECT 
     c.id_client,
     c.nom_empresa,
@@ -100,73 +95,32 @@ FROM sensors s
 JOIN naus n ON s.id_nau = n.id_nau
 JOIN granges g ON n.id_granja = g.id_granja
 JOIN clients c ON g.id_client = c.id_client
-JOIN LATERAL (
-    SELECT valor, data_hora 
-    FROM lectures_sensors 
-    WHERE id_sensor = s.id_sensor 
-    ORDER BY data_hora DESC 
-    LIMIT 1
-) ls ON TRUE
-WHERE s.tipus_sensor = 'pes_silo';
+JOIN lectures_sensors ls ON ls.id_sensor = s.id_sensor
+WHERE s.tipus_sensor = 'pes_silo'
+  AND ls.id_lectura = (
+      SELECT MAX(ls_int.id_lectura)
+      FROM lectures_sensors ls_int
+      WHERE ls_int.id_sensor = s.id_sensor
+  );
 
 -- -----------------------------------------------------------------------------
--- 4. VISTA: Panell Executiu Global per Client i Granja (R3 i R1)
--- Síntesi executiva multitenant per a la direcció i veterinaris d'integradora.
+-- 4. VISTA: Panell Executiu Global per a Direcció i Operacions
+-- KPIs en temps real d'infraestructura, aus actives i alarmes no resoltes.
 -- -----------------------------------------------------------------------------
-CREATE OR REPLACE VIEW v_panell_executiu_global
-WITH (security_invoker = true) AS
+CREATE OR REPLACE SQL SECURITY INVOKER VIEW v_panell_executiu_global AS
 SELECT 
-    c.id_client,
-    c.nom_empresa,
-    COUNT(DISTINCT g.id_granja) AS total_granges,
-    COUNT(DISTINCT n.id_nau) AS total_naus,
-    COALESCE(SUM(n.capacitat_aus), 0) AS capacitat_total_aus,
-    COALESCE(SUM(l.num_aus_inicials - l.num_baixes), 0) AS aus_en_produccio,
-    (SELECT COUNT(*) 
-     FROM alarmes_incidencies al 
-     JOIN naus n2 ON al.id_nau = n2.id_nau
-     JOIN granges g2 ON n2.id_granja = g2.id_granja
-     WHERE g2.id_client = c.id_client AND al.resolta = FALSE) AS alarmes_pendents_resolucio
-FROM clients c
-LEFT JOIN granges g ON c.id_client = g.id_client AND g.activa = TRUE
-LEFT JOIN naus n ON g.id_granja = n.id_granja AND n.activa = TRUE
-LEFT JOIN lots_crianca l ON n.id_nau = l.id_nau AND l.estat = 'en_curs'
-GROUP BY c.id_client, c.nom_empresa
-ORDER BY c.nom_empresa;
+    (SELECT COUNT(*) FROM clients WHERE actiu = TRUE) AS total_clients_actius,
+    (SELECT COUNT(*) FROM granges WHERE activa = TRUE) AS total_granges_actives,
+    (SELECT COUNT(*) FROM naus WHERE activa = TRUE) AS total_naus_operatives,
+    (SELECT COALESCE(SUM(num_aus_inicials - num_baixes), 0) FROM lots_crianca WHERE estat = 'en_curs') AS total_aus_en_criança,
+    (SELECT COUNT(*) FROM sensors WHERE actiu = TRUE) AS total_sensors_connectats,
+    (SELECT COUNT(*) FROM alarmes_incidencies WHERE resolta = FALSE) AS total_incidencies_pendents,
+    (SELECT COUNT(*) FROM alarmes_incidencies WHERE resolta = FALSE AND nivell_gravetat = 'critic') AS alertes_critiques_urgents;
 
--- -----------------------------------------------------------------------------
--- Concessió de permisos de lectura sobre totes les vistes per al rol 'avigest_consulta'
--- -----------------------------------------------------------------------------
-GRANT SELECT ON v_comparativa_lots_rendiment TO avigest_consulta;
-GRANT SELECT ON v_resum_diari_climatic TO avigest_consulta;
-GRANT SELECT ON v_estat_silos_gra TO avigest_consulta;
-GRANT SELECT ON v_panell_executiu_global TO avigest_consulta;
-GRANT SELECT ON v_estat_actual_naus TO avigest_consulta;
-GRANT SELECT ON v_alarmes_actives TO avigest_consulta;
+-- Concedir permisos de consulta a avigest_consulta sobre les vistes
+GRANT SELECT ON avigest_db.v_comparativa_lots_rendiment TO 'avigest_consulta'@'%';
+GRANT SELECT ON avigest_db.v_resum_diari_climatic TO 'avigest_consulta'@'%';
+GRANT SELECT ON avigest_db.v_estat_silos_gra TO 'avigest_consulta'@'%';
+GRANT SELECT ON avigest_db.v_panell_executiu_global TO 'avigest_consulta'@'%';
 
--- =============================================================================
--- CONSULTES COMPARATIVES D'EXEMPLE PER A DEMOSTRACIÓ I AUDITORIA
--- =============================================================================
-
--- Consulta 1: Demostració d'Aïllament Multitenant RLS (R3)
--- SELECT sp_set_tenant(1);
--- SELECT nom_empresa, nom_granja, codi_nau, estat_lot, percentatge_mortalitat FROM v_comparativa_lots_rendiment;
--- SELECT sp_set_tenant(2);
--- SELECT nom_empresa, nom_granja, codi_nau, estat_lot, percentatge_mortalitat FROM v_comparativa_lots_rendiment;
-
--- Consulta 2: Rànquing d'Incidències Crítiques per Nau
--- SELECT n.codi_nau, g.nom_granja, COUNT(a.id_alarma) AS alertes_critiques
--- FROM alarmes_incidencies a
--- JOIN naus n ON a.id_nau = n.id_nau
--- JOIN granges g ON n.id_granja = g.id_granja
--- WHERE a.nivell_gravetat = 'critic'
--- GROUP BY n.codi_nau, g.nom_granja
--- ORDER BY alertes_critiques DESC;
-
--- Consulta 3: Històric d'activacions d'emergència de ventiladors per sensor
--- SELECT a.codi_actuador, n.codi_nau, r.accio, r.motiu, r.data_hora
--- FROM registre_actuacions r
--- JOIN actuadors a ON r.id_actuador = a.id_actuador
--- JOIN naus n ON a.id_nau = n.id_nau
--- WHERE a.tipus_actuador = 'ventilador' AND r.accio = 'ON'
--- ORDER BY r.data_hora DESC;
+FLUSH PRIVILEGES;

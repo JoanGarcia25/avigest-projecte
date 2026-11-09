@@ -25,7 +25,7 @@ En aquesta carpeta es troben els fitxers font vectorials en format estàndard **
   2. **Capa 2 (Transmissió de Camp):** Bus sèrie diferencial RS485 Modbus RTU (interior de naus) vs xarxa de ràdio LoRaWAN 868 MHz amb gateway Dragino LPS8N (silos exteriors).
   3. **Capa 3 (Edge Computing a `granja1-srv`):** Broker MQTT local, **bucle autònom d'actuació immediata** sobre relés si $T > 31^\circ\text{C}$ (independent d'Internet) i cua de retenció *Store-and-Forward* (fins a 72h).
   4. **Capa 4 (Transport Segur WAN):** Router 4G amb doble SIM, túnel WireGuard VPN i filtre OPNsense (només port MQTT 1883 autoritzat).
-  5. **Capa 5 (Seu Central i BD PostgreSQL 16):** Ingestor central, triggers PL/pgSQL d'alarma crítica ($T \ge 33^\circ\text{C}$ o $CO_2 > 3.000\text{ ppm}$) i vistes comparatives de negoci amb seguretat RLS.
+  5. **Capa 5 (Seu Central i BD MariaDB 10.11 LTS):** Ingestor central, triggers d'alarma crítica ($T \ge 33^\circ\text{C}$ o $CO_2 > 3.000\text{ ppm}$) i vistes comparatives de negoci amb aïllament multitenant.
 
 ---
 
@@ -37,7 +37,7 @@ En aquesta carpeta es troben els fitxers font vectorials en format estàndard **
   * **Branca Grups (`ou=groups`):** Els 4 rols de seguretat `posixGroup` (`AdminsAviGest`, `AdminsClient`, `GestorsGranja`, `UsuarisConsulta`).
   * **Branca Clients Multitenant (`ou=clients`):** Empreses integradores separades (`ou=AgroPonent` amb ID 1, `ou=AvicolaSegria` amb ID 2).
   * **Sub-branques de Granges:** `ou=Granja_Bellpuig`, `ou=Granja_Alcarras` i usuaris associats amb `departmentNumber: GRANJA_<ID>`.
-  * **Mecanisme RLS:** Explicació visual de com els atributs LDAP mapegen directament a la funció `sp_set_tenant()` de PostgreSQL per garantir l'aïllament matemàtic de dades entre granges.
+  * **Mecanisme multitenant:** Explicació visual de com els atributs LDAP mapegen directament al procediment `sp_set_tenant()` de MariaDB per garantir l'aïllament de dades entre granges mitjançant vistes de sessió.
 
 ---
 

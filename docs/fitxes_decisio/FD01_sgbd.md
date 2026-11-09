@@ -2,7 +2,7 @@
 
 **Projecte:** AviGest S.L. — Sistema de gestió centralitzada de granges avícoles  
 **Mòdul:** ASIX - Projecte (Requeriment 4.3 i 4.6)  
-**Data:** Actualitzat a 26 d'octubre de 2026  
+**Data:** Actualitzat a novembre de 2026  
 **Responsable:** Mariam / Joan  
 
 ---
@@ -11,30 +11,28 @@
 El sistema centralitzat d'AviGest a `srv-serveis` requereix un SGBD relacional robust per emmagatzemar:
 - Dades estructurades de clients, granges, naus i cicles de criança (model multitenant).
 - Sèries temporals de lectures IoT d'alta freqüència (temperatura, humitat, CO2, nivell de silos).
-- Triggers procedimentals per a control automàtic d'actuadors i generació d'alarmes.
+- Triggers per al control automàtic d'actuadors i generació immediata d'alarmes.
 - Suport natiu de **rèplica de dades** per garantir la redundància i alta disponibilitat (Requeriment 4.6).
 
 ---
 
 ## 2. Alternatives avaluades
 
-### Alternativa 1: PostgreSQL 16 (Escollida)
-* **Descripció:** SGBD relacional i d'objectes avançat de codi obert, de referència en entorns empresarials i projectes IoT.
+### Alternativa 1: MariaDB (10.11 LTS) — (Escollida)
+* **Descripció:** SGBD relacional de referència al cicle de CFGS ASIX (M02 Bases de Dades), de codi obert i totalment compatible amb l'ecosistema Linux de producció.
 * **Pros:**
-  - **Llenguatge procedural avançat (PL/pgSQL):** Permet escriure triggers rics i procediments d'automatització i auditoria d'accessos sense limitacions.
-  - **Suport excel·lent per a telemetria:** Tipus JSON/JSONB natius i índexs de sèrie temporal. TimescaleDB es deixa com a extensió futura; **no està instal·lada al laboratori**.
-  - **Seguretat a nivell de fila (Row-Level Security - RLS):** Aïllament natiu multitenant per motor de dades, ideal per separar granges i clients.
-  - **Mecanisme de rèplica nadiu (Streaming Replication):** Permet configurar rèpliques calentes (*Hot Standby*) amb sincronització basada en fitxers WAL (*Write-Ahead Logging*).
+  - **Estàndard docent i tecnològic ASIX:** És el motor oficial utilitzat als mòduls de bases de dades i administració de servidors a l'Institut Mollerussa.
+  - **Rendiment transaccional InnoDB:** Motor d'emmagatzematge ACID amb bloqueig per fila, claus foranes estrictes i integritat referencial en cascada.
+  - **Automatismes procedimentals complets:** Suport natiu de triggers (`BEFORE`/`AFTER INSERT/UPDATE/DELETE`), procediments emmagatzemats amb gestió de transaccions i funcions definides per l'usuari.
+  - **Suport JSON nadiu:** Permet registrar instantànies d'auditoria DML amb `JSON_OBJECT()` sense necessitat d'extensions externes.
+  - **Replicació d'alta fiabilitat (GTID):** Replicació binlog primary-replica mitjançant identificadors de transacció globals (*Global Transaction IDs*).
+  - **Lleuger i eficient:** Consum òptim de memòria RAM a la màquina virtual `srv-serveis`.
 * **Contres:**
-  - Administració de configuració inicial més estricta (`pg_hba.conf`, `postgresql.conf`).
+  - L'aïllament multitenant s'implementa mitjançant vistes segures i variables de sessió en comptes de RLS integrat al motor.
 
-### Alternativa 2: MariaDB (10.11 LTS) / MySQL
-* **Descripció:** SGBD relacional clàssic derivat de MySQL.
-* **Pros:**
-  - Desplegament ràpid i eina web senzilla (phpMyAdmin).
-* **Contres:**
-  - Menor potència en procediments emmagatzemats i triggers complexos en comparació amb PL/pgSQL.
-  - No disposa de Row-Level Security natiu directe; l'aïllament requereix vistes manuals.
+### Alternativa 2: PostgreSQL 16 (Descartada)
+* **Descripció:** SGBD relacional avançat d'objectes.
+* **Motiu de descart:** Tot i la seva potència, introdueix complexitats de sintaxi i administració innecessàries que s'aparten de l'estàndard docent del cicle ASIX (on tot l'aprenentatge i eines es fonamenten en MariaDB/MySQL).
 
 ### Alternativa 3: SQLite3 (Descartada)
 * **Descripció:** Base de dades embeguda en fitxer local.
@@ -43,30 +41,30 @@ El sistema centralitzat d'AviGest a `srv-serveis` requereix un SGBD relacional r
 ---
 
 ## 3. Decisió presa
-**S'escull PostgreSQL 16 amb suport de rèplica.**
+**S'escull MariaDB 10.11 LTS amb motor InnoDB i suport de rèplica.**
 
 ### Justificació:
-1. **Lògica de negoci potent:** PL/pgSQL permet implementar la lògica d'actuació automàtica i validació de llindars de forma elegant i segura.
-2. **Capacitat d'ingesta IoT:** Estructura òptima per rebre les lectures del broker MQTT a `srv-serveis`.
-3. **Redundància i Rèplica (Fitxa de Decisió / Avaluació):**
+1. **Coherència formativa i de projecte:** MariaDB és el motor de base de dades vehicular d'ASIX. Tota la infraestructura, scripts d'ingesta i eines de còpia (`mariadb-dump`) són directament defensables davant del tribunal.
+2. **Capacitat d'ingesta IoT i triggers:** Els triggers InnoDB gestionen eficaçment les alertes i activació de ventiladors en temps real.
+3. **Redundància i Rèplica (Requeriment 4.6):**
    > **Nota d'arquitectura sobre la Rèplica de Base de Dades:**  
-   > En el desplegament del laboratori acadèmic, la rèplica de PostgreSQL està allotjada com a contenidor secundari dins de la mateixa màquina virtual `srv-serveis`.  
-   > **Limitació de disseny documentada i defensada davant del tribunal:** Som plenament conscients que tenir la rèplica en un contenidor dins de la mateixa VM **no és una redundància real de maquinari si cau la VM sencera o si falla el disc virtual de `srv-serveis`**. El contenidor `avigest_postgres_replica` (port 5433) sí que fa **streaming replication real** (`pg_basebackup` + `walreceiver`): protegeix la caiguda del procés primari, no la del disc de la VM.  
-   > Si cau la VM `srv-serveis` per complet, la continuïtat del servei està garantida per la màquina virtual dedicada independent **`srv-backup`** (`10.0.20.20`), la qual fa còpies transaccionals diàries i les emmagatzema en un segon disc virtual extern (RTO < 30 minuts). En una arquitectura de producció empresarial amb recursos de maquinari suficients, la rèplica de la BD s'allotjaria en una VM pròpia o en un servidor físic separat en un altre rack/CPD.
+   > En el laboratori virtual, la rèplica de MariaDB està configurada com a contenidor secundari dins de la màquina virtual `srv-serveis` (port 3307).  
+   > Protegeix el servei davant la caiguda del procés primari mitjançant replicació GTID.  
+   > La protecció davant la caiguda física de la VM o pèrdua de disc queda coberta pel servidor dedicat independent **`srv-backup`** (`10.0.20.20`), amb còpies transaccionals comprimides i segon disc virtual muntat (RTO < 30 minuts).
 
 ---
 
 ## 4. Mètode de verificació
-- **Desplegament en Docker:** Contenidor `postgres:16-alpine` a la màquina `srv-serveis` (LAN: `10.0.20.0/24`).
-- **Validació de triggers:** Execució de lectures de temperatura disparant l'activació de l'actuador i la inserció d'alarma.
-- **Rèplica:** `SELECT * FROM pg_stat_replication;` al primari i `SELECT pg_is_in_recovery();` al port 5433 (ha de retornar `t`).
-- **RLS:** connexió amb `avigest_consulta` + `SELECT sp_set_tenant(1)` vs `sp_set_tenant(2)`.
-- **Ingesta MQTT:** publicació al topic `avigest/granja1/telemetria/temperatura` i comprovació de la fila a `lectures_sensors`.
+- **Desplegament en Docker:** Contenidor `mariadb:10.11` a la màquina `srv-serveis` (LAN: `10.0.20.0/24`, port `3306`).
+- **Validació de triggers:** Inserció d'una lectura de temperatura a `lectures_sensors` disparant automàticament l'activació de ventilador a `actuadors` i la inserció d'alarma a `alarmes_incidencies`.
+- **Rèplica GTID:** Comprovació amb `SHOW SLAVE STATUS\G` al contenidor `avigest_mariadb_replica` (verificant `Slave_IO_Running: Yes` i `Slave_SQL_Running: Yes`).
+- **Aïllament Multitenant:** Connexió amb l'usuari `avigest_consulta`, execució de `CALL sp_set_tenant(1, NULL)` i comprovació que només es visualitzen les granges del Client 1 a `v_tenant_granges`.
+- **Ingesta MQTT:** Publicació al topic `avigest/granja1/telemetria/temperatura` i comprovació de la nova fila persistida a `lectures_sensors`.
 
 ---
 
 ## 5. Fonts consultades
-- Documentació oficial de PostgreSQL 16: *Streaming Replication & WAL Archiving* — [https://www.postgresql.org/docs/16/warm-standby.html](https://www.postgresql.org/docs/16/warm-standby.html)
-- Documentació oficial de PostgreSQL: *Row Security Policies (RLS)* — [https://www.postgresql.org/docs/16/ddl-rowsecurity.html](https://www.postgresql.org/docs/16/ddl-rowsecurity.html)
-- Repositori oficial de la imatge Docker de PostgreSQL (Docker Hub): [https://hub.docker.com/_/postgres](https://hub.docker.com/_/postgres)
-- Comparativa tècnica PostgreSQL vs MySQL per a ingestes de sèries temporals i JSONB: PostgreSQL Global Development Group (2024).
+- Documentació oficial de MariaDB 10.11 LTS: *Setting Up Replication with GTID* — [https://mariadb.com/kb/en/gtid/](https://mariadb.com/kb/en/gtid/)
+- Documentació oficial de MariaDB: *InnoDB Storage Engine Overview* — [https://mariadb.com/kb/en/innodb/](https://mariadb.com/kb/en/innodb/)
+- Currículum oficial del Cicle Formatiu de Grau Superior ASIX (Departament d'Educació de la Generalitat de Catalunya) — Mòdul M02 Bases de Dades.
+- Imatge oficial de MariaDB a Docker Hub: [https://hub.docker.com/_/mariadb](https://hub.docker.com/_/mariadb)

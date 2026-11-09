@@ -105,12 +105,12 @@ iptables -A INPUT -i "$WAN_IF" -p udp --dport 51820 -j ACCEPT
 # 6. REGLES DMZ -> LAN (Aïllament estricte de la zona DMZ)
 # JUSTIFICACIÓ CRÍTICA: Si el servidor web és compromès, l'atacant NO pot
 # escanejar la LAN, ni atacar srv-backup, ni accedir per SSH. Únicament
-# pot connectar a la BD (PostgreSQL: 5432) i al directori d'usuaris (LDAP: 389/636).
+# pot connectar a la BD (MariaDB: 3306) i al directori d'usuaris (LDAP: 389/636).
 # ------------------------------------------------------------------------------
 echo "[5/6] Aplicant aïllament estricte DMZ -> LAN..."
 
-# Permès 1: Consultes SQL del portal web cap a srv-serveis (PostgreSQL)
-iptables -A FORWARD -i "$DMZ_IF" -o "$LAN_IF" -s "$DMZ_WEB_IP" -d "$SRV_SERVEIS_IP" -p tcp --dport 5432 -m conntrack --ctstate NEW -j ACCEPT
+# Permès 1: Consultes SQL del portal web cap a srv-serveis (MariaDB: 3306)
+iptables -A FORWARD -i "$DMZ_IF" -o "$LAN_IF" -s "$DMZ_WEB_IP" -d "$SRV_SERVEIS_IP" -p tcp --dport 3306 -m conntrack --ctstate NEW -j ACCEPT
 
 # Permès 2: Validació d'autenticació LDAP cap a srv-serveis (OpenLDAP)
 iptables -A FORWARD -i "$DMZ_IF" -o "$LAN_IF" -s "$DMZ_WEB_IP" -d "$SRV_SERVEIS_IP" -p tcp --dport 389 -m conntrack --ctstate NEW -j ACCEPT

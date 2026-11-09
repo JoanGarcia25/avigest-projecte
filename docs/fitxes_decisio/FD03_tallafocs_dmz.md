@@ -48,7 +48,7 @@ La seu central d'AviGest conté dades crítiques i privades de múltiples client
 ### Justificació de les regles clau de tallafocs:
 1. **Regla WAN -> DMZ:** Només es permet el trànsit HTTPS (443) i HTTP (80) provinent de l'adreça IP pública de `pc-client` (o clients contractats) cap a `dmz-web`. Tota la resta és **DROP**.
 2. **Regla DMZ -> LAN (Aïllament estricte):** **La DMZ té expressament denegada la capacitat d'iniciar connexions cap a la LAN**, amb les úniques excepcions imprescindibles per al servei:
-   - Cap a `srv-serveis`: Port 5432 (PostgreSQL) per consultar la BD.
+   - Cap a `srv-serveis`: Port 3306 (MariaDB) per consultar la BD.
    - Cap a `srv-serveis`: Port 389/636 (OpenLDAP / LDAPS) per autenticar usuaris.
    - Qualsevol altra connexió iniciada des de la DMZ cap a la LAN és bloquejada i registrada (*Default DROP*).
 3. **Regla VPN (`10.0.100.0/24`) -> LAN:** El tràfic provinent de `granja1-srv` **només pot accedir a `srv-serveis` a través del port MQTT (1883/8883)**. La granja mai no té accés directe a la BD ni a LDAP.

@@ -1,0 +1,259 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1150" width="100%" height="100%" style="background-color: #0f172a; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;">
+  <defs>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+    <linearGradient id="hdr-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e3a8a"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+    <linearGradient id="hdr-teal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#115e59"/>
+      <stop offset="100%" stop-color="#0d9488"/>
+    </linearGradient>
+    <linearGradient id="hdr-emerald" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="hdr-amber" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#78350f"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="hdr-rose" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#881337"/>
+      <stop offset="100%" stop-color="#e11d48"/>
+    </linearGradient>
+    <linearGradient id="hdr-purple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#581c87"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8" />
+    </marker>
+    <marker id="circle" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6">
+      <circle cx="5" cy="5" r="3" fill="#38bdf8"/>
+    </marker>
+  </defs>
+
+  <!-- Capçalera General -->
+  <text x="50" y="55" fill="#f8fafc" font-size="28" font-weight="700" letter-spacing="0.5">AviGest — Model Entitat-Relació Relacional (MariaDB 10.11 LTS)</text>
+  <text x="50" y="85" fill="#94a3b8" font-size="14">Esquema 3FN amb aïllament multitenant (vistes de sessió) | 10 Taules InnoDB utf8mb4 | Fita M02/M12 ASIX</text>
+
+  <!-- Connectors (Línies de relació) -->
+  <g stroke="#38bdf8" stroke-width="2" fill="none" opacity="0.6">
+    <!-- clients -> pagaments -->
+    <path d="M 190 390 L 190 450" marker-end="url(#arrow)" marker-start="url(#circle)"/>
+    <!-- clients -> granges -->
+    <path d="M 330 260 L 410 260" marker-end="url(#arrow)" marker-start="url(#circle)"/>
+    <!-- granges -> naus -->
+    <path d="M 690 260 L 770 260" marker-end="url(#arrow)" marker-start="url(#circle)"/>
+    <!-- naus -> lots_criança -->
+    <path d="M 1050 210 L 1150 210" marker-end="url(#arrow)" marker-start="url(#circle)"/>
+    <!-- naus -> sensors -->
+    <path d="M 910 400 L 910 520 L 750 520" marker-end="url(#arrow)" marker-start="url(#circle)"/>
+    <!-- naus -> actuadors -->
+    <path d="M 910 400 L 910 520 L 1070 520" marker-end="url(#arrow)" marker-start="url(#circle)"/>
+    <!-- naus -> alarmes_incidencies -->
+    <path d="M 1050 330 L 1370 330 L 1370 580" marker-end="url(#arrow)" marker-start="url(#circle)"/>
+    <!-- sensors -> lectures_sensors -->
+    <path d="M 590 770 L 590 850" marker-end="url(#arrow)" marker-start="url(#circle)"/>
+    <!-- actuadors -> registre_actuacions -->
+    <path d="M 1210 770 L 1210 850" marker-end="url(#arrow)" marker-start="url(#circle)"/>
+    <!-- sensors -> alarmes_incidencies -->
+    <path d="M 770 650 L 1230 650" marker-end="url(#arrow)" marker-start="url(#circle)"/>
+  </g>
+
+  <!-- 1. TAULA: clients -->
+  <g transform="translate(50, 130)" filter="url(#shadow)">
+    <rect width="280" height="260" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+    <rect width="280" height="42" rx="8" fill="url(#hdr-blue)"/>
+    <rect y="34" width="280" height="8" fill="url(#hdr-blue)"/>
+    <text x="16" y="27" fill="#ffffff" font-size="15" font-weight="700">clients</text>
+    <text x="210" y="27" fill="#93c5fd" font-size="11" font-weight="600">CLIENTS</text>
+    <g transform="translate(16, 62)" font-size="12" fill="#cbd5e1" font-family="Consolas, monospace">
+      <text y="0"><tspan fill="#f59e0b" font-weight="bold">PK </tspan>id_client <tspan fill="#64748b">INT AUTO_INCREMENT</tspan></text>
+      <text y="24"><tspan fill="#38bdf8" font-weight="bold">UQ </tspan>nif_cif <tspan fill="#64748b">VARCHAR(20)</tspan></text>
+      <text y="48">   nom_comercial <tspan fill="#64748b">VARCHAR(100)</tspan></text>
+      <text y="72">   nom_contacte <tspan fill="#64748b">VARCHAR(100)</tspan></text>
+      <text y="96">   telefon <tspan fill="#64748b">VARCHAR(20)</tspan></text>
+      <text y="120">   email <tspan fill="#64748b">VARCHAR(100)</tspan></text>
+      <text y="144">   actiu <tspan fill="#64748b">TINYINT(1) (1)</tspan></text>
+      <text y="168">   data_alta <tspan fill="#64748b">DATETIME (NOW)</tspan></text>
+    </g>
+  </g>
+
+  <!-- 2. TAULA: pagaments -->
+  <g transform="translate(50, 450)" filter="url(#shadow)">
+    <rect width="280" height="235" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+    <rect width="280" height="42" rx="8" fill="url(#hdr-purple)"/>
+    <rect y="34" width="280" height="8" fill="url(#hdr-purple)"/>
+    <text x="16" y="27" fill="#ffffff" font-size="15" font-weight="700">pagaments</text>
+    <text x="210" y="27" fill="#d8b4fe" font-size="11" font-weight="600">FACTURACIÓ</text>
+    <g transform="translate(16, 62)" font-size="12" fill="#cbd5e1" font-family="Consolas, monospace">
+      <text y="0"><tspan fill="#f59e0b" font-weight="bold">PK </tspan>id_pagament <tspan fill="#64748b">INT AUTO_INC</tspan></text>
+      <text y="24"><tspan fill="#38bdf8" font-weight="bold">FK </tspan>id_client <tspan fill="#64748b">INT</tspan></text>
+      <text y="48">   import_eur <tspan fill="#64748b">DECIMAL(10,2)</tspan></text>
+      <text y="72">   data_pagament <tspan fill="#64748b">DATETIME</tspan></text>
+      <text y="96">   periode_mes <tspan fill="#64748b">VARCHAR(7)</tspan></text>
+      <text y="120">   concepte <tspan fill="#64748b">VARCHAR(150)</tspan></text>
+      <text y="144">   estat_pagament <tspan fill="#64748b">ENUM(...)</tspan></text>
+    </g>
+  </g>
+
+  <!-- 3. TAULA: granges -->
+  <g transform="translate(410, 130)" filter="url(#shadow)">
+    <rect width="280" height="260" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+    <rect width="280" height="42" rx="8" fill="url(#hdr-blue)"/>
+    <rect y="34" width="280" height="8" fill="url(#hdr-blue)"/>
+    <text x="16" y="27" fill="#ffffff" font-size="15" font-weight="700">granges</text>
+    <text x="210" y="27" fill="#93c5fd" font-size="11" font-weight="600">EXPLOTACIÓ</text>
+    <g transform="translate(16, 62)" font-size="12" fill="#cbd5e1" font-family="Consolas, monospace">
+      <text y="0"><tspan fill="#f59e0b" font-weight="bold">PK </tspan>id_granja <tspan fill="#64748b">INT AUTO_INCREMENT</tspan></text>
+      <text y="24"><tspan fill="#38bdf8" font-weight="bold">FK </tspan>id_client <tspan fill="#64748b">INT</tspan></text>
+      <text y="48">   nom_granja <tspan fill="#64748b">VARCHAR(100)</tspan></text>
+      <text y="72"><tspan fill="#38bdf8" font-weight="bold">UQ </tspan>codi_explotacio <tspan fill="#64748b">VARCHAR(30)</tspan></text>
+      <text y="96">   adreca <tspan fill="#64748b">VARCHAR(150)</tspan></text>
+      <text y="120">   poblacio <tspan fill="#64748b">VARCHAR(100)</tspan></text>
+      <text y="144">   activa <tspan fill="#64748b">TINYINT(1) (1)</tspan></text>
+      <text y="168">   data_alta <tspan fill="#64748b">DATETIME (NOW)</tspan></text>
+    </g>
+  </g>
+
+  <!-- 4. TAULA: naus -->
+  <g transform="translate(770, 130)" filter="url(#shadow)">
+    <rect width="280" height="260" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+    <rect width="280" height="42" rx="8" fill="url(#hdr-teal)"/>
+    <rect y="34" width="280" height="8" fill="url(#hdr-teal)"/>
+    <text x="16" y="27" fill="#ffffff" font-size="15" font-weight="700">naus</text>
+    <text x="220" y="27" fill="#99f6e4" font-size="11" font-weight="600">EDIFICI</text>
+    <g transform="translate(16, 62)" font-size="12" fill="#cbd5e1" font-family="Consolas, monospace">
+      <text y="0"><tspan fill="#f59e0b" font-weight="bold">PK </tspan>id_nau <tspan fill="#64748b">INT AUTO_INCREMENT</tspan></text>
+      <text y="24"><tspan fill="#38bdf8" font-weight="bold">FK </tspan>id_granja <tspan fill="#64748b">INT</tspan></text>
+      <text y="48">   codi_nau <tspan fill="#64748b">VARCHAR(20)</tspan></text>
+      <text y="72">   capacitat_max_aus <tspan fill="#64748b">INT</tspan></text>
+      <text y="96">   longitud_m <tspan fill="#64748b">DECIMAL(6,2)</tspan></text>
+      <text y="120">   amplada_m <tspan fill="#64748b">DECIMAL(6,2)</tspan></text>
+      <text y="144">   activa <tspan fill="#64748b">TINYINT(1) (1)</tspan></text>
+      <text y="168">   data_alta <tspan fill="#64748b">DATETIME (NOW)</tspan></text>
+    </g>
+  </g>
+
+  <!-- 5. TAULA: lots_criança -->
+  <g transform="translate(1150, 80)" filter="url(#shadow)">
+    <rect width="320" height="310" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+    <rect width="320" height="42" rx="8" fill="url(#hdr-amber)"/>
+    <rect y="34" width="320" height="8" fill="url(#hdr-amber)"/>
+    <text x="16" y="27" fill="#ffffff" font-size="15" font-weight="700">lots_criança</text>
+    <text x="240" y="27" fill="#fde68a" font-size="11" font-weight="600">PRODUCCIÓ</text>
+    <g transform="translate(16, 62)" font-size="12" fill="#cbd5e1" font-family="Consolas, monospace">
+      <text y="0"><tspan fill="#f59e0b" font-weight="bold">PK </tspan>id_lot <tspan fill="#64748b">INT AUTO_INCREMENT</tspan></text>
+      <text y="24"><tspan fill="#38bdf8" font-weight="bold">FK </tspan>id_nau <tspan fill="#64748b">INT</tspan></text>
+      <text y="48">   codi_lot <tspan fill="#64748b">VARCHAR(30)</tspan></text>
+      <text y="72">   data_entrada <tspan fill="#64748b">DATE</tspan></text>
+      <text y="96">   data_sortida_prevista <tspan fill="#64748b">DATE</tspan></text>
+      <text y="120">   data_sortida_real <tspan fill="#64748b">DATE</tspan></text>
+      <text y="144">   num_aus_inicials <tspan fill="#64748b">INT</tspan></text>
+      <text y="168">   num_baixes <tspan fill="#64748b">INT (0)</tspan></text>
+      <text y="192">   pes_mitja_kg <tspan fill="#64748b">DECIMAL(5,3)</tspan></text>
+      <text y="216">   pinso_consumit_kg <tspan fill="#64748b">DECIMAL(10,2)</tspan></text>
+      <text y="240">   estat <tspan fill="#64748b">ENUM('actiu','tancat',...)</tspan></text>
+    </g>
+  </g>
+
+  <!-- 6. TAULA: sensors -->
+  <g transform="translate(470, 490)" filter="url(#shadow)">
+    <rect width="300" height="280" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+    <rect width="300" height="42" rx="8" fill="url(#hdr-emerald)"/>
+    <rect y="34" width="300" height="8" fill="url(#hdr-emerald)"/>
+    <text x="16" y="27" fill="#ffffff" font-size="15" font-weight="700">sensors</text>
+    <text x="210" y="27" fill="#a7f3d0" font-size="11" font-weight="600">IOT INPUT</text>
+    <g transform="translate(16, 62)" font-size="12" fill="#cbd5e1" font-family="Consolas, monospace">
+      <text y="0"><tspan fill="#f59e0b" font-weight="bold">PK </tspan>id_sensor <tspan fill="#64748b">INT AUTO_INCREMENT</tspan></text>
+      <text y="24"><tspan fill="#38bdf8" font-weight="bold">FK </tspan>id_nau <tspan fill="#64748b">INT</tspan></text>
+      <text y="48">   codi_sensor <tspan fill="#64748b">VARCHAR(30)</tspan></text>
+      <text y="72">   tipus_sensor <tspan fill="#64748b">ENUM('temperatura',...)</tspan></text>
+      <text y="96">   tecnologia <tspan fill="#64748b">ENUM('rs485_modbus',...)</tspan></text>
+      <text y="120">   unitat_mesura <tspan fill="#64748b">VARCHAR(10)</tspan></text>
+      <text y="144">   llindar_minim <tspan fill="#64748b">DECIMAL(8,2)</tspan></text>
+      <text y="168">   llindar_maxim <tspan fill="#64748b">DECIMAL(8,2)</tspan></text>
+      <text y="192">   actiu <tspan fill="#64748b">TINYINT(1) (1)</tspan></text>
+      <text y="216">   data_alta <tspan fill="#64748b">DATETIME (NOW)</tspan></text>
+    </g>
+  </g>
+
+  <!-- 7. TAULA: lectures_sensors -->
+  <g transform="translate(470, 850)" filter="url(#shadow)">
+    <rect width="300" height="170" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+    <rect width="300" height="42" rx="8" fill="url(#hdr-emerald)"/>
+    <rect y="34" width="300" height="8" fill="url(#hdr-emerald)"/>
+    <text x="16" y="27" fill="#ffffff" font-size="15" font-weight="700">lectures_sensors</text>
+    <text x="210" y="27" fill="#a7f3d0" font-size="11" font-weight="600">HISTÒRIC IOT</text>
+    <g transform="translate(16, 62)" font-size="12" fill="#cbd5e1" font-family="Consolas, monospace">
+      <text y="0"><tspan fill="#f59e0b" font-weight="bold">PK </tspan>id_lectura <tspan fill="#64748b">BIGINT AUTO_INCREMENT</tspan></text>
+      <text y="24"><tspan fill="#38bdf8" font-weight="bold">FK </tspan>id_sensor <tspan fill="#64748b">INT</tspan></text>
+      <text y="48">   valor <tspan fill="#64748b">DECIMAL(10,3)</tspan></text>
+      <text y="72">   data_hora <tspan fill="#64748b">DATETIME (NOW)</tspan></text>
+    </g>
+  </g>
+
+  <!-- 8. TAULA: actuadors -->
+  <g transform="translate(1070, 490)" filter="url(#shadow)">
+    <rect width="290" height="260" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+    <rect width="290" height="42" rx="8" fill="url(#hdr-teal)"/>
+    <rect y="34" width="290" height="8" fill="url(#hdr-teal)"/>
+    <text x="16" y="27" fill="#ffffff" font-size="15" font-weight="700">actuadors</text>
+    <text x="200" y="27" fill="#99f6e4" font-size="11" font-weight="600">CONTROL RELÉS</text>
+    <g transform="translate(16, 62)" font-size="12" fill="#cbd5e1" font-family="Consolas, monospace">
+      <text y="0"><tspan fill="#f59e0b" font-weight="bold">PK </tspan>id_actuador <tspan fill="#64748b">INT AUTO_INCREMENT</tspan></text>
+      <text y="24"><tspan fill="#38bdf8" font-weight="bold">FK </tspan>id_nau <tspan fill="#64748b">INT</tspan></text>
+      <text y="48">   codi_actuador <tspan fill="#64748b">VARCHAR(30)</tspan></text>
+      <text y="72">   tipus_actuador <tspan fill="#64748b">ENUM('ventilacio',...)</tspan></text>
+      <text y="96">   mode_operacio <tspan fill="#64748b">ENUM('auto','manual')</tspan></text>
+      <text y="120">   estat_actual <tspan fill="#64748b">ENUM('ON','OFF')</tspan></text>
+      <text y="144">   actiu <tspan fill="#64748b">TINYINT(1) (1)</tspan></text>
+      <text y="168">   data_alta <tspan fill="#64748b">DATETIME (NOW)</tspan></text>
+    </g>
+  </g>
+
+  <!-- 9. TAULA: registre_actuacions -->
+  <g transform="translate(1070, 850)" filter="url(#shadow)">
+    <rect width="290" height="190" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+    <rect width="290" height="42" rx="8" fill="url(#hdr-teal)"/>
+    <rect y="34" width="290" height="8" fill="url(#hdr-teal)"/>
+    <text x="16" y="27" fill="#ffffff" font-size="15" font-weight="700">registre_actuacions</text>
+    <text x="220" y="27" fill="#99f6e4" font-size="11" font-weight="600">AUDITORIA</text>
+    <g transform="translate(16, 62)" font-size="12" fill="#cbd5e1" font-family="Consolas, monospace">
+      <text y="0"><tspan fill="#f59e0b" font-weight="bold">PK </tspan>id_registre <tspan fill="#64748b">BIGINT AUTO_INCREMENT</tspan></text>
+      <text y="24"><tspan fill="#38bdf8" font-weight="bold">FK </tspan>id_actuador <tspan fill="#64748b">INT</tspan></text>
+      <text y="48">   estat_anterior <tspan fill="#64748b">ENUM('ON','OFF')</tspan></text>
+      <text y="72">   nou_estat <tspan fill="#64748b">ENUM('ON','OFF')</tspan></text>
+      <text y="96">   motiu <tspan fill="#64748b">VARCHAR(255)</tspan></text>
+      <text y="120">   data_hora <tspan fill="#64748b">DATETIME (NOW)</tspan></text>
+    </g>
+  </g>
+
+  <!-- 10. TAULA: alarmes_incidencies -->
+  <g transform="translate(1230, 580)" filter="url(#shadow)">
+    <rect width="320" height="260" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+    <rect width="320" height="42" rx="8" fill="url(#hdr-rose)"/>
+    <rect y="34" width="320" height="8" fill="url(#hdr-rose)"/>
+    <text x="16" y="27" fill="#ffffff" font-size="15" font-weight="700">alarmes_incidencies</text>
+    <text x="230" y="27" fill="#fecdd3" font-size="11" font-weight="600">ALERTES CRÍT</text>
+    <g transform="translate(16, 62)" font-size="12" fill="#cbd5e1" font-family="Consolas, monospace">
+      <text y="0"><tspan fill="#f59e0b" font-weight="bold">PK </tspan>id_alarma <tspan fill="#64748b">INT AUTO_INCREMENT</tspan></text>
+      <text y="24"><tspan fill="#38bdf8" font-weight="bold">FK </tspan>id_nau <tspan fill="#64748b">INT</tspan></text>
+      <text y="48"><tspan fill="#38bdf8" font-weight="bold">FK </tspan>id_sensor <tspan fill="#64748b">INT (NULL)</tspan></text>
+      <text y="72">   nivell_gravetat <tspan fill="#64748b">ENUM('info','avis',...)</tspan></text>
+      <text y="96">   missatge <tspan fill="#64748b">VARCHAR(255)</tspan></text>
+      <text y="120">   resolta <tspan fill="#64748b">TINYINT(1) (0)</tspan></text>
+      <text y="144">   data_generacio <tspan fill="#64748b">DATETIME (NOW)</tspan></text>
+      <text y="168">   data_resolucio <tspan fill="#64748b">DATETIME</tspan></text>
+      <text y="192">   observacions_resolucio <tspan fill="#64748b">TEXT</tspan></text>
+    </g>
+  </g>
+
+  <!-- LLegenda / Peu -->
+  <g transform="translate(50, 1080)" font-size="13" fill="#94a3b8">
+    <text x="0" y="0"><tspan fill="#f59e0b" font-weight="bold">PK</tspan> = Clau Primària | <tspan fill="#38bdf8" font-weight="bold">FK</tspan> = Clau Forana | <tspan fill="#38bdf8" font-weight="bold">UQ</tspan> = Índex Únic | Compatible Dia Editor: <tspan fill="#e2e8f0">bd/model-er/diagrama_avigest.dia</tspan></text>
+  </g>
+</svg>
