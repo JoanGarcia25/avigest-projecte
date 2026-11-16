@@ -1,4 +1,4 @@
-# Arquitectura i Justificació del Disseny de la Base de Dades — AviGest S.L.
+﻿# Arquitectura i Justificació del Disseny de la Base de Dades — AviGest S.L.
 
 **Fitxer:** `bd/explicacio_disseny_base_dades.md`  
 **Mòdul:** M12 - Projecte d'Administració de Sistemes Informàtics en Xarxa (ASIX)  
@@ -20,33 +20,34 @@ El disseny de la base de dades relacional a **MariaDB 10.11 LTS** respon a quatr
 
 ---
 
-## 2. Per què exactament 10 Taules? Justificació Entitat per Entitat
+## 2. Per què exactament 11 Taules? Justificació Entitat per Entitat
 
-El model s'estructura en exactament **10 taules**, dividides lògicament en quatre capes funcionals. Aquest nombre és el resultat d'un procés de normalització en Tercera Forma Normal (3FN), evitant tant la desnormalització amb redundància com la sobreenginyeria innecessària.
+El model s'estructura en exactament **11 taules**, dividides lògicament en cinc capes funcionals que reflecteixen fidelment el Model Entitat-Relació Conceptual oficial. Aquest disseny és el resultat d'un procés de normalització en Tercera Forma Normal (3FN):
 
 ```mermaid
 graph TD
     subgraph Capa 1: Infraestructura Física i Clients
-        C["1. clients"] --> G["2. granges"]
-        G --> N["3. naus"]
+        C["1. clients"] --> P["2. pagaments"]
+        C --> G["3. granges"]
+        G --> N["4. naus"]
     end
 
     subgraph Capa 2: Gestió Zootècnica
-        N --> L["4. lots_crianca"]
+        N --> L["5. lots_crianca"]
     end
 
     subgraph Capa 3: IoT, Telemetria i Automatització
-        N --> S["5. sensors"]
-        N --> A["6. actuadors"]
-        S --> LS["7. lectures_sensors"]
-        A --> RA["8. registre_actuacions"]
+        N --> S["6. sensors"]
+        N --> A["7. actuadors"]
+        S --> LS["8. lectures_sensors"]
+        A --> RA["9. registre_actuacions"]
         S -.->|dispara| RA
     end
 
     subgraph Capa 4: Seguretat, Alertes i Auditoria
-        N --> AL["9. alarmes_incidencies"]
+        N --> AL["10. alarmes_incidencies"]
         S -.->|genera| AL
-        AU["10. auditoria_canvis"]
+        AU["11. auditoria_canvis"]
     end
 
     style C fill:#e1f5fe,stroke:#0288d1
@@ -73,7 +74,8 @@ graph TD
 * **Què representa:** L'explotació ramadera física concreta, identificada pel seu codi oficial REGA/explotació ramadera (`ES...`) i la seva ubicació geogràfica (adreça i municipi).
 * **Per què és una taula independent:** Separa la personalitat jurídica (`clients`) de la ubicació territorial. Una granja pertany a un únic client (`id_client` és clau forana `ON DELETE RESTRICT`). Aquesta taula constitueix el **pivot fonamental de l'aïllament multitenant (R3)**: tant l'arbre LDAP (`businessCategory`, `departmentNumber`) com les consultes s'articulen al voltant d'aquesta divisió.
 
-#### Taula 3: `naus` (Requeriment R2)
+#### Taula 3: 
+aus` (Requeriment R2)
 * **Què representa:** Cadascun dels pavellons industrials d'engreix físics que formen la granja. Emmagatzema les dimensions estructurals (`longitud_metres`, `amplada_metres`) i la capacitat màxima de càrrega animal (`capacitat_aus`, ex: 12.000 o 20.000 aus).
 * **Per què és una taula independent:** En avicultura intensiva, les granges no són espais unitaris diàfans; estan formades per diverses naus (entre 1 i 10+) que operen de forma totalment independent. La temperatura, el cicle de criança i els equips de ventilació es gestionen **a nivell de nau**, mai a nivell global de granja. Disposa d'una clau única composta `uq_granja_codinau (id_granja, codi_nau)` per garantir que el codi `NAU-01` sigui únic dins de cada granja però reutilitzable entre explotacions.
 
@@ -83,8 +85,10 @@ graph TD
 
 #### Taula 4: `lots_crianca` (Requeriment R6)
 * **Què representa:** El cicle biològic d'engreix d'una tongada de pollastres (~45 dies), des de la recepció de pollets d'un dia de vida fins al buidat sanitari i transport a l'escorxador.
-* **Per què és una taula independent de `naus`:** Una nau és un actiu immoble permanent amb una vida útil de dècades. En canvi, un lot és un esdeveniment biològic temporal amb data d'inici i de final. Al llarg d'un any, una nau allotja entre 5 i 6 lots consecutius (amb períodes de buit sanitari de 10 a 14 dies entre ells). Unir nau i lot faria impossible guardar l'històric d'explotació o comparar l'evolució entre tongades d'estiu i d'hivern.
-* **Per què conté mètriques de rendiment (`num_baixes`, `pes_mitja_kg`, `pinso_consumit_kg`):** Permet calcular els dos indicadors clau de rendibilitat avícola:
+* **Per què és una taula independent de 
+aus`:** Una nau és un actiu immoble permanent amb una vida útil de dècades. En canvi, un lot és un esdeveniment biològic temporal amb data d'inici i de final. Al llarg d'un any, una nau allotja entre 5 i 6 lots consecutius (amb períodes de buit sanitari de 10 a 14 dies entre ells). Unir nau i lot faria impossible guardar l'històric d'explotació o comparar l'evolució entre tongades d'estiu i d'hivern.
+* **Per què conté mètriques de rendiment (
+um_baixes`, `pes_mitja_kg`, `pinso_consumit_kg`):** Permet calcular els dos indicadors clau de rendibilitat avícola:
   1. **Percentatge de mortalitat:** $\frac{\text{baixes}}{\text{aus inicials}} \times 100$.
   2. **Índex de Conversió Alimentària (ICA / FCR):** $\text{ICA} = \frac{\text{kg pinso consumits}}{\text{kg carn produïts}}$.
 
@@ -97,7 +101,8 @@ graph TD
 * **Per què és independent de `lectures_sensors`:** Aplica la 3FN estricta. El tipus de sensor, la tecnologia, la unitat de mesura i els llindars d'alarma són metadades estàtiques del dispositiu. Si aquestes dades es guardessin a cada lectura periòdica de camp, la base de dades patiria un malbaratament massiu d'emmagatzematge.
 
 #### Taula 6: `actuadors` (Requeriment R5)
-* **Què representa:** La maquinària electromecànica instal·lada a la nau per alterar el clima o alimentar els animals (`ventilador`, `calefactor`, `il_luminacio`, `menjadora`, `bomba_aigua`, `alarma_sonora`, `nebulitzador`), el seu mode d'operació (`automatic`, `manual`, `aturat`) i el seu estat en temps real (`ON`, `OFF`).
+* **Què representa:** La maquinària electromecànica instal·lada a la nau per alterar el clima o alimentar els animals (`ventilador`, `calefactor`, `il_luminacio`, `menjadora`, `bomba_aigua`, `alarma_sonora`, 
+ebulitzador`), el seu mode d'operació (`automatic`, `manual`, `aturat`) i el seu estat en temps real (`ON`, `OFF`).
 * **Per què és independent de `sensors`:** Separa clarament els **dispositius d'entrada** dels **dispositius de sortida**. La relació entre sensor i actuador no és un cablejat físic 1:1, sinó una regla lògica programada a la base de dades mitjançant triggers.
 
 #### Taula 7: `lectures_sensors` (Requeriments R4 i R5)
@@ -116,7 +121,8 @@ graph TD
 * **Cicle de vida:** Té un flux de resolució (`resolta = FALSE` $\rightarrow$ `resolta = TRUE`, `data_resolucio`, `observacions_resolucio`) gestionat mitjançant el procediment `sp_resoldre_alarma()`.
 
 #### Taula 10: `auditoria_canvis` (Requeriment 4.3 / E2 Secció 7.2)
-* **Què representa:** Pista d'auditoria immutable (*Change Data Capture*) que registra operacions DML (`INSERT`, `UPDATE`, `DELETE`) sobre les taules mestres de configuració (`clients`, `granges`, `naus`, `lots_crianca`, `sensors`, `actuadors`).
+* **Què representa:** Pista d'auditoria immutable (*Change Data Capture*) que registra operacions DML (`INSERT`, `UPDATE`, `DELETE`) sobre les taules mestres de configuració (`clients`, `granges`, 
+aus`, `lots_crianca`, `sensors`, `actuadors`).
 * **Per què s'utilitza JSON (`dades_antigues`, `dades_noves`):** Permet capturar l'estat complet de qualsevol fila abans i després de la modificació mitjançant `JSON_OBJECT()` sense necessitat de crear taules duplicades. Registra a més l'usuari SQL connectat (`CURRENT_USER()`) i la marca de temps.
 
 ---
@@ -128,10 +134,14 @@ L'esquema aplica regles estrictes de claus foranes InnoDB:
 | Relació Clau Forana | Estratègia | Justificació Tècnica i de Negoci |
 | :--- | :---: | :--- |
 | `granges` $\rightarrow$ `clients` | **`ON DELETE RESTRICT`** | Impedeix esborrar accidentalment una empresa client si té granges actives assignades. |
-| `naus` $\rightarrow$ `granges` | **`ON DELETE CASCADE`** | Si s'elimina una granja de prova, s'eliminen automàticament les seves naus associades. |
-| `lots_crianca` $\rightarrow$ `naus` | **`ON DELETE RESTRICT`** | Protecció legal sanitària: **mai** es pot esborrar una nau si conté l'històric de cicles d'engreix (traçabilitat alimentària UE). |
-| `sensors` $\rightarrow$ `naus` | **`ON DELETE CASCADE`** | Els sensors pertanyen a l'estructura física de la nau. |
-| `actuadors` $\rightarrow$ `naus` | **`ON DELETE CASCADE`** | Els actuadors pertanyen a l'estructura física de la nau. |
+| 
+aus` $\rightarrow$ `granges` | **`ON DELETE CASCADE`** | Si s'elimina una granja de prova, s'eliminen automàticament les seves naus associades. |
+| `lots_crianca` $\rightarrow$ 
+aus` | **`ON DELETE RESTRICT`** | Protecció legal sanitària: **mai** es pot esborrar una nau si conté l'històric de cicles d'engreix (traçabilitat alimentària UE). |
+| `sensors` $\rightarrow$ 
+aus` | **`ON DELETE CASCADE`** | Els sensors pertanyen a l'estructura física de la nau. |
+| `actuadors` $\rightarrow$ 
+aus` | **`ON DELETE CASCADE`** | Els actuadors pertanyen a l'estructura física de la nau. |
 | `lectures_sensors` $\rightarrow$ `sensors` | **`ON DELETE CASCADE`** | Si s'elimina un sensor de test, s'esborren les seves lectures vinculades. |
 | `registre_actuacions` $\rightarrow$ `sensors` | **`ON DELETE SET NULL`** | Si es canvia o substitueix un sensor físic avariat, **no es perd l'històric** d'activacions passades de ventiladors. |
 | `alarmes_incidencies` $\rightarrow$ `sensors` | **`ON DELETE SET NULL`** | Preserva la traçabilitat de la incidència històrica encara que la sonda física hagi estat donada de baixa. |
@@ -223,7 +233,8 @@ El fitxer [`05_vistes_consultes_comparatives.sql`](file:///c:/avigest-projecte/b
 | Requeriment Oficial | Descripció de l'Enunciat | Taules, Triggers o Procediments Implicats | Fitxer SQL de Referència |
 | :--- | :--- | :--- | :--- |
 | **R1** | Gestió de dades de granges i clients | `clients`, `granges` | [`01_esquema.sql`](file:///c:/avigest-projecte/bd/sql/01_esquema.sql) |
-| **R2** | Dades individuals per nau (dimensions, capacitat) | `naus` (clau única composta `id_granja, codi_nau`) | [`01_esquema.sql`](file:///c:/avigest-projecte/bd/sql/01_esquema.sql) |
+| **R2** | Dades individuals per nau (dimensions, capacitat) | 
+aus` (clau única composta `id_granja, codi_nau`) | [`01_esquema.sql`](file:///c:/avigest-projecte/bd/sql/01_esquema.sql) |
 | **R3** | Aïllament de dades multitenant i privadesa | Vistes `v_tenant_*`, `sp_set_tenant()`, `sp_reset_tenant()` | [`04_usuaris_rols_bd.sql`](file:///c:/avigest-projecte/bd/sql/04_usuaris_rols_bd.sql) |
 | **R4** | Telemetria ambiental i control de silos | `sensors` (RS485/LoRaWAN), `lectures_sensors`, `v_estat_silos_gra` | [`01_esquema.sql`](file:///c:/avigest-projecte/bd/sql/01_esquema.sql) i [`05_vistes_consultes_comparatives.sql`](file:///c:/avigest-projecte/bd/sql/05_vistes_consultes_comparatives.sql) |
 | **R5** | Automatització d'actuadors (termòstat) | `actuadors`, `registre_actuacions`, trigger `trg_control_llindars_sensor` | [`02_triggers_procedures.sql`](file:///c:/avigest-projecte/bd/sql/02_triggers_procedures.sql) |

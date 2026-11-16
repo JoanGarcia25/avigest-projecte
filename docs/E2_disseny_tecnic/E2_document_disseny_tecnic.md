@@ -73,7 +73,8 @@ A partir de la llista mÃ­nima de l'enunciat i ampliant-la amb l'Estudi de Nece
 
 | ID Requeriment | DescripciÃ³ Concretada del Requeriment | MÃ²dul Enunciat | SecciÃ³ del Document E2 que el cobreix |
 | :---: | :--- | :---: | :--- |
-| **R1** | **Alta i baixa de clients i granges:** GestiÃ³ del cicle de vida d'empreses integradores avÃ­coles i les seves granges contractades. | 4.3, 4.7 | [SecciÃ³ 7](#7-base-de-dades-centralitzada-MariaDB-16-i-rÃ¨plica-requeriment-43) (taules `clients`, `granges`, `naus`) i [SecciÃ³ 10](#10-automatitzaciÃ³-de-creaciÃ³-de-granges-i-variaciÃ³-requeriment-47) (`alta_granja.sh`). |
+| **R1** | **Alta i baixa de clients i granges:** GestiÃ³ del cicle de vida d'empreses integradores avÃ­coles i les seves granges contractades. | 4.3, 4.7 | [SecciÃ³ 7](#7-base-de-dades-centralitzada-MariaDB-16-i-rÃ¨plica-requeriment-43) (taules `clients`, `granges`, 
+aus`) i [SecciÃ³ 10](#10-automatitzaciÃ³-de-creaciÃ³-de-granges-i-variaciÃ³-requeriment-47) (`alta_granja.sh`). |
 | **R2** | **GestiÃ³ d'usuaris amb rols diferenciats:** Administrador AviGest, Administrador de Client, Gestor de Granja i Usuari de Consulta. | 4.2, 4.3 | [SecciÃ³ 6](#6-directori-centralitzat-dusuaris--openldap-requeriment-42) (OpenLDAP) i [SecciÃ³ 7.4](#74-rols-sql-de-mÃ­nim-privilegi) (rols SQL). |
 | **R3** | **AÃ¯llament estricte i accÃ©s multitenant:** Cada granja nomÃ©s accedeix a les seves dades. Un client amb $N$ granges les visualitza totes amb un Ãºnic compte d'accÃ©s. | 4.2, 4.3, 4.4 | [SecciÃ³ 6](#6-directori-centralitzat-dusuaris--openldap-requeriment-42) (OUs LDAP), [SecciÃ³ 7.2](#72-lÃ²gica-procedural-i-triggers-mariadb-procedural-r5-i-r7) (RLS a MariaDB) i [SecciÃ³ 5](#5-seguretat-perimetral-opnsense-dmz-i-tallafocs-requeriment-44) (OPNsense). |
 | **R4** | **Registre i telemetria de sensors:** Captura contÃ­nua de temperatura, humitat, nivell de silos de gra i consums d'aigua/aliment. | 4.3, 4.8 | [SecciÃ³ 8](#8-arquitectura-iot-simulaciÃ³-edge-computing-i-inventari-requeriments-48-i-r4) (xarxa hÃ­brida RS485/LoRaWAN) i [SecciÃ³ 7.1](#71-model-entitat-relaciÃ³-complet-mermaid-i-normalitzaciÃ³-3fn) (`lectures_sensors`). |
@@ -317,12 +318,14 @@ El disseny estÃ  directament implementat i versionat al repositori per a la se
 - **LÃ²gica procedural (Triggers i Funcions MariaDB Procedural):** [`bd/procediments-triggers/02_triggers_procedures.sql`](file:///c:/avigest-projecte-git/bd/procediments-triggers/02_triggers_procedures.sql).
 - **Dades de prova inicials:** [`bd/sql/03_dades_prova.sql`](file:///c:/avigest-projecte-git/bd/sql/03_dades_prova.sql) (precarrega clients com *AgroPonent S.L.* i *AvÃ­cola del SegriÃ  S.A.*, granges a Bellpuig i AlcarrÃ s, sensors amb llindars reals i un histÃ²ric de lectures per comprovar vistes).
 
-### 2.1. Arquitectura de MÃ quines Virtuals i Xarxa (Diagrama de Blocs)
 > [!TIP]
-> Teniu disponible el diagrama font editable a [`docs/diagrames/esquema_xarxa_vms.drawio`](../diagrames/esquema_xarxa_vms.drawio) (llest per obrir amb Draw.io / diagrams.net).
+> Teniu disponible el diagrama Entitat-Relació conceptual oficial dibuixat a [bd/model-er/diagrama_avigest.dia](../../bd/model-er/diagrama_avigest.dia), la imatge exportada a [bd/model-er/diagrama_avigest.png](../../bd/model-er/diagrama_avigest.png) i el gràfic vectorial SVG a [bd/model-er/diagrama_er_chen.svg](../../bd/model-er/diagrama_er_chen.svg).
+
 
 ```mermaid
 erDiagram
+    CLIENTS ||--o{ PAGAMENTS : "paga"
+
     CLIENTS ||--o{ GRANGES : "contracta (R1)"
     GRANGES ||--o{ NAUS : "conte"
     NAUS ||--o{ LOTS_CRIANCA : "allotja cicles (R6)"
@@ -338,7 +341,14 @@ erDiagram
         VARCHAR nif UK
         VARCHAR nom_empresa
         VARCHAR email
-        BOOLEAN actiu
+    }
+    PAGAMENTS {
+        INT id_pagament PK
+        INT id_client FK
+        DECIMAL import
+        DATETIME data
+        VARCHAR estat
+    }
     }
     GRANGES {
         INT id_granja PK
@@ -414,7 +424,7 @@ erDiagram
 - **Control de termÃ²stat automÃ tic:** Trigger `trg_control_llindars_sensor` que commuta ventiladors a `ON` i calefactors a `OFF` si $T > 31^\circ\text{C}$, generant l'acciÃ³ a `registre_actuacions` i alarma crÃ­tica a `alarmes_incidencies` si $T \ge 33^\circ\text{C}$. TambÃ© cobreix CO2 i silo buit.
 - **NormalitzaciÃ³ de temperatura:** Aturada automÃ tica de ventilaciÃ³ quan la temperatura retorna al rang Ã²ptim ($20^\circ\text{C} \le T \le 31^\circ\text{C}$).
 - **Auditoria:** Trigger `trg_audit_*` sobre `clients`, `granges`, `lots_crianca` i `sensors` (no sobre telemetria, per volum).
-- **RLS:** Sense `sp_set_tenant()` el rol `avigest_consulta` no veu files. `CALL sp_set_tenant(1, 1)` limita a la granja Bellpuig. El rol `avigest_app` Ã©s superusuari de Docker i **no** demostra l'aÃ¯llament.
+- **Aïllament multitenant (R3):** Implementat mitjançant vistes segures de tenant (`v_tenant_*`) i variables de sessió (`@app_current_tenant_id`, `@app_current_granja_id`). Amb `CALL sp_set_tenant(1, 1)` l'usuari només veu les dades de la granja Bellpuig. Sense establir tenant, el rol de consulta no accedeix a cap fila.
 
 ### 7.3. Consultes i Vistes Comparatives de Negoci (Requeriment 4.3)
 1. **`v_comparativa_lots_rendiment`:** Mortalitat, percentatge de baixes i durada de cicles entre naus i granges.
@@ -424,9 +434,9 @@ erDiagram
 
 ### 7.4. Rols SQL de MÃ­nim Privilegi
 - `avigest_app`: Superusuari del clÃºster Docker (portal i administraciÃ³).
-- `avigest_iot`: **NomÃ©s `INSERT`** a `lectures_sensors` (`BYPASSRLS` per poder ingestir totes les granges).
-- `avigest_consulta`: NomÃ©s `SELECT`; l'aÃ¯llament R3 s'hi aplica via RLS i vistes `security_invoker`.
-- `avigest_backup`: `mariadb-dump` amb `BYPASSRLS`.
+- `avigest_iot`: **Només `INSERT` i `SELECT` mínim** a `lectures_sensors` i comprovació de llindars de `sensors` pel servei d'ingesta MQTT.
+- `avigest_consulta`: Només `SELECT` sobre les vistes aïllades de tenant (`v_tenant_*`) i les 4 vistes comparatives; accés controlat per sessió mitjançant `sp_set_tenant`.
+- `avigest_backup`: Drets de lectura transaccional (`SELECT, LOCK TABLES, SHOW VIEW, TRIGGER, EVENT`) per a buidatge complet amb `mariadb-dump` des de `srv-backup`.
 
 ---
 
@@ -489,14 +499,14 @@ Per a la seu central d'AviGest s'ha avaluat la tipologia de cÃ²pies:
 El procÃ©s estÃ  completament desatÃ¨s a la mÃ quina `srv-backup` mitjanÃ§ant crontab:
 ```cron
 # ExecuciÃ³ cada nit a les 02:00 AM (baixa cÃ rrega)
-0 2 * * * /usr/local/bin/backup_avigest.sh >> /var/log/avigest_backup.log 2>&1
+- `avigest_backup`: Drets de lectura transaccional (`SELECT, LOCK TABLES, SHOW VIEW, TRIGGER, EVENT`) per a buidatge complet amb `mariadb-dump` des de `srv-backup`.
 ```
 
 L'script [`infra/backups-prd/backup_avigest.sh`](file:///c:/avigest-projecte-git/infra/backups-prd/backup_avigest.sh) executa:
 1. ComprovaciÃ³ de connectivitat cap a `srv-serveis:3306` i `srv-serveis:389`.
-2. Buidatge `mariadb-dump` amb l'usuari `avigest_backup` (amb permÃ­s `BYPASSRLS`).
+- `avigest_backup`: Drets de lectura transaccional (`SELECT, LOCK TABLES, SHOW VIEW, TRIGGER, EVENT`) per a buidatge complet amb `mariadb-dump` des de `srv-backup`.
 3. ExtracciÃ³ en calent de la base LDAP amb `slapcat`.
-4. Empaquetat comprimit `.tar.gz` amb marca temporal (`avigest_backup_YYYYMMDD_HHMMSS.tar.gz`).
+- `avigest_backup`: Drets de lectura transaccional (`SELECT, LOCK TABLES, SHOW VIEW, TRIGGER, EVENT`) per a buidatge complet amb `mariadb-dump` des de `srv-backup`.
 5. GeneraciÃ³ del fitxer de comprovaciÃ³ `.sha256`.
 6. CÃ²pia al segon disc dur muntat a `/mnt/disc-extern-backup/` (simulant suport extern) i purga de fitxers de mÃ©s de 30 dies.
 
@@ -539,7 +549,8 @@ Abans de dur a terme qualsevol modificaciÃ³ a l'entorn de producciÃ³, l'scri
 ### 10.3. Ordre d'ExecuciÃ³ i Accions AtÃ²miques
 1. **CreaciÃ³ a Base de Dades (MariaDB 10.11 LTS):**
    - InserciÃ³ atÃ²mica a la taula `granges` associada a l'`id_client`.
-   - Bucle automÃ tic per generar les $N$ naus a la taula `naus` amb nomenclatura estandarditzada (`NAU-01`, `NAU-02`, etc.) i capacitat per defecte.
+   - Bucle automÃ tic per generar les $N$ naus a la taula 
+aus` amb nomenclatura estandarditzada (`NAU-01`, `NAU-02`, etc.) i capacitat per defecte.
    - CreaciÃ³ automÃ tica del sensor de temperatura/humitat, $CO_2$ i pesatge de sitja per cada nau a la taula `sensors`.
 2. **CreaciÃ³ d'Identitat i Rols a OpenLDAP:**
    - ConnexiÃ³ mitjanÃ§ant `ldapadd` amb el compte administratiu (`cn=admin,dc=avigest,dc=cat`).
@@ -602,7 +613,7 @@ gantt
 
 - **Eines utilitzades:** Antigravity / Gemini 3.8 Flash (High) per a esborranys de disseny; Cursor (Grok) per a revisiÃ³ creuada amb l'enunciat i correcciÃ³ de configuraciÃ³ (rÃ¨plica GTID, LDAP, RLS, ingesta MQTT).
 - **Finalitat de l'Ãºs:** Eina de suport per al disseny de la topologia de xarxes, diagrames de flux, estructuraciÃ³ de fitxes de decisiÃ³, esborranys de configuraciÃ³ i depuraciÃ³. No substitueix la comprensiÃ³ de l'equip.
-- **MÃ¨tode de verificaciÃ³ i comprensiÃ³:** L'equip (Joan i Mariam) ha definit l'esquema de mÃ quines virtuals, entÃ©n les regles de tallafocs, la separaciÃ³ DMZ-LAN, el flux MQTTâ†’ingestaâ†’MariaDB, el RLS amb `avigest_consulta` i la lÃ²gica de rÃ¨plica i backups per poder-ho defensar a l'oral.
+- `avigest_consulta`: Només `SELECT` sobre les vistes aïllades de tenant (`v_tenant_*`) i les 4 vistes comparatives; accés controlat per sessió mitjançant `sp_set_tenant`.
 
 ---
 

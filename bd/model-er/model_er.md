@@ -1,21 +1,41 @@
 # Model Entitat-Relació (ER) — AviGest S.L.
 
-Aquest document defineix el model de dades relacional per al sistema de gestió de granges avícoles d'AviGest S.L., cobrint tots els requeriments funcionals de l'enunciat (R1 a R7) i la traçabilitat auditada a MariaDB 10.11 LTS (Requeriment 4.3).
+Aquest document defineix el model de dades per al sistema de gestió de granges avícoles d'AviGest S.L., cobrint tots els requeriments funcionals de l'enunciat (R1 a R7) i la traçabilitat auditada a MariaDB 10.11 LTS (Requeriment 4.3).
 
 ---
 
-## 1. Diagrama Entitat-Relació (Mermaid)
+## 1. Diagrama Entitat-Relació Conceptual (Notació de Chen)
+
+El model conceptual oficial del projecte s'ha dissenyat amb l'eina **Dia** i està disponible en tres formats:
+- **Fitxer font editable de Dia:** [`diagrama_avigest.dia`](diagrama_avigest.dia)
+- **Imatge exportada PNG:** [`diagrama_avigest.png`](diagrama_avigest.png)
+- **Gràfic vectorial natiu SVG:** [`diagrama_er_chen.svg`](diagrama_er_chen.svg)
+
+![Model Entitat-Relació AviGest (Notació Chen)](diagrama_avigest.png)
+
+### Codi de colors per dominis (Segons llegenda del diagrama):
+- 🔵 **Blau (Gestió i multitenant):** `CLIENT`, `PAGAMENT`, `GRANJA`, `NAU`.
+- 🟢 **Verd (Cicle productiu biològic):** `LOT_CRIANÇA`.
+- 🟠 **Taronja (Dispositius de camp):** `SENSOR`, `ACTUADOR` i relació d'activació `acciona`.
+- 🟣 **Lila (Sèrie Temporal telemetria):** `LECTURA_SENSORS`.
+- 🔴 **Vermell (Alertes i incidències crítiques):** `ALARMES_INCIDÈNCIES`.
+
+---
+
+## 2. Diagrama Lògic Relacional (Taules i Claus Foranes)
 
 ```mermaid
 erDiagram
+    CLIENTS ||--o{ PAGAMENTS : "paga"
     CLIENTS ||--o{ GRANGES : "contracta (R1)"
-    GRANGES ||--o{ NAUS : "conte"
+    GRANGES ||--o{ NAUS : "te"
     NAUS ||--o{ LOTS_CRIANCA : "allotja cicles (R6)"
     NAUS ||--o{ SENSORS : "monitoritza (R4)"
     NAUS ||--o{ ACTUADORS : "regula ambient (R5)"
     NAUS ||--o{ ALARMES_INCIDENCIES : "genera alertes (R7)"
     SENSORS ||--o{ LECTURES_SENSORS : "enregistra"
     ACTUADORS ||--o{ REGISTRE_ACTUACIONS : "executa canvis"
+    SENSORS ||--o{ REGISTRE_ACTUACIONS : "dispara per sensor"
     SENSORS ||--o{ ALARMES_INCIDENCIES : "dispara per llindar"
 
     CLIENTS {

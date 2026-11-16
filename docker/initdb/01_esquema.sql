@@ -186,7 +186,21 @@ CREATE TABLE alarmes_incidencies (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------------------------
--- 10. Taula AUDITORIA_CANVIS (Requeriment 4.3 / E2 Sec. 7.2)
+-- 10. Taula PAGAMENTS (Model ER Oficial / Facturació de Clients)
+-- Representa els pagaments i quotes dels clients integradors de la plataforma.
+-- -----------------------------------------------------------------------------
+CREATE TABLE pagaments (
+    id_pagament INT AUTO_INCREMENT PRIMARY KEY,
+    id_client INT NOT NULL,
+    import DECIMAL(10,2) NOT NULL CHECK (import >= 0),
+    data DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    estat ENUM('pendent', 'pagat', 'rebutjat') NOT NULL DEFAULT 'pendent',
+    CONSTRAINT fk_pagaments_client FOREIGN KEY (id_client)
+        REFERENCES clients(id_client) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
+-- 11. Taula AUDITORIA_CANVIS (Requeriment 4.3 / E2 Sec. 7.2)
 -- Registre de traçabilitat de canvis DML (INSERT, UPDATE, DELETE) en format JSON.
 -- -----------------------------------------------------------------------------
 CREATE TABLE auditoria_canvis (
@@ -210,4 +224,5 @@ CREATE INDEX idx_lots_nau_estat ON lots_crianca(id_nau, estat);
 CREATE INDEX idx_lectures_sensor_data ON lectures_sensors(id_sensor, data_hora DESC);
 CREATE INDEX idx_alarmes_pendents ON alarmes_incidencies(id_nau, resolta);
 CREATE INDEX idx_alarmes_gravetat ON alarmes_incidencies(resolta, nivell_gravetat);
+CREATE INDEX idx_pagaments_client ON pagaments(id_client, data DESC);
 CREATE INDEX idx_auditoria_taula_data ON auditoria_canvis(taula, data_hora DESC);

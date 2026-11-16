@@ -1,0 +1,489 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 1450" width="100%" height="100%" style="background-color: #ffffff; font-family: 'Consolas', 'Courier New', monospace, sans-serif;">
+  <defs>
+    <!-- Estils comuns -->
+    <style>
+      .entity { fill: #ffffff; stroke-width: 3.5; }
+      .entity-blue { stroke: #0000ff; }
+      .entity-green { stroke: #00cc00; }
+      .entity-orange { stroke: #ff8000; }
+      .entity-purple { stroke: #800080; }
+      .entity-red { stroke: #ff0000; }
+      
+      .rel-diamond { fill: #ffffff; stroke: #000000; stroke-width: 1.8; }
+      .attr-ellipse { fill: #ffffff; stroke: #000000; stroke-width: 1.6; }
+      
+      .line-conn { stroke: #000000; stroke-width: 1.5; fill: none; }
+      
+      .txt-title { font-size: 13px; font-weight: bold; fill: #000000; text-anchor: middle; dominant-baseline: central; }
+      .txt-attr { font-size: 10.5px; fill: #000000; text-anchor: middle; dominant-baseline: central; font-family: 'Segoe UI', Arial, sans-serif; }
+      .txt-pk { text-decoration: underline; font-weight: bold; }
+      .txt-card { font-size: 12px; font-weight: bold; fill: #000000; text-anchor: middle; dominant-baseline: central; }
+    </style>
+  </defs>
+
+  <!-- ========================================== -->
+  <!-- LINIES DE CONNEXIÓ (CONNECTORS)           -->
+  <!-- ========================================== -->
+  <g class="line-conn">
+    <!-- CLIENT -> PAGAMENT (via paga) -->
+    <line x1="680" y1="410" x2="680" y2="280"/>
+    <line x1="680" y1="280" x2="680" y2="155"/>
+    
+    <!-- CLIENT -> GRANJA (via contracta) -->
+    <line x1="740" y1="435" x2="855" y2="435"/>
+    <line x1="855" y1="435" x2="970" y2="435"/>
+
+    <!-- GRANJA -> NAU (via té) -->
+    <line x1="1035" y1="455" x2="1035" y2="535"/>
+    <line x1="1035" y1="535" x2="1035" y2="615"/>
+
+    <!-- NAU -> LOT_CRIANÇA (via allotja) -->
+    <line x1="1090" y1="635" x2="1265" y2="660"/>
+    <line x1="1265" y1="660" x2="1440" y2="685"/>
+
+    <!-- NAU -> acciona (1) -->
+    <line x1="1035" y1="655" x2="1035" y2="875"/>
+
+    <!-- SENSOR -> acciona (N) -->
+    <line x1="755" y1="905" x2="975" y2="905"/>
+
+    <!-- ACTUADOR -> acciona (M) -->
+    <line x1="1235" y1="905" x2="1095" y2="905"/>
+
+    <!-- SENSOR -> LECTURA_SENSORS (via registra) -->
+    <line x1="680" y1="925" x2="520" y2="1005"/>
+    <line x1="520" y1="1005" x2="330" y2="1080"/>
+
+    <!-- SENSOR -> ALARMES_INCIDÈNCIES (via genera) -->
+    <line x1="715" y1="925" x2="715" y2="1090"/>
+    <line x1="715" y1="1090" x2="715" y2="1245"/>
+
+    <!-- Atributs PAGAMENT -->
+    <line x1="680" y1="135" x2="550" y2="70"/>
+    <line x1="680" y1="135" x2="640" y2="35"/>
+    <line x1="680" y1="135" x2="735" y2="35"/>
+    <line x1="680" y1="135" x2="810" y2="70"/>
+
+    <!-- Atributs CLIENT -->
+    <line x1="680" y1="435" x2="745" y2="310"/>
+    <line x1="680" y1="435" x2="820" y2="365"/>
+    <line x1="680" y1="435" x2="580" y2="315"/>
+    <line x1="680" y1="435" x2="525" y2="355"/>
+    <line x1="680" y1="435" x2="495" y2="400"/>
+    <line x1="680" y1="435" x2="470" y2="455"/>
+    <line x1="680" y1="435" x2="495" y2="500"/>
+    <line x1="680" y1="435" x2="535" y2="540"/>
+
+    <!-- Atributs GRANJA -->
+    <line x1="1035" y1="435" x2="1035" y2="280"/>
+    <line x1="1035" y1="435" x2="945" y2="310"/>
+    <line x1="1035" y1="435" x2="880" y2="340"/>
+    <line x1="1035" y1="435" x2="1145" y2="315"/>
+    <line x1="1035" y1="435" x2="1235" y2="340"/>
+    <line x1="1035" y1="435" x2="1265" y2="395"/>
+    <line x1="1035" y1="435" x2="1275" y2="455"/>
+
+    <!-- Atributs NAU -->
+    <line x1="1035" y1="635" x2="955" y2="540"/>
+    <line x1="1035" y1="635" x2="910" y2="570"/>
+    <line x1="1035" y1="635" x2="865" y2="610"/>
+    <line x1="1035" y1="635" x2="865" y2="660"/>
+    <line x1="1035" y1="635" x2="1175" y2="565"/>
+    <line x1="1035" y1="635" x2="1205" y2="615"/>
+    <line x1="1035" y1="635" x2="1205" y2="665"/>
+
+    <!-- Atributs LOT_CRIANÇA -->
+    <line x1="1485" y1="685" x2="1495" y2="550"/>
+    <line x1="1485" y1="685" x2="1605" y2="565"/>
+    <line x1="1485" y1="685" x2="1710" y2="600"/>
+    <line x1="1485" y1="685" x2="1770" y2="645"/>
+    <line x1="1485" y1="685" x2="1820" y2="690"/>
+    <line x1="1485" y1="685" x2="1810" y2="745"/>
+    <line x1="1485" y1="685" x2="1770" y2="790"/>
+    <line x1="1485" y1="685" x2="1710" y2="835"/>
+    <line x1="1485" y1="685" x2="1625" y2="880"/>
+    <line x1="1485" y1="685" x2="1535" y2="925"/>
+
+    <!-- Atributs SENSOR -->
+    <line x1="715" y1="905" x2="570" y2="590"/>
+    <line x1="715" y1="905" x2="595" y2="640"/>
+    <line x1="715" y1="905" x2="495" y2="635"/>
+    <line x1="715" y1="905" x2="480" y2="690"/>
+    <line x1="715" y1="905" x2="460" y2="740"/>
+    <line x1="715" y1="905" x2="465" y2="795"/>
+    <line x1="715" y1="905" x2="480" y2="850"/>
+    <line x1="715" y1="905" x2="490" y2="905"/>
+    <line x1="715" y1="905" x2="535" y2="955"/>
+
+    <!-- Atributs acciona -->
+    <line x1="1035" y1="905" x2="1145" y2="995"/>
+    <line x1="1035" y1="905" x2="1080" y2="1055"/>
+    <line x1="1035" y1="905" x2="990" y2="1090"/>
+    <line x1="1035" y1="905" x2="905" y2="1045"/>
+
+    <!-- Atributs ACTUADOR -->
+    <line x1="1285" y1="905" x2="1205" y2="810"/>
+    <line x1="1285" y1="905" x2="1320" y2="820"/>
+    <line x1="1285" y1="905" x2="1380" y2="835"/>
+    <line x1="1285" y1="905" x2="1420" y2="880"/>
+    <line x1="1285" y1="905" x2="1405" y2="940"/>
+    <line x1="1285" y1="905" x2="1400" y2="990"/>
+    <line x1="1285" y1="905" x2="1395" y2="1035"/>
+
+    <!-- Atributs LECTURA_SENSORS -->
+    <line x1="280" y1="1095" x2="175" y2="1005"/>
+    <line x1="280" y1="1095" x2="135" y2="1105"/>
+    <line x1="280" y1="1095" x2="170" y2="1195"/>
+
+    <!-- Atributs ALARMES_INCIDÈNCIES -->
+    <line x1="715" y1="1265" x2="530" y2="1265"/>
+    <line x1="715" y1="1265" x2="520" y2="1320"/>
+    <line x1="715" y1="1265" x2="555" y2="1395"/>
+    <line x1="715" y1="1265" x2="680" y2="1430"/>
+    <line x1="715" y1="1265" x2="815" y2="1430"/>
+    <line x1="715" y1="1265" x2="855" y2="1370"/>
+    <line x1="715" y1="1265" x2="885" y2="1310"/>
+  </g>
+
+  <!-- ========================================== -->
+  <!-- RELACIONS (ROMBES)                         -->
+  <!-- ========================================== -->
+  <!-- paga -->
+  <polygon points="680,260 705,280 680,300 655,280" class="rel-diamond"/>
+  <text x="680" y="280" class="txt-attr" font-size="9.5">paga</text>
+  <text x="695" y="240" class="txt-card">N</text>
+  <text x="695" y="325" class="txt-card">1</text>
+
+  <!-- contracta -->
+  <polygon points="855,415 890,435 855,455 820,435" class="rel-diamond"/>
+  <text x="855" y="435" class="txt-attr" font-size="9.5">contracta</text>
+  <text x="765" y="420" class="txt-card">1</text>
+  <text x="945" y="420" class="txt-card">N</text>
+
+  <!-- té -->
+  <polygon points="1035,515 1060,535 1035,555 1010,535" class="rel-diamond"/>
+  <text x="1035" y="535" class="txt-attr" font-size="9.5">té</text>
+  <text x="1050" y="480" class="txt-card">1</text>
+  <text x="1050" y="590" class="txt-card">N</text>
+
+  <!-- allotja -->
+  <polygon points="1265,640 1295,660 1265,680 1235,660" class="rel-diamond"/>
+  <text x="1265" y="660" class="txt-attr" font-size="9.5">allotja</text>
+  <text x="1135" y="640" class="txt-card">1</text>
+  <text x="1395" y="675" class="txt-card">N</text>
+
+  <!-- acciona (ternària) -->
+  <polygon points="1035,875 1095,905 1035,935 975,905" class="rel-diamond"/>
+  <text x="1035" y="905" class="txt-attr" font-size="10.5">acciona</text>
+  <text x="1050" y="845" class="txt-card">1</text>
+  <text x="885" y="895" class="txt-card">N</text>
+  <text x="1175" y="895" class="txt-card">M</text>
+
+  <!-- registra -->
+  <polygon points="520,985 545,1005 520,1025 495,1005" class="rel-diamond"/>
+  <text x="520" y="1005" class="txt-attr" font-size="9.5">registra</text>
+  <text x="615" y="955" class="txt-card">1</text>
+  <text x="415" y="1045" class="txt-card">N</text>
+
+  <!-- genera -->
+  <polygon points="715,1070 740,1090 715,1110 690,1090" class="rel-diamond"/>
+  <text x="715" y="1090" class="txt-attr" font-size="9.5">genera</text>
+  <text x="730" y="1040" class="txt-card">1</text>
+  <text x="730" y="1145" class="txt-card">N</text>
+
+  <!-- ========================================== -->
+  <!-- ENTITATS (RECTANGLES)                      -->
+  <!-- ========================================== -->
+  <!-- PAGAMENT -->
+  <rect x="630" y="115" width="100" height="40" class="entity entity-blue"/>
+  <text x="680" y="135" class="txt-title">PAGAMENT</text>
+
+  <!-- CLIENT -->
+  <rect x="635" y="415" width="90" height="40" class="entity entity-blue"/>
+  <text x="680" y="435" class="txt-title">CLIENT</text>
+
+  <!-- GRANJA -->
+  <rect x="990" y="415" width="90" height="40" class="entity entity-blue"/>
+  <text x="1035" y="435" class="txt-title">GRANJA</text>
+
+  <!-- NAU -->
+  <rect x="995" y="615" width="80" height="40" class="entity entity-blue"/>
+  <text x="1035" y="635" class="txt-title">NAU</text>
+
+  <!-- LOT_CRIANÇA -->
+  <rect x="1420" y="665" width="130" height="40" class="entity entity-green"/>
+  <text x="1485" y="685" class="txt-title">LOT_CRIANÇA</text>
+
+  <!-- SENSOR -->
+  <rect x="670" y="885" width="90" height="40" class="entity entity-orange"/>
+  <text x="715" y="905" class="txt-title">SENSOR</text>
+
+  <!-- ACTUADOR -->
+  <rect x="1235" y="885" width="100" height="40" class="entity entity-orange"/>
+  <text x="1285" y="905" class="txt-title">ACTUADOR</text>
+
+  <!-- LECTURA_SENSORS -->
+  <rect x="200" y="1075" width="160" height="40" class="entity entity-purple"/>
+  <text x="280" y="1095" class="txt-title">LECTURA_SENSORS</text>
+
+  <!-- ALARMES_INCIDÈNCIES -->
+  <rect x="630" y="1245" width="170" height="40" class="entity entity-red"/>
+  <text x="715" y="1265" class="txt-title">ALARMES_INCIDÈNCIES</text>
+
+  <!-- ========================================== -->
+  <!-- ATRIBUTS (EL·LIPSES)                       -->
+  <!-- ========================================== -->
+  <!-- Atributs PAGAMENT -->
+  <g>
+    <ellipse cx="550" cy="70" rx="42" ry="18" class="attr-ellipse"/>
+    <text x="550" y="70" class="txt-attr txt-pk">id_pagament</text>
+
+    <ellipse cx="640" cy="35" rx="26" ry="16" class="attr-ellipse"/>
+    <text x="640" y="35" class="txt-attr">estat</text>
+
+    <ellipse cx="735" cy="35" rx="30" ry="16" class="attr-ellipse"/>
+    <text x="735" y="35" class="txt-attr">import</text>
+
+    <ellipse cx="810" cy="70" rx="26" ry="16" class="attr-ellipse"/>
+    <text x="810" y="70" class="txt-attr">data</text>
+  </g>
+
+  <!-- Atributs CLIENT -->
+  <g>
+    <ellipse cx="745" cy="310" rx="38" ry="18" class="attr-ellipse"/>
+    <text x="745" y="310" class="txt-attr txt-pk">id_client</text>
+
+    <ellipse cx="820" cy="365" rx="38" ry="18" class="attr-ellipse"/>
+    <text x="820" y="365" class="txt-attr">data_alta</text>
+
+    <ellipse cx="580" cy="315" rx="24" ry="16" class="attr-ellipse"/>
+    <text x="580" y="315" class="txt-attr">dni</text>
+
+    <ellipse cx="525" cy="355" rx="46" ry="18" class="attr-ellipse"/>
+    <text x="525" y="355" class="txt-attr">nom_empresa</text>
+
+    <ellipse cx="495" cy="400" rx="46" ry="18" class="attr-ellipse"/>
+    <text x="495" y="400" class="txt-attr">nom_contacte</text>
+
+    <ellipse cx="470" cy="455" rx="26" ry="16" class="attr-ellipse"/>
+    <text x="470" y="455" class="txt-attr">actiu</text>
+
+    <ellipse cx="495" cy="500" rx="30" ry="16" class="attr-ellipse"/>
+    <text x="495" y="500" class="txt-attr">telèfon</text>
+
+    <ellipse cx="535" cy="540" rx="28" ry="16" class="attr-ellipse"/>
+    <text x="535" y="540" class="txt-attr">email</text>
+  </g>
+
+  <!-- Atributs GRANJA -->
+  <g>
+    <ellipse cx="1035" cy="280" rx="38" ry="18" class="attr-ellipse"/>
+    <text x="1035" y="280" class="txt-attr txt-pk">id_granja</text>
+
+    <ellipse cx="945" cy="310" rx="34" ry="18" class="attr-ellipse"/>
+    <text x="945" y="310" class="txt-attr">població</text>
+
+    <ellipse cx="880" cy="340" rx="30" ry="18" class="attr-ellipse"/>
+    <text x="880" y="340" class="txt-attr">adreça</text>
+
+    <ellipse cx="1145" cy="315" rx="28" ry="16" class="attr-ellipse"/>
+    <text x="1145" y="315" class="txt-attr">activa</text>
+
+    <ellipse cx="1235" cy="340" rx="38" ry="18" class="attr-ellipse"/>
+    <text x="1235" y="340" class="txt-attr">data_alta</text>
+
+    <ellipse cx="1265" cy="395" rx="42" ry="18" class="attr-ellipse"/>
+    <text x="1265" y="395" class="txt-attr">nom_granja</text>
+
+    <ellipse cx="1275" cy="455" rx="52" ry="18" class="attr-ellipse"/>
+    <text x="1275" y="455" class="txt-attr">codi_explotació</text>
+  </g>
+
+  <!-- Atributs NAU -->
+  <g>
+    <ellipse cx="955" cy="540" rx="32" ry="18" class="attr-ellipse"/>
+    <text x="955" y="540" class="txt-attr txt-pk">id_nau</text>
+
+    <ellipse cx="910" cy="570" rx="34" ry="18" class="attr-ellipse"/>
+    <text x="910" y="570" class="txt-attr">lingitud</text>
+
+    <ellipse cx="865" cy="610" rx="32" ry="18" class="attr-ellipse"/>
+    <text x="865" y="610" class="txt-attr">amplada</text>
+
+    <ellipse cx="865" cy="660" rx="28" ry="16" class="attr-ellipse"/>
+    <text x="865" y="660" class="txt-attr">activa</text>
+
+    <ellipse cx="1175" cy="565" rx="38" ry="18" class="attr-ellipse"/>
+    <text x="1175" y="565" class="txt-attr">codi_nau</text>
+
+    <ellipse cx="1205" cy="615" rx="48" ry="18" class="attr-ellipse"/>
+    <text x="1205" y="615" class="txt-attr">capacitat_aus</text>
+
+    <ellipse cx="1205" cy="665" rx="38" ry="18" class="attr-ellipse"/>
+    <text x="1205" y="665" class="txt-attr">data_alta</text>
+  </g>
+
+  <!-- Atributs LOT_CRIANÇA -->
+  <g>
+    <ellipse cx="1495" cy="550" rx="26" ry="16" class="attr-ellipse"/>
+    <text x="1495" y="550" class="txt-attr">estat</text>
+
+    <ellipse cx="1605" cy="565" rx="30" ry="18" class="attr-ellipse"/>
+    <text x="1605" y="565" class="txt-attr txt-pk">id_lot</text>
+
+    <ellipse cx="1710" cy="600" rx="36" ry="18" class="attr-ellipse"/>
+    <text x="1710" y="600" class="txt-attr">codi_lot</text>
+
+    <ellipse cx="1770" cy="645" rx="46" ry="18" class="attr-ellipse"/>
+    <text x="1770" y="645" class="txt-attr">data_entrada</text>
+
+    <ellipse cx="1820" cy="690" rx="66" ry="18" class="attr-ellipse"/>
+    <text x="1820" y="690" class="txt-attr">data_sortida_prevista</text>
+
+    <ellipse cx="1810" cy="745" rx="58" ry="18" class="attr-ellipse"/>
+    <text x="1810" y="745" class="txt-attr">data_sortida_real</text>
+
+    <ellipse cx="1770" cy="790" rx="58" ry="18" class="attr-ellipse"/>
+    <text x="1770" y="790" class="txt-attr">num_aus_inicials</text>
+
+    <ellipse cx="1710" cy="835" rx="42" ry="18" class="attr-ellipse"/>
+    <text x="1710" y="835" class="txt-attr">num_baixes</text>
+
+    <ellipse cx="1625" cy="880" rx="46" ry="18" class="attr-ellipse"/>
+    <text x="1625" y="880" class="txt-attr">pes_mitja_kg</text>
+
+    <ellipse cx="1535" cy="925" rx="56" ry="18" class="attr-ellipse"/>
+    <text x="1535" y="925" class="txt-attr">pinso_consumit_kg</text>
+  </g>
+
+  <!-- Atributs SENSOR -->
+  <g>
+    <ellipse cx="570" cy="590" rx="34" ry="18" class="attr-ellipse"/>
+    <text x="570" y="590" class="txt-attr txt-pk">id_sensor</text>
+
+    <ellipse cx="595" cy="640" rx="40" ry="18" class="attr-ellipse"/>
+    <text x="595" y="640" class="txt-attr">codi_sensor</text>
+
+    <ellipse cx="495" cy="635" rx="40" ry="18" class="attr-ellipse"/>
+    <text x="495" y="635" class="txt-attr">tipus_sensor</text>
+
+    <ellipse cx="480" cy="690" rx="26" ry="16" class="attr-ellipse"/>
+    <text x="480" y="690" class="txt-attr">actiu</text>
+
+    <ellipse cx="460" cy="740" rx="46" ry="18" class="attr-ellipse"/>
+    <text x="460" y="740" class="txt-attr">unitat_mesura</text>
+
+    <ellipse cx="465" cy="795" rx="46" ry="18" class="attr-ellipse"/>
+    <text x="465" y="795" class="txt-attr">llindar_màxim</text>
+
+    <ellipse cx="480" cy="850" rx="38" ry="18" class="attr-ellipse"/>
+    <text x="480" y="850" class="txt-attr">data_alta</text>
+
+    <ellipse cx="490" cy="905" rx="38" ry="18" class="attr-ellipse"/>
+    <text x="490" y="905" class="txt-attr">tecnologia</text>
+
+    <ellipse cx="535" cy="955" rx="46" ry="18" class="attr-ellipse"/>
+    <text x="535" y="955" class="txt-attr">llindar_mínim</text>
+  </g>
+
+  <!-- Atributs acciona -->
+  <g>
+    <ellipse cx="1145" cy="995" rx="42" ry="18" class="attr-ellipse"/>
+    <text x="1145" y="995" class="txt-attr txt-pk">id_registre</text>
+
+    <ellipse cx="1080" cy="1055" rx="26" ry="16" class="attr-ellipse"/>
+    <text x="1080" y="1055" class="txt-attr">accio</text>
+
+    <ellipse cx="990" cy="1090" rx="28" ry="16" class="attr-ellipse"/>
+    <text x="990" y="1090" class="txt-attr">motiu</text>
+
+    <ellipse cx="905" cy="1045" rx="36" ry="18" class="attr-ellipse"/>
+    <text x="905" y="1045" class="txt-attr">data_hora</text>
+  </g>
+
+  <!-- Atributs ACTUADOR -->
+  <g>
+    <ellipse cx="1205" cy="810" rx="38" ry="18" class="attr-ellipse"/>
+    <text x="1205" y="810" class="txt-attr">data_alta</text>
+
+    <ellipse cx="1320" cy="820" rx="44" ry="18" class="attr-ellipse"/>
+    <text x="1320" y="820" class="txt-attr">tipus_actuador</text>
+
+    <ellipse cx="1380" cy="835" rx="42" ry="18" class="attr-ellipse"/>
+    <text x="1380" y="835" class="txt-attr">codi_actuador</text>
+
+    <ellipse cx="1420" cy="880" rx="40" ry="18" class="attr-ellipse"/>
+    <text x="1420" y="880" class="txt-attr txt-pk">id_actuador</text>
+
+    <ellipse cx="1405" cy="940" rx="26" ry="16" class="attr-ellipse"/>
+    <text x="1405" y="940" class="txt-attr">actiu</text>
+
+    <ellipse cx="1400" cy="990" rx="42" ry="18" class="attr-ellipse"/>
+    <text x="1400" y="990" class="txt-attr">estat_actual</text>
+
+    <ellipse cx="1395" cy="1035" rx="48" ry="18" class="attr-ellipse"/>
+    <text x="1395" y="1035" class="txt-attr">mode_operacio</text>
+  </g>
+
+  <!-- Atributs LECTURA_SENSORS -->
+  <g>
+    <ellipse cx="175" cy="1005" rx="36" ry="18" class="attr-ellipse"/>
+    <text x="175" y="1005" class="txt-attr txt-pk">id_lectura</text>
+
+    <ellipse cx="135" cy="1105" rx="26" ry="16" class="attr-ellipse"/>
+    <text x="135" y="1105" class="txt-attr">valor</text>
+
+    <ellipse cx="170" cy="1195" rx="26" ry="16" class="attr-ellipse"/>
+    <text x="170" y="1195" class="txt-attr">data</text>
+  </g>
+
+  <!-- Atributs ALARMES_INCIDÈNCIES -->
+  <g>
+    <ellipse cx="530" cy="1265" rx="36" ry="18" class="attr-ellipse"/>
+    <text x="530" y="1265" class="txt-attr txt-pk">id_alarma</text>
+
+    <ellipse cx="520" cy="1320" rx="66" ry="18" class="attr-ellipse"/>
+    <text x="520" y="1320" class="txt-attr">observacions_resolució</text>
+
+    <ellipse cx="555" cy="1395" rx="48" ry="18" class="attr-ellipse"/>
+    <text x="555" y="1395" class="txt-attr">data_resolució</text>
+
+    <ellipse cx="680" cy="1430" rx="48" ry="18" class="attr-ellipse"/>
+    <text x="680" y="1430" class="txt-attr">nivell_gravetat</text>
+
+    <ellipse cx="815" cy="1430" rx="48" ry="18" class="attr-ellipse"/>
+    <text x="815" y="1430" class="txt-attr">data_generació</text>
+
+    <ellipse cx="855" cy="1370" rx="34" ry="18" class="attr-ellipse"/>
+    <text x="855" y="1370" class="txt-attr">missatge</text>
+
+    <ellipse cx="885" cy="1310" rx="28" ry="16" class="attr-ellipse"/>
+    <text x="885" y="1310" class="txt-attr">resolta</text>
+  </g>
+
+  <!-- ========================================== -->
+  <!-- LLEGENDA DE DOMINIS (COLOR-CODED)          -->
+  <!-- ========================================== -->
+  <g transform="translate(1620, 1220)" font-family="'Segoe UI', Arial, sans-serif" font-size="12">
+    <!-- Blue -->
+    <text x="0" y="0" fill="#0000ff" font-weight="bold" font-size="16">*</text>
+    <text x="15" y="-1" fill="#000000">Gestió i multitenant</text>
+
+    <!-- Green -->
+    <text x="0" y="28" fill="#00cc00" font-weight="bold" font-size="16">*</text>
+    <text x="15" y="27" fill="#000000">Cicle productiu biològic</text>
+
+    <!-- Orange -->
+    <text x="0" y="56" fill="#ff8000" font-weight="bold" font-size="16">*</text>
+    <text x="15" y="55" fill="#000000">Dispositius de camp</text>
+
+    <!-- Purple -->
+    <text x="0" y="84" fill="#800080" font-weight="bold" font-size="16">*</text>
+    <text x="15" y="83" fill="#000000">Sèrie Temporal telemetria</text>
+
+    <!-- Red -->
+    <text x="0" y="112" fill="#ff0000" font-weight="bold" font-size="16">*</text>
+    <text x="15" y="111" fill="#000000">Alertes i incidències crítiques</text>
+  </g>
+
+</svg>

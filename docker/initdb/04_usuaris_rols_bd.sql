@@ -107,6 +107,18 @@ JOIN granges g ON n.id_granja = g.id_granja
 WHERE (@app_current_tenant_id IS NULL OR g.id_client = @app_current_tenant_id)
   AND (@app_current_granja_id IS NULL OR g.id_granja = @app_current_granja_id);
 
+CREATE OR REPLACE VIEW v_tenant_registre_actuacions AS
+SELECT ra.* FROM registre_actuacions ra
+JOIN actuadors a ON ra.id_actuador = a.id_actuador
+JOIN naus n ON a.id_nau = n.id_nau
+JOIN granges g ON n.id_granja = g.id_granja
+WHERE (@app_current_tenant_id IS NULL OR g.id_client = @app_current_tenant_id)
+  AND (@app_current_granja_id IS NULL OR g.id_granja = @app_current_granja_id);
+
+CREATE OR REPLACE VIEW v_tenant_pagaments AS
+SELECT p.* FROM pagaments p
+WHERE (@app_current_tenant_id IS NULL OR p.id_client = @app_current_tenant_id);
+
 -- -----------------------------------------------------------------------------
 -- 5. USUARI DE CONSULTA MULTITENANT (avigest_consulta)
 -- Utilitzat per veterinaris, tècnics i clients finals.
@@ -122,7 +134,9 @@ GRANT SELECT ON avigest_db.v_tenant_lots_crianca TO 'avigest_consulta'@'%';
 GRANT SELECT ON avigest_db.v_tenant_sensors TO 'avigest_consulta'@'%';
 GRANT SELECT ON avigest_db.v_tenant_actuadors TO 'avigest_consulta'@'%';
 GRANT SELECT ON avigest_db.v_tenant_lectures_sensors TO 'avigest_consulta'@'%';
+GRANT SELECT ON avigest_db.v_tenant_registre_actuacions TO 'avigest_consulta'@'%';
 GRANT SELECT ON avigest_db.v_tenant_alarmes_incidencies TO 'avigest_consulta'@'%';
+GRANT SELECT ON avigest_db.v_tenant_pagaments TO 'avigest_consulta'@'%';
 
 GRANT EXECUTE ON PROCEDURE avigest_db.sp_set_tenant TO 'avigest_consulta'@'%';
 GRANT EXECUTE ON PROCEDURE avigest_db.sp_reset_tenant TO 'avigest_consulta'@'%';

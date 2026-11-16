@@ -171,3 +171,14 @@ INSERT INTO registre_actuacions (id_actuador, accio, motiu, disparat_per_sensor_
 (4, 'ON', 'Temperatura detectada (31.80 ºC) supera llindar màxim (31.00 ºC)', 5, NOW() - INTERVAL 15 MINUTE),
 (1, 'ON', 'Renovació periòdica programada d aire', NULL, NOW() - INTERVAL 2 HOUR),
 (1, 'OFF', 'Aturada programada en finalitzar cicle de ventilació', NULL, NOW() - INTERVAL 105 MINUTE);
+
+-- -----------------------------------------------------------------------------
+-- 10. Inserció de PAGAMENTS HISTÒRICS (Model ER Oficial / Facturació)
+-- Quotes mensuals de servei IoT i manteniment de la plataforma per client.
+-- -----------------------------------------------------------------------------
+INSERT INTO pagaments (id_pagament, id_client, import, data, estat) VALUES
+(1, 1, 450.00, NOW() - INTERVAL 60 DAY, 'pagat'),
+(2, 1, 450.00, NOW() - INTERVAL 30 DAY, 'pagat'),
+(3, 1, 450.00, NOW() - INTERVAL 2 DAY,  'pendent'),
+(4, 2, 620.00, NOW() - INTERVAL 45 DAY, 'pagat'),
+(5, 2, 620.00, NOW() - INTERVAL 15 DAY, 'pagat');

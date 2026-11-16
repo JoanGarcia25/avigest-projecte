@@ -140,7 +140,7 @@
   - **Mariam:**
     - Desplegament de `avigest_mariadb` a Docker Compose.
     - Detecció i correcció d'un error de subconsulta no agrupada (`ERROR: subquery uses ungrouped column`) a la vista comparativa `v_resum_diari_climatic`, refactoritzant-la amb un `LEFT JOIN` directe net.
-    - Verificació de les 10 taules en 3FN, de les 6 vistes de negoci i validació del trigger `trg_control_llindars_sensor` davant d'una inserció d'estrès tèrmic (35.0 ºC), registrant l'encesa del ventilador a `registre_actuacions` i l'alerta crítica a `alarmes_incidencies`.
+    - Verificació de les 11 taules en 3FN, de les vistes de negoci i validació del trigger `trg_control_llindars_sensor` davant d'una inserció d'estrès tèrmic (35.0 ºC), registrant l'encesa del ventilador a `registre_actuacions` i l'alerta crítica a `alarmes_incidencies`.
     - Incorporació a l'E2 del catàleg traçable de requeriments funcionals R1–R7, justificació formal de la normalització 3FN i taula de freqüències de mostreig IoT (30s clima, 15m sitges).
     - Actualització de les seccions de fonts bibliogràfiques a les 5 fitxes de decisió tècnica (FD01 a FD05).
 - **Dedicació:** Joan: 6 h | Mariam: 6 h (Total: 12 h)
