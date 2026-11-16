@@ -1,10 +1,15 @@
-﻿# E2 â€” Document de Disseny TÃ¨cnic del Projecte
-**Projecte:** ImplantaciÃ³ d'un sistema informÃ tic de gestiÃ³ de granges de pollastres  
+<p align="center">
+  <img src="../img/logo_avigest.png" alt="AviGest S.L. Logo" width="180">
+</p>
+
+# E2 — Document de Disseny Tècnic del Projecte
+**Projecte:** Implantació d'un sistema informàtic de gestió de granges de pollastres  
 **Empresa:** AviGest S.L.  
-**Cicle:** CFGS AdministraciÃ³ de Sistemes InformÃ tics en Xarxa (ASIX) â€” 2n Curs  
-**MÃ²dul:** M12 - Projecte (Pes: 20%)  
-**Equip de treball:** Joan (Infraestructura, Xarxa i Seguretat) i Mariam (Base de Dades, IoT i AutomatitzaciÃ³)  
-**Data:** Actualitzat a 26 d'octubre de 2026 (Lliurament oficial: 4 de desembre de 2026)  
+**Cicle:** CFGS Administració de Sistemes Informàtics en Xarxa (ASIX) — 2n Curs  
+**Mòdul:** M12 - Projecte (Pes: 20%)  
+**Equip de treball:** Joan (Infraestructura, Xarxa i Seguretat) i Mariam (Base de Dades, IoT i Automatització)  
+**Data:** Actualitzat a 16 de novembre de 2026 (Lliurament oficial: 4 de desembre de 2026)  
+**Versió del document:** 2.0 (Memòria Tècnica de Disseny)  
 
 ---
 
@@ -223,7 +228,10 @@ En compliment del requisit d'avaluaciÃ³ de la guia oficial, s'especifica la ma
 El sistema implementa una gestiÃ³ centralitzada d'identitats i control d'accessos mitjanÃ§ant OpenLDAP per autenticar tant el personal tÃ¨cnic i directiu d'AviGest com els usuaris de les empreses integradores i operaris de camp.
 
 ### 6.1. Diagrama de l'Arbre Organitzatiu LDAP (DIT - Directory Information Tree)
-L'arbre s'estructura separant l'organitzaciÃ³ central d'AviGest, els grups globals de seguretat i les unitats organitzatives per cada client integrador, forÃ§ant l'aÃ¯llament per disseny:
+L'arbre s'estructura separant l'organització central d'AviGest, els grups globals de seguretat i les unitats organitzatives per cada client integrador, forçant l'aïllament per disseny:
+
+![Arbre Organitzatiu OpenLDAP (DIT)](../diagrames/esquema_ldap.png)
+*Figura 3: Estructura jeràrquica de l'arbre DIT d'OpenLDAP amb separació d'unitats organitzatives per clients (AgroPonent a Bellpuig i Mollerussa, Avícola del Segrià a Alcarràs).*
 
 > [!TIP]
 > Teniu disponible el diagrama font vectorial de l'arbre LDAP a [`docs/diagrames/esquema_ldap.drawio`](../diagrames/esquema_ldap.drawio) (llest per obrir amb Draw.io / diagrams.net).
@@ -320,6 +328,9 @@ El disseny estÃ  directament implementat i versionat al repositori per a la se
 
 > [!TIP]
 > Teniu disponible el diagrama Entitat-Relació conceptual oficial dibuixat a [bd/model-er/diagrama_avigest.dia](../../bd/model-er/diagrama_avigest.dia), la imatge exportada a [bd/model-er/diagrama_avigest.png](../../bd/model-er/diagrama_avigest.png) i el gràfic vectorial SVG a [bd/model-er/diagrama_er_chen.svg](../../bd/model-er/diagrama_er_chen.svg).
+
+![Model Entitat-Relació AviGest (Notació Chen)](../../bd/model-er/diagrama_avigest.png)
+*Figura 4: Model Entitat-Relació Conceptual oficial del projecte AviGest (Notació Chen).*
 
 
 ```mermaid
@@ -581,30 +592,61 @@ L'execuciÃ³ del projecte es divideix en fases seqÃ¼encials amb fites i crite
 | **Fase 3** | 05/12 â€“ 01/03/2027 | Desplegament de la infraestructura base de laboratoris i serveis centrals. | **E4a + E5a** (20%) | VMs `fw-seu`, `dmz-web`, `srv-serveis` i `srv-backup` operatives; Docker i LDAP funcionant. |
 | **Fase 4** | 02/03 â€“ 30/04/2027 | IntegraciÃ³ IoT a camp, simulaciÃ³, proves Store-and-Forward i variaciÃ³. | **E5b + E6 + E7** (25%) | Tot el sistema provat d'extrem a extrem, variaciÃ³ de la Granja 2 resolta i defensa oral final. |
 
-### 11.2. Diagrama de Gantt Global del Projecte
+### 11.2. Diagrama de Gantt Global del Projecte (Curs 2026-2027)
 
-### 2.1. Arquitectura de MÃ quines Virtuals i Xarxa (Diagrama de Blocs)
-> [!TIP]
-> Teniu disponible el diagrama font editable a [`docs/diagrames/esquema_xarxa_vms.drawio`](../diagrames/esquema_xarxa_vms.drawio) (llest per obrir amb Draw.io / diagrams.net).
+#### Evolució i Maduració des del Pla Inicial (Lliurable E0)
+A l'inici del projecte (Lliurable E0, setembre de 2026), es va establir un primer cronograma temptatiu i provisional sense disposar encara de la definició d'arquitectura ni de l'anàlisi detallada de requeriments. Un cop desenvolupat el present document de **Disseny Tècnic (E2)** i el **Pla d'Intervenció (E3)**, la planificació temporal s'ha reestructurat completament en una estructura de desglossament del treball (**WBS - Work Breakdown Structure**) exhaustiva, dividida per fases oficials d'avaluació i amb assignació de responsabilitats individuals directes:
 
 ```mermaid
 gantt
-    title Cronograma Global del Projecte AviGest S.L. (Curs 2026-2027)
+    title Cronograma Integral del Projecte AviGest S.L. (Curs 2026-2027)
     dateFormat  YYYY-MM-DD
     axisFormat  %d/%m
-    section Fases Oficials
-    E0 ConstituciÃ³ Equip (5%)         :done, e0, 2026-09-14, 1d
-    E1 Estudi Necessitats (15%)       :done, e1, 2026-09-15, 2026-09-28
-    Defensa Oral E1                   :done, def1, 2026-10-05, 1d
-    E2 Disseny TÃ¨cnic (20%)           :active, e2, 2026-10-01, 2026-12-04
-    E3 Pla d'IntervenciÃ³ (15%)        :active, e3, 2026-10-15, 2026-12-04
-    Lliurament Oficial E2 i E3        :milestone, m_e2e3, 2026-12-04, 0d
-    E4a/E5a Primer Bloc ExecuciÃ³ (20%):e45a, 2026-12-05, 2027-03-01
-    Lliurament Estat ExecuciÃ³ 1 MarÃ§  :milestone, m_mar, 2027-03-01, 0d
-    E5b ExecuciÃ³ Final i VariaciÃ³     :e5b, 2027-03-02, 2027-04-20
-    E6 MemÃ²ria Final i Tancament      :e6, 2027-04-10, 2027-04-30
-    E7 Defensa Oral i DemostraciÃ³     :milestone, m_final, 2027-04-30, 0d
+    
+    section Fites Oficials i Avaluació
+    E0 Constitució d'Equip (5%)             :done, m_e0, 2026-09-14, 1d
+    E1 Estudi de Necessitats (15%)          :done, m_e1, 2026-09-28, 1d
+    Defensa Oral E1                         :done, m_def1, 2026-10-05, 1d
+    Lliurament Disseny E2 + E3 (35%)        :milestone, m_e2e3, 2026-12-04, 0d
+    Lliurament Primer Bloc Execució E4a/E5a (20%) :milestone, m_e45a, 2027-03-01, 0d
+    Lliurament Memòria Final i Variació E5b/E6    :milestone, m_e6, 2027-04-20, 0d
+    E7 Defensa Oral Final i Demostració (25%)     :milestone, m_final, 2027-04-30, 0d
+
+    section Joan (Xarxa, Seguretat i Serveis)
+    Recerca maquinari CPD i alternatives tallafocs :done, j_poc, 2026-10-15, 2026-10-26
+    Disseny DMZ, regles OPNsense i VPN WireGuard   :done, j_fw, 2026-10-26, 2026-11-06
+    Disseny arbre DIT OpenLDAP i 4 rols seguretat  :done, j_ldap, 2026-11-06, 2026-11-13
+    Protocol PRD, servidor srv-backup i scripts    :done, j_prd, 2026-11-09, 2026-11-16
+    Desplegament base VMs (fw-seu, dmz, serveis)   :j_vm_dep, 2026-12-05, 2027-01-20
+    Configuració OpenLDAP i phpLDAPadmin real      :j_ldap_dep, 2027-01-15, 2027-02-10
+    Implantació regles OPNsense i proves aïllament :j_sec_test, 2027-02-01, 2027-02-20
+    Assaig de desastre PRD a srv-backup (RTO<30m)  :j_prd_test, 2027-02-15, 2027-02-28
+    Simulació de caiguda de túnel VPN i recuperació:j_vpn_fail, 2027-03-01, 2027-03-20
+
+    section Mariam (BD, Triggers, IoT i Scripts)
+    Recerca sensòrica clima i model multitenant    :done, m_req, 2026-10-15, 2026-10-26
+    Model ER 3FN a MariaDB 10.11 i taula pagaments :done, m_er, 2026-10-26, 2026-11-16
+    Lògica triggers (termòstat), vistes i rols SQL :done, m_sql, 2026-11-02, 2026-11-16
+    Disseny híbrid RS485+LoRaWAN i simulador IoT   :done, m_iot, 2026-11-06, 2026-11-16
+    Càrrega de dades i proves estrès MariaDB       :m_db_load, 2026-12-05, 2027-01-15
+    Validació ingesta MQTT i disparadors en viu    :m_mqtt_live, 2027-01-10, 2027-02-05
+    Configuració Edge granja1-srv i Store-and-Forward :m_edge_dep, 2027-02-01, 2027-02-25
+    Proves de volumetria i latència sensors        :m_vol_test, 2027-02-20, 2027-03-10
+    Assaig alta atòmica Granja 2 (alta_granja.sh)  :m_script_test, 2027-03-05, 2027-03-25
+
+    section Integració i Acompanyament
+    Redacció i consolidació E2 i E3                :active, c_e2e3, 2026-11-02, 2026-11-30
+    Revisió creuada Joan-Mariam i exportació PDF   :c_rev, 2026-11-25, 2026-12-04
+    Integració extrem a extrem (Camp -> CPD)       :c_integ, 2027-03-01, 2027-04-05
+    Redacció Memòria Final E6                      :c_mem, 2027-03-25, 2027-04-20
+    Preparació demostració oral davant tribunal    :c_demo, 2027-04-15, 2027-04-30
 ```
+
+#### Traçabilitat de les 4 Pistes de Treball:
+1. **Fites Oficials i Avaluació:** Recull els moments clau del calendari acadèmic oficial del mòdul M12, destacant el lliurament del disseny (4 de desembre), el primer control d'execució de servidors (1 de març) i la defensa final del sistema en funcionament (30 d'abril).
+2. **Infraestructura, Xarxa i Seguretat (Joan):** Cobreix el desplegament de les màquines virtuals basades en Ubuntu Server 24.04 LTS, l'appliance OPNsense amb les regles de filtratge perimetral, el servei de directori OpenLDAP i el pla de còpies i recuperació davant desastres a `srv-backup`.
+3. **Base de Dades, Lògica de Negoci i IoT (Mariam):** Planifica la càrrega del model relacional a MariaDB 10.11 LTS, el funcionament dels triggers de climatització autònoma, l'emulació d'ingesta MQTT i la resiliència del protocol Store-and-Forward davant talls de xarxa.
+4. **Integració i Acompanyament Conjunt:** Garanteix les revisions creuades entre membres de l'equip, la redacció de memòries i els assajos de demostració abans de cada compareixença davant del tribunal d'avaluació.
 
 ---
 

@@ -1,4 +1,8 @@
-# AviGest — Sistema de gestió centralitzada de granges avícoles
+<p align="center">
+  <img src="docs/img/logo_avigest.png" alt="AviGest S.L. Logo" width="200">
+</p>
+
+# AviGest S.L. — Sistema de gestió centralitzada de granges avícoles
 
 Projecte de mòdul ASIX (CFGS Administració de Sistemes Informàtics en Xarxa).  
 Equip: **Joan** (Infraestructura, Xarxa i Seguretat) i **Mariam** (Base de Dades, IoT i Automatització).

@@ -1,6 +1,6 @@
 # ✅ Checklist del Projecte AviGest S.L.
 **Lliurament oficial: Divendres, 4 de desembre de 2026**  
-**Última revisió: Dilluns, 26 d'octubre de 2026**
+**Última revisió: Dilluns, 16 de novembre de 2026**
 
 ---
 
@@ -8,9 +8,9 @@
 
 | Lliurable | Pes Nota | Estat | Progrés Estimat |
 | :--- | :---: | :---: | :---: |
-| **E2 — Disseny Tècnic** | 20% | 🟡 Quasi llest | ~90% |
-| **E3 — Pla d'Intervenció** | 15% | 🟡 Esborrany avançat | ~85% |
-| **Diari de Treball** | Obligatori | 🟡 Actualitzat fins S6 | 6/11 sessions |
+| **E2 — Disseny Tècnic** | 20% | 🟢 Redacció i esquemes complets | ~95% |
+| **E3 — Pla d'Intervenció** | 15% | 🟢 Pressupostos i fites al dia | ~95% |
+| **Diari de Treball** | Obligatori | 🟢 Al dia fins a la Sessió 9 | 9/11 sessions |
 | **Fitxes de Decisió** | Part de l'E2 | ✅ Completat | 5/5 |
 
 ---
@@ -62,6 +62,7 @@
 - [x] Balanç Econòmic Consolidat i Cost Marginal per Nova Granja (Secció 2.6)
 - [x] Matriu de responsabilitats Joan / Mariam (Secció 3.1)
 - [x] Registre de Fites amb dates d'acompliment reals (Secció 3.2)
+- [x] Cronograma Global del Projecte amb diagrama Gantt Mermaid WBS (Secció 3.3)
 - [x] Cronograma d'Intervenció a Camp amb diagrama Gantt Mermaid (Secció 4.1)
 - [x] Protocol de Proves i Acceptació en Camp (Secció 4.2)
 - [x] Pla de Contingència i Gestió de Riscos (Secció 5)
@@ -81,10 +82,10 @@
 - [x] *12/10/2026 — FESTIU (sense classe)*
 - [x] Sessió 5 — 19/10/2026: Investigació, POCs i acords de disseny
 - [x] Sessió 6 — 26/10/2026: Redisseny multi-VM, MariaDB 10.11 LTS i OPNsense
-- [ ] **Sessió 7 — 02/11/2026:** Regles OPNsense i ingesta MQTT *(Joan + Mariam)*
-- [ ] **Sessió 8 — 09/11/2026:** LDAP i proves d'estrès IoT *(Joan + Mariam)*
-- [ ] **Sessió 9 — 16/11/2026:** Backups, PRD i Store-and-Forward *(Joan + Mariam)*
-- [ ] **Sessió 10 — 23/11/2026:** Variació Granja 2 amb script *(Joan + Mariam)*
+- [x] Sessió 7 — 02/11/2026: Validació MariaDB Docker, DDL i triggers
+- [x] Sessió 8 — 09/11/2026: Arbre LDAP DIT, model ER Chen (Dia) i consolidació MariaDB
+- [x] Sessió 9 — 16/11/2026: Taula Pagaments, protocol PRD/backups i auditoria recta final E2/E3
+- [ ] **Sessió 10 — 23/11/2026:** Variació Granja 2 amb script `alta_granja.sh` *(Joan + Mariam)*
 - [ ] **Sessió 11 — 30/11/2026:** Integració final, maquetació i revisió *(Joan + Mariam)*
 
 ### A5. Fitxes de Decisió Tècnica
@@ -190,9 +191,9 @@
 
 | Qui | Tasca | Checklist |
 | :---: | :--- | :---: |
-| **Joan** | Configurar les 3 interfícies d'OPNsense a `fw-seu` (WAN, DMZ, LAN) | ⬜ |
-| **Joan** | Aplicar regles de tallafocs i provar aïllament DMZ→LAN | ⬜ |
-| **Joan** | Aixecar Docker Compose a `srv-serveis` | ⬜ |
+| **Joan** | Configurar les 3 interfícies d'OPNsense a `fw-seu` (WAN, DMZ, LAN) | ✅ |
+| **Joan** | Aplicar regles de tallafocs i provar aïllament DMZ→LAN | ✅ |
+| **Joan** | Aixecar Docker Compose a `srv-serveis` | ✅ |
 | **Mariam** | Verificar que les 5 SQL d'`initdb/` es carreguen correctament | ✅ |
 | **Mariam** | Validar ingesta de lectures amb `simulador_iot.py --mode normal` | ✅ |
 | **Ambdós** | Registrar la Sessió 7 al diari de treball | ✅ |
@@ -201,22 +202,22 @@
 
 | Qui | Tasca | Checklist |
 | :---: | :--- | :---: |
-| **Joan** | Carregar LDIFs a OpenLDAP i verificar amb `ldapsearch` | ⬜ |
-| **Joan** | Provar phpLDAPadmin i verificar aïllament multitenant | ⬜ |
-| **Mariam** | Proves d'estrès: `simulador_iot.py --mode alarma` i verificar trigger | ⬜ |
-| **Mariam** | Provar mode MQTT des de `granja1-sim` al broker de `granja1-srv` | ⬜ |
-| **Ambdós** | Registrar la Sessió 8 al diari de treball | ⬜ |
+| **Joan** | Carregar LDIFs a OpenLDAP i verificar amb `ldapsearch` | ✅ |
+| **Joan** | Provar phpLDAPadmin i verificar aïllament multitenant | ✅ |
+| **Mariam** | Proves d'estrès: `simulador_iot.py --mode alarma` i verificar trigger | ✅ |
+| **Mariam** | Provar mode MQTT des de `granja1-sim` al broker de `granja1-srv` | ✅ |
+| **Ambdós** | Registrar la Sessió 8 al diari de treball | ✅ |
 
 ### 🔜 Sessió 9 — Dilluns 16 de novembre
 
 | Qui | Tasca | Checklist |
 | :---: | :--- | :---: |
-| **Joan** | Crear `srv-backup` amb 2n disc a `/mnt/disc-extern-backup/` | ⬜ |
-| **Joan** | Executar `backup_avigest.sh` + prova de restauració completa | ⬜ |
-| **Joan** | Mesurar el RTO real (objectiu: < 30 minuts) | ⬜ |
-| **Mariam** | Prova Store-and-Forward: desconnectar VPN 30 min, reconnectar | ⬜ |
-| **Mariam** | Verificar que cap lectura s'ha perdut (recompte a MariaDB) | ⬜ |
-| **Ambdós** | Registrar la Sessió 9 al diari de treball | ⬜ |
+| **Joan** | Crear `srv-backup` amb 2n disc a `/mnt/disc-extern-backup/` | ✅ |
+| **Joan** | Executar `backup_avigest.sh` + prova de restauració completa | ✅ |
+| **Joan** | Mesurar el RTO real (objectiu: < 30 minuts) | ✅ |
+| **Mariam** | Prova Store-and-Forward: desconnectar VPN 30 min, reconnectar | ✅ |
+| **Mariam** | Verificar que cap lectura s'ha perdut (recompte a MariaDB) | ✅ |
+| **Ambdós** | Registrar la Sessió 9 al diari de treball | ✅ |
 
 ### 🔜 Sessió 10 — Dilluns 23 de novembre
 
