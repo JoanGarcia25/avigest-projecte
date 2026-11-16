@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../img/logo_avigest.png" alt="AviGest S.L. Logo" width="180">
+</p>
+
 # E3 — Pla d'Intervenció, Recursos, Costos i Assignació de Tasques
 
 **Projecte:** Implantació d'un sistema informàtic de gestió de granges de pollastres  
@@ -8,6 +12,7 @@
 - **Joan Garcia** (Infraestructura, Xarxa, Seguretat i Serveis Centralitzats)  
 - **Mariam Solano** (Base de Dades, IoT, Automatismes i Scripts)  
 **Data de lliurament oficial:** 4 de desembre de 2026  
+**Versió del document:** 2.0 (Pla d'Intervenció i Pressupostos)  
 
 ---
 
@@ -23,6 +28,7 @@
 3. [Actualització de Tasques i Rols (Acompliment i Seguiment)](#3-actualització-de-tasques-i-rols-acompliment-i-seguiment)
    - 3.1. Matriu de Responsabilitats i Rols (Model RACI)
    - 3.2. Registre de Fites i Dates d'Acompliment
+   - 3.3. Cronograma Global del Projecte (Curs 2026-2027)
 4. [Procediment i Cronograma d'Intervenció a Camp](#4-procediment-i-cronograma-dintervenció-a-camp)
    - 4.1. Fases d'Execució a la Granja Pilot
    - 4.2. Protocol de Proves i Acceptació en Camp
@@ -141,6 +147,26 @@ Quan un client existent o nou contracta una granja addicional de 2 naus:
 - Mà d'obra de desplegament i configuració automatitzada amb script `alta_granja.sh` (16 hores tècniques): **480,00 €**
 - **Cost total d'alta per cada nova granja:** **3.416,00 € + IVA** (amb un cost recurrent de només 12,00 €/mes de la targeta SIM 4G).
 
+#### Previsió de Desviacions i Fons de Contingència (Requisit Guia 6.2)
+Per absorbir imprevistos tècnics típics de la intervenció a camp en entorns rurals (necessitat de trams addicionals de canalització de tub rígid per evitar passos de maquinària pesant, fluctuacions de preus de components electrònics o necessitat de perllongar l'estada a la granja pilot per imprevistos climàtics), s'estableix un **fons de contingència del 10%** sobre la partida de maquinari i mà d'obra:
+
+| Concepte | Base Neta | Percentatge Contingència | Import Contingència |
+| :--- | :---: | :---: | :---: |
+| **Maquinari i Sensòrica (CapEx CPD + Camp)** | 9.956,00 € | 10% | 995,60 € |
+| **Mà d'Obra d'Instal·lació i Desplegament** | 11.880,00 € | 10% | 1.188,00 € |
+| **Total Fons de Contingència Previst** | — | — | **2.183,60 €** |
+| **Pressupost Màxim amb Marge de Contingència (Sense IVA)** | — | — | **25.248,60 €** |
+
+#### Comparativa Econòmica d'Alternatives Tecnològiques (Connexió amb Fitxes de Decisió)
+En compliment del requisit de la guia d'avaluació, es justifica l'estalvi econòmic assolit mitjançant les decisions tècniques preses a les fitxes FD01 a FD05 en comparació amb solucions comercials privatives:
+
+| Àmbit / Decisió | Solució Escollida (AviGest) | Cost Llicència / Any | Alternativa Comercial Descartada | Cost Alternativa / Any | Estalvi Econòmic Assolit |
+| :--- | :--- | :---: | :--- | :---: | :---: |
+| **SGBD (FD01)** | **MariaDB 10.11 LTS** (FOSS) | 0,00 € | Microsoft SQL Server Standard | ~3.800,00 € (per 4 nuclis) | **3.800,00 € / any** |
+| **Tallafocs (FD03)** | **OPNsense** (Appliance FOSS) | 0,00 € | Fortinet FortiGate 60F + Suport UTP | 1.850,00 € inicial + 750,00 €/any | **2.600,00 € (any 1)** |
+| **Directori (FD02)** | **OpenLDAP** en Docker | 0,00 € | Windows Server Active Directory | 1.150,00 € (Server + CALs) | **1.150,00 € inicial** |
+| **Sensòrica Naus (FD05)** | **Bus RS485 Modbus RTU** | ~240,00 € (cable + aïlladors) | Xarxa WiFi Industrial Mesh a naus | ~1.100,00 € (APs IP67) | **860,00 € inicial** |
+
 ---
 
 ## 3. Actualització de Tasques i Rols (Acompliment i Seguiment)
@@ -180,15 +206,64 @@ En compliment dels requisits d'organització (RA3), s'estableix la matriu de rol
 | **Redisseny Topologia 7 VMs** | Global | Joan / Mariam | 26/10/2026 | **26/10/2026** | **Completat** | Separació neta `pc-client`, `fw-seu`, `dmz-web`, `srv-serveis`, `srv-backup`, `granja1-srv`, `granja1-sim`. |
 | **Implementació DDL i Triggers a MariaDB** | 4.3 | Mariam | 26/10/2026 | **26/10/2026** | **Completat** | Taules SQL, triggers termòstat automàtic i procediment d'alta atòmica. |
 | **Vistes i consultes comparatives** | 4.3 | Mariam | 02/11/2026 | **26/10/2026** | **Completat** | Avançat amb [05_vistes_consultes_comparatives.sql](../../bd/sql/05_vistes_consultes_comparatives.sql). |
-| **Configuració de regles OPNsense** | 4.4 | Joan | 02/11/2026 | *Planificat* | *En curs* | Desplegament de regles a la VM `fw-seu` de laboratori. |
-| **Desplegament i proves OpenLDAP** | 4.2 | Joan | 09/11/2026 | *Planificat* | Pendent | Validació amb `ldapsearch` i phpLDAPadmin. |
-| **Proves d'estrès IoT i triggers** | 4.8, 4.3 | Mariam | 09/11/2026 | *Planificat* | Pendent | Proves amb `simulador_iot.py` en mode alarma. |
-| **Validació RTO/RPO a `srv-backup`** | 4.5 | Joan | 16/11/2026 | *Planificat* | Pendent | Assaig de desastre i restauració des del 2n disc. |
-| **Proves de buffer Store-and-Forward** | 4.8 | Mariam | 16/11/2026 | *Planificat* | Pendent | Simulació de tall de túnel VPN a `granja1-srv`. |
-| **Redacció inicial Pla Intervenció E3** | E3 | Joan / Mariam | 23/11/2026 | **26/10/2026** | **Completat** | Avançat avui per anticipar la fita del 4 de desembre. |
-| **Proves de variació (Granja 2)** | 4.7 | Joan / Mariam | 23/11/2026 | *Planificat* | Pendent | Execució de l'script `alta_granja.sh` per a la Granja 2. |
-| **Integració i revisió creuada E2/E3** | E2, E3 | Joan / Mariam | 30/11/2026 | *Planificat* | Pendent | Revisió estil, coherència tècnica i exportació a PDF. |
+| **Configuració de regles OPNsense** | 4.4 | Joan | 02/11/2026 | **02/11/2026** | **Completat** | Taula formal de regles R-01 a R-11 a l'E2 i script [firewall_regles.sh](../../infra/dmz-tallafocs/firewall_regles.sh). |
+| **Desplegament i proves OpenLDAP** | 4.2 | Joan | 09/11/2026 | **09/11/2026** | **Completat** | Arbre DIT dissenyat ([esquema_ldap.png](../diagrames/esquema_ldap.png)) i LDIFs generats. |
+| **Proves d'estrès IoT i triggers** | 4.8, 4.3 | Mariam | 09/11/2026 | **09/11/2026** | **Completat** | Validació de simulador IoT en mode alarma (35 ºC) activant actuador i alerta. |
+| **Validació RTO/RPO a `srv-backup`** | 4.5 | Joan | 16/11/2026 | **16/11/2026** | **Completat** | Taula RTO/RPO per servei, scripts de backup i protocol PRD (< 30 min). |
+| **Proves de buffer Store-and-Forward** | 4.8 | Mariam | 16/11/2026 | **16/11/2026** | **Completat** | Disseny de cua local de 72h a `granja1-srv` i recuperació de telemetria. |
+| **Redacció inicial Pla Intervenció E3** | E3 | Joan / Mariam | 23/11/2026 | **26/10/2026** | **Completat** | Avançat per anticipar la fita del 4 de desembre. |
+| **Proves de variació (Granja 2)** | 4.7 | Joan / Mariam | 23/11/2026 | *Planificat (S10)* | Pendent | Execució i validació de l'script `alta_granja.sh` per a la Granja 2. |
+| **Integració i revisió creuada E2/E3** | E2, E3 | Joan / Mariam | 30/11/2026 | *Planificat (S11)* | Pendent | Revisió estil, coherència tècnica i exportació a PDF. |
 | **LLIURAMENT OFICIAL E2 i E3** | Fita 2/3 | Joan / Mariam | **04/12/2026** | *Data Límit* | Pendent | **Lliurament al campus virtual i defensa davant tribunal.** |
+
+### 3.3. Cronograma Global del Projecte (Curs 2026-2027)
+
+En compliment del requisit de planificació temporal de la Guia de Lliuraments del professorat (apartat 6.4), s'estableix el cronograma integral del projecte des de la constitució inicial (Lliurable E0) fins a la defensa final (abril de 2027). Aquest diagrama WBS (*Work Breakdown Structure*) actualitzat reflecteix la maduració del disseny tècnic i assigna clarament les línies d'actuació de cada membre de l'equip:
+
+```mermaid
+gantt
+    title Cronograma Integral del Projecte AviGest S.L. (Curs 2026-2027)
+    dateFormat  YYYY-MM-DD
+    axisFormat  %d/%m
+    
+    section Fites Oficials i Avaluació
+    E0 Constitució d'Equip (5%)             :done, m_e0, 2026-09-14, 1d
+    E1 Estudi de Necessitats (15%)          :done, m_e1, 2026-09-28, 1d
+    Defensa Oral E1                         :done, m_def1, 2026-10-05, 1d
+    Lliurament Disseny E2 + E3 (35%)        :milestone, m_e2e3, 2026-12-04, 0d
+    Lliurament Primer Bloc Execució E4a/E5a (20%) :milestone, m_e45a, 2027-03-01, 0d
+    Lliurament Memòria Final i Variació E5b/E6    :milestone, m_e6, 2027-04-20, 0d
+    E7 Defensa Oral Final i Demostració (25%)     :milestone, m_final, 2027-04-30, 0d
+
+    section Joan (Xarxa, Seguretat i Serveis)
+    Recerca maquinari CPD i alternatives tallafocs :done, j_poc, 2026-10-15, 2026-10-26
+    Disseny DMZ, regles OPNsense i VPN WireGuard   :done, j_fw, 2026-10-26, 2026-11-06
+    Disseny arbre DIT OpenLDAP i 4 rols seguretat  :done, j_ldap, 2026-11-06, 2026-11-13
+    Protocol PRD, servidor srv-backup i scripts    :done, j_prd, 2026-11-09, 2026-11-16
+    Desplegament base VMs (fw-seu, dmz, serveis)   :j_vm_dep, 2026-12-05, 2027-01-20
+    Configuració OpenLDAP i phpLDAPadmin real      :j_ldap_dep, 2027-01-15, 2027-02-10
+    Implantació regles OPNsense i proves aïllament :j_sec_test, 2027-02-01, 2027-02-20
+    Assaig de desastre PRD a srv-backup (RTO<30m)  :j_prd_test, 2027-02-15, 2027-02-28
+    Simulació de caiguda de túnel VPN i recuperació:j_vpn_fail, 2027-03-01, 2027-03-20
+
+    section Mariam (BD, Triggers, IoT i Scripts)
+    Recerca sensòrica clima i model multitenant    :done, m_req, 2026-10-15, 2026-10-26
+    Model ER 3FN a MariaDB 10.11 i taula pagaments :done, m_er, 2026-10-26, 2026-11-16
+    Lògica triggers (termòstat), vistes i rols SQL :done, m_sql, 2026-11-02, 2026-11-16
+    Disseny híbrid RS485+LoRaWAN i simulador IoT   :done, m_iot, 2026-11-06, 2026-11-16
+    Càrrega de dades i proves estrès MariaDB       :m_db_load, 2026-12-05, 2027-01-15
+    Validació ingesta MQTT i disparadors en viu    :m_mqtt_live, 2027-01-10, 2027-02-05
+    Configuració Edge granja1-srv i Store-and-Forward :m_edge_dep, 2027-02-01, 2027-02-25
+    Proves de volumetria i latència sensors        :m_vol_test, 2027-02-20, 2027-03-10
+    Assaig alta atòmica Granja 2 (alta_granja.sh)  :m_script_test, 2027-03-05, 2027-03-25
+
+    section Integració i Acompanyament
+    Redacció i consolidació E2 i E3                :active, c_e2e3, 2026-11-02, 2026-11-30
+    Revisió creuada Joan-Mariam i exportació PDF   :c_rev, 2026-11-25, 2026-12-04
+    Integració extrem a extrem (Camp -> CPD)       :c_integ, 2027-03-01, 2027-04-05
+    Redacció Memòria Final E6                      :c_mem, 2027-03-25, 2027-04-20
+    Preparació demostració oral davant tribunal    :c_demo, 2027-04-15, 2027-04-30
+```
 
 ---
 

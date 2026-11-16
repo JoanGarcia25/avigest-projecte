@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../img/logo_avigest.png" alt="AviGest S.L. Logo" width="140">
+</p>
+
 # Diari de Treball — AviGest S.L.
 
 **Projecte:** Implantació d'un sistema informàtic de gestió de granges de pollastres  
@@ -9,7 +13,7 @@
 **Tutor del Projecte:** Professorat de l'Institut Mollerussa  
 **Inici del Projecte:** 14 de setembre de 2026  
 **Lliurament Fita E2/E3:** 4 de desembre de 2026  
-**Darrera actualització:** Dilluns, 26 d'octubre de 2026  
+**Darrera actualització:** Dilluns, 16 de novembre de 2026  
 
 ---
 
@@ -33,7 +37,7 @@
 - **Treball realitzat:**
   - **Joan:** Recerca prèvia sobre els requeriments d'infraestructura (maquinari de servidor, necessitat de directori centralitzat i seguretat perimetral).
   - **Mariam:** Recerca sobre la normativa de benestar animal en avicultura d'engreix (temperatures recomanades, ventilació, humitat i CO2).
-  - **Treball conjunt:** Definició dels àmbits de responsabilitat (Joan: Infraestructura, Xarxa i Seguretat; Mariam: BD, IoT i Automatització). Redacció i tancament del document [E0_divisio_tasques_rols.md](../E0_divisio_tasques_rols.md).
+  - **Treball conjunt:** Definició dels àmbits de responsabilitat (Joan: Infraestructura, Xarxa i Seguretat; Mariam: BD, IoT i Automatització). Redacció i tancament del document [E0_divisio_tasques_rols_v2.pdf](../lliuraments/E0_divisio_tasques_rols_v2.pdf).
 - **Dedicació:** Joan: 6 h | Mariam: 6 h (Total: 12 h)
 
 ---
@@ -57,7 +61,7 @@
 - **Treball realitzat:**
   - **Joan:** Inicialització de l'estructura de carpetes del repositori a Git, definició de branques de treball i configuració de fitxers `.gitignore`.
   - **Mariam:** Concreció dels paràmetres ambientals a monitoritzar (temperatura, humitat, CO2 i nivell de sitja) i revisió de l'apartat de viabilitat.
-  - **Treball conjunt:** Revisió final i maquetació del document [E1_estudi_necessitats_joangarcia_mariamsolano.pdf](../E1_estudi_necessitats_joangarcia_mariamsolano%20(2).pdf) i elaboració de les 2 diapositives resum (*què hem comparat / què farem*).
+  - **Treball conjunt:** Revisió final i maquetació del document [E1_estudi_necessitats_joangarcia_mariamsolano.pdf](../lliuraments/E1_estudi_necessitats_joangarcia_mariamsolano%20(2).pdf) i elaboració de les 2 diapositives resum (*què hem comparat / què farem*).
 - **Dedicació:** Joan: 6 h | Mariam: 6 h (Total: 12 h)
 
 ---
@@ -101,7 +105,7 @@
 
 ---
 
-### Sessió 6: Dilluns, 26 d'octubre de 2026 (6 hores — AVUI)
+### Sessió 6: Dilluns, 26 d'octubre de 2026 (6 hores)
 **Fita:** Consens de la topologia multi-VM, homogeneïtzació a Ubuntu Server 24.04 LTS i avanç de l'E3
 
 - **Objectiu:** Reestructurar l'entorn de màquines virtuals per reflectir una infraestructura industrial realista, professional i 100% defensable davant del tribunal, consolidant les 6 VMs especialitzades, aplicant el consell docent d'homogeneïtat i avançant el pla d'intervenció.
@@ -118,7 +122,7 @@
       * `granja1-srv`: Camp (`10.1.1.10`, Ubuntu 24.04 / VPN WireGuard `10.0.100.10`) amb MQTT local, regles d'actuadors (>31ºC), búfer store-and-forward i client VPN.
       * `granja1-sim`: Camp (`10.1.1.20`, Ubuntu 24.04) simulador d'ESP32 per RS485 Modbus i silos per LoRaWAN ChirpStack.
   - **Joan:**
-    - Elaboració de la documentació de desplegament de màquines virtuals i pujada de les guies de referència a `docs/Guies_MV/` ([Guia del laboratori virtual d'AviGest.pdf](../Guies_MV/Guia%20del%20laboratori%20virtual%20d’AviGest.pdf) i [guia_desplegament_maquines_virtuals.md](../guia_desplegament_maquines_virtuals.md) amb les configuracions de Netplan YAML).
+    - Elaboració de la documentació de desplegament de màquines virtuals i pujada de les guies de referència a `docs/Guies_MV/` ([Guia del laboratori virtual d'AviGest.pdf](../Guies_MV/Guia%20del%20laboratori%20virtual%20d’AviGest.pdf) i [guia_desplegament_maquines_virtuals.md](../Guies_MV/guia_desplegament_maquines_virtuals.md) amb les configuracions de Netplan YAML).
     - Disseny i documentació de les regles de tallafocs OPNsense a [disseny_dmz_seguretat.md](../../infra/dmz-tallafocs/disseny_dmz_seguretat.md) i [firewall_regles.sh](../../infra/dmz-tallafocs/firewall_regles.sh), amb aïllament estricte DMZ -> LAN (només TCP 3306 i LDAPS permesos) i pas de VPN WireGuard a Broker MQTT.
     - Configuració del servidor dedicat `srv-backup` i del pla de recuperació PRD amb el segon disc virtual simulat ([pla_recuperacio_desastres_prd.md](../../infra/backups-prd/pla_recuperacio_desastres_prd.md)).
   - **Mariam:**
@@ -147,6 +151,37 @@
 
 ---
 
+### Sessió 8: Dilluns, 9 de novembre de 2026 (6 hores)
+**Fita:** Disseny de l'Arbre LDAP, Model ER Conceptual en Notació Chen i Unificació d'Arquitectura MariaDB 10.11 LTS
+
+- **Objectiu:** Representar formalment l'arbre organitzatiu OpenLDAP i el model conceptual de base de dades amb eines especialitzades de diagramació (Draw.io i Dia), i unificar la infraestructura cap a MariaDB 10.11 LTS amb rèplica GTID.
+- **Treball realitzat durant les 6 hores:**
+  - **Joan:**
+    - Elaboració del model Entitat-Relació conceptual oficial del projecte utilitzant l'eina **Dia** ([diagrama_avigest.dia](../../bd/model-er/diagrama_avigest.dia)), exportant el diagrama natiu a format vectorial SVG ([diagrama_er_chen.svg](../../bd/model-er/diagrama_er_chen.svg)) i en mapa de bits PNG ([diagrama_avigest.png](../../bd/model-er/diagrama_avigest.png)) amb notació Chen completa (entitats, atributs, claus primàries i relacions amb cardinalitats).
+    - Unificació i sincronització de scripts SQL, docker-compose i documentació per consolidar definitivament MariaDB 10.11 LTS, preparant l'entrypoint de la rèplica GTID (`replica-entrypoint.sh`).
+  - **Mariam:**
+    - Disseny i generació de l'esquema de l'arbre organitzatiu OpenLDAP (DIT) a Draw.io ([esquema_ldap.drawio](../diagrames/esquema_ldap.drawio)), plasmant la jerarquia exacta del projecte: `dc=avigest,dc=cat`, `ou=avigest` (personal tècnic i directiu), `ou=groups` (4 rols de seguretat) i `ou=clients` segregat per a les empreses integradores (AgroPonent S.L. amb les granges de Bellpuig i Mollerussa, i Avícola del Segrià S.A. amb la granja d'Alcarràs).
+    - Poliment dels esquemes d'arquitectura de xarxa i màquines virtuals ([esquema_xarxa_vms.drawio](../diagrames/esquema_xarxa_vms.drawio)) i de flux de dades IoT end-to-end ([esquema_flux_iot.drawio](../diagrames/esquema_flux_iot.drawio)), resolent solapaments d'etiquetes i exportant les versions definitives en PNG d'alta resolució.
+- **Dedicació:** Joan: 6 h | Mariam: 6 h (Total: 12 h)
+
+---
+
+### Sessió 9: Dilluns, 16 de novembre de 2026 (6 hores — AVUI)
+**Fita:** Incorporació de la Taula de Pagaments al Model ER, Protocol PRD/Backups i Auditoria de Gaps per a l'Entrega E2/E3
+
+- **Objectiu:** Integrar el mòdul de facturació i pagaments al model de dades, verificar la resiliència del protocol de còpies de seguretat i recuperació davant desastres (PRD), i realitzar una auditoria integral del repositori per planificar exactament les 2 sessions restants abans del lliurament del 4 de desembre.
+- **Treball realitzat durant les 6 hores:**
+  - **Joan:**
+    - Modelat i codificació de la taula `pagaments` (taula 10 de l'esquema relacional) per cobrir la gestió de quotes i facturació dels clients integradors: actualització del DDL ([01_esquema.sql](../../bd/sql/01_esquema.sql)), dades de prova inicials ([03_dades_prova.sql](../../bd/sql/03_dades_prova.sql)), assignació de permisos per rols ([04_usuaris_rols_bd.sql](../../bd/sql/04_usuaris_rols_bd.sql)) i actualització del model ER a Dia.
+    - Revisió i validació del protocol de còpies de seguretat a `srv-backup` ([backup_avigest.sh](../../infra/backups-prd/backup_avigest.sh)) i restauració ([restaurar_avigest.sh](../../infra/backups-prd/restaurar_avigest.sh)), assegurant el compliment del RTO (< 30 minuts) i RPO (< 24 hores) amb buidatge transaccional de MariaDB i arbre OpenLDAP amb hash SHA-256 cap al segon disc simulat.
+  - **Mariam:**
+    - Auditoria completa dels requisits de la guia d'avaluació del professorat, revisant els 17 punts de l'E2, els 6 punts de l'E3 i les 5 fitxes de decisió tècnica.
+    - Incrustació formal de les figures pendents al document [E2_document_disseny_tecnic.md](../E2_disseny_tecnic/E2_document_disseny_tecnic.md): arbre organitzatiu OpenLDAP (Figura 3) i model Entitat-Relació conceptual en notació Chen (Figura 4), a més de la neteja d'encapçalaments residuals abans del Gantt global.
+    - Actualització del Registre de Fites i Dates d'Acompliment Reals a la Secció 3.2 de l'E3 ([E3_pla_intervencio.md](../E3_pla_intervencio/E3_pla_intervencio.md)) i actualització d'aquest diari de treball.
+- **Dedicació:** Joan: 6 h | Mariam: 6 h (Total: 12 h)
+
+---
+
 ## Taula Resum d'Hores Lectives Dedicades
 
 | Sessió | Data | Fase / Fita | Hores Joan | Hores Mariam | Total Sessió |
@@ -159,7 +194,9 @@
 | **S5** | Dilluns 19/10/2026 | Investigació, proves de concepte i acords E2 | 6 h | 6 h | **12 h** |
 | **S6** | Dilluns 26/10/2026 | Multi-VM (Ubuntu 24.04 + OPNsense), MariaDB 10.11 LTS i avanç E3 | 6 h | 6 h | **12 h** |
 | **S7** | Dilluns 02/11/2026 | Validació MariaDB 10.11 Docker, triggers i adaptació guia E2-E3 | 6 h | 6 h | **12 h** |
-| **TOTAL** | *(Fins al 02/11)* | **7 dilluns lectius x 6 hores** | **42 h** | **42 h** | **84 h** |
+| **S8** | Dilluns 09/11/2026 | Arbre LDAP DIT, model ER Chen (Dia) i consolidació MariaDB | 6 h | 6 h | **12 h** |
+| **S9** | Dilluns 16/11/2026 | Taula Pagaments, protocols PRD/backups i auditoria recta final E2/E3 | 6 h | 6 h | **12 h** |
+| **TOTAL** | *(Fins al 16/11)* | **9 dilluns lectius x 6 hores** | **54 h** | **54 h** | **108 h** |
 
 ---
 
@@ -179,10 +216,10 @@ gantt
     S4 Defenses orals E1      :done, 2026-10-05, 1d
     S5 Investigació i POCs    :done, 2026-10-19, 1d
     S6 Multi-VM i avanç E3    :done, 2026-10-26, 1d
+    S7 Validació Docker i DDL :done, 2026-11-02, 1d
+    S8 Arbre LDAP i Model ER  :done, 2026-11-09, 1d
+    S9 Pagaments i Backups PRD:done, 2026-11-16, 1d
     section Sessions Planificades
-    S7 Disseny Xarxa/DMZ i DDL final   :2026-11-02, 1d
-    S8 Lògica Triggers i Arbre LDAP     :2026-11-09, 1d
-    S9 IoT Edge, Backups i PRD          :2026-11-16, 1d
     S10 Assaig Variació i Tancament E3  :2026-11-23, 1d
     S11 Integració final E2/E3          :2026-11-30, 1d
     Lliurament oficial E2 i E3          :milestone, 2026-12-04, 0d
@@ -190,25 +227,16 @@ gantt
 
 ### Detall de les properes sessions lectives:
 
-1. **Sessió 7 (Dilluns, 2 de novembre):**
-   - **Joan:** Implementació de la configuració d'interfícies i regles a l'entorn virtual d'OPNsense (`fw-seu`) i proves d'aïllament DMZ.
-   - **Mariam:** Validació de la ingesta de dades a MariaDB 10.11 LTS a través del broker MQTT central.
+1. **Sessió 10 (Dilluns, 23 de novembre):**
+   - **Treball conjunt:** Assaig de l'script d'alta ràpida de la Granja 2 (`alta_granja.sh`) per a la prova de variació presencial (validant l'alta atòmica a MariaDB, LDAP i firewall en menys de 10 segons).
+   - **Mariam:** Revisió econòmica final i ajust de fites del document **E3 (Pla d'Intervenció i Pressupostos)** (contrast de costos CapEx/OpEx i actualització de fites).
+   - **Joan:** Verificació de la coherència del maquinari especificat a l'E2 (Dell PowerEdge R450, switches Cisco, SAI APC) amb les taules pressupostàries de l'E3.
 
-2. **Sessió 8 (Dilluns, 9 de novembre):**
-   - **Joan:** Desplegament de l'arbre LDAP a `srv-serveis` i validació d'autenticació per a usuaris de granja i de seu central.
-   - **Mariam:** Proves d'estrès dels triggers MariaDB davant d'incidències tèrmiques amb el simulador IoT.
+2. **Sessió 11 (Dilluns, 30 de novembre):**
+   - **Treball conjunt (Revisió creuada formal):** Revisió creuada d'estil, ortografia i coherència tècnica (en Joan audita les seccions de BD, triggers, IoT i scripts; la Mariam audita xarxa, seguretat OPNsense, LDAP i backups/PRD).
+   - **Treball conjunt:** Maquetació definitiva i generació dels documents oficials en format PDF (**`E2_document_disseny_tecnic.pdf`** i **`E3_pla_intervencio.pdf`**), verificant que taules i diagrames no es tallin.
 
-3. **Sessió 9 (Dilluns, 16 de novembre):**
-   - **Joan:** Proves de còpia i restauració amb `srv-backup` i validació del segon disc simulat (RTO < 30 min).
-   - **Mariam:** Prova de buffer Store-and-Forward a `granja1-srv` davant de desconnexió intencionada del túnel VPN.
-
-4. **Sessió 10 (Dilluns, 23 de novembre):**
-   - **Treball conjunt:** Assaig de l'script d'alta ràpida de la Granja 2 (`alta_granja.sh`) per a la prova de variació presencial.
-   - Revisió econòmica final i ajust de fites del document **E3 (Pla d'Intervenció i Pressupostos)** avançat a la Sessió 6.
-
-5. **Sessió 11 (Dilluns, 30 de novembre):**
-   - **Treball conjunt:** Maquetació, revisió creuada final d'estil i coherència de l'E2 i l'E3, i generació dels PDFs definitius.
-
-6. **Divendres, 4 de desembre de 2026:**
-   - **Lliurament oficial dels documents E2 (Disseny Tècnic) i E3 (Pla d'Intervenció) al campus virtual.**
+3. **Divendres, 4 de desembre de 2026 (Lliurament Oficial):**
+   - **Pujada al Campus Virtual:** Lliurament dels documents en PDF (E2: 20%, E3: 15% i Diari de Treball).
+   - **Control de versions final a GitHub:** `git push` definitiu a la branca principal amb tot el repositori net, etiquetat i llest per a l'avaluació.
 
