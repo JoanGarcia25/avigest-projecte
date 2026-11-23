@@ -13,7 +13,7 @@
 **Tutor del Projecte:** Professorat de l'Institut Mollerussa  
 **Inici del Projecte:** 14 de setembre de 2026  
 **Lliurament Fita E2/E3:** 4 de desembre de 2026  
-**Darrera actualització:** Dilluns, 16 de novembre de 2026  
+**Darrera actualització:** Dilluns, 23 de novembre de 2026  
 
 ---
 
@@ -166,19 +166,27 @@
 
 ---
 
-### Sessió 9: Dilluns, 16 de novembre de 2026 (6 hores — AVUI)
-**Fita:** Incorporació de la Taula de Pagaments al Model ER, Protocol PRD/Backups i Auditoria de Gaps per a l'Entrega E2/E3
+### Sessió 9: Dilluns, 16 de novembre de 2026 (6 hores)
+**Fita:** Modelat de Pagaments al Model ER, Protocol PRD/Backups, Auditoria de Gaps E2/E3, Ajust Pressupostari i Integració del Logotip
 
-- **Objectiu:** Integrar el mòdul de facturació i pagaments al model de dades, verificar la resiliència del protocol de còpies de seguretat i recuperació davant desastres (PRD), i realitzar una auditoria integral del repositori per planificar exactament les 2 sessions restants abans del lliurament del 4 de desembre.
+- **Objectiu:** Integrar el mòdul de facturació i pagaments al model de dades, verificar la resiliència del protocol de còpies de seguretat (PRD), realitzar una auditoria integral del repositori respecte a la Guia de Lliuraments E2-E3, blindar el pressupost d'E3 amb marge de contingència (10%) i comparativa d'alternatives, i incorporar el logotip oficial corporatiu a tota la documentació.
 - **Treball realitzat durant les 6 hores:**
   - **Joan:**
     - Modelat i codificació de la taula `pagaments` (taula 10 de l'esquema relacional) per cobrir la gestió de quotes i facturació dels clients integradors: actualització del DDL ([01_esquema.sql](../../bd/sql/01_esquema.sql)), dades de prova inicials ([03_dades_prova.sql](../../bd/sql/03_dades_prova.sql)), assignació de permisos per rols ([04_usuaris_rols_bd.sql](../../bd/sql/04_usuaris_rols_bd.sql)) i actualització del model ER a Dia.
     - Revisió i validació del protocol de còpies de seguretat a `srv-backup` ([backup_avigest.sh](../../infra/backups-prd/backup_avigest.sh)) i restauració ([restaurar_avigest.sh](../../infra/backups-prd/restaurar_avigest.sh)), assegurant el compliment del RTO (< 30 minuts) i RPO (< 24 hores) amb buidatge transaccional de MariaDB i arbre OpenLDAP amb hash SHA-256 cap al segon disc simulat.
+    - Revisió de la coherència d'infraestructura de xarxa i maquinari de camp i CPD entre el document tècnic E2 (Secció 4) i el pla d'intervenció E3 (Secció 2): contrast de servidors Dell PowerEdge R450, switches Cisco Catalyst, SAIs APC Smart-UPS, gateways industrials Advantech UNO-2271G i routers cel·lulars Teltonika RUT955.
   - **Mariam:**
     - Auditoria completa dels requisits de la guia d'avaluació del professorat, revisant els 17 punts de l'E2, els 6 punts de l'E3 i les 5 fitxes de decisió tècnica.
-    - Incrustació formal de les figures pendents al document [E2_document_disseny_tecnic.md](../E2_disseny_tecnic/E2_document_disseny_tecnic.md): arbre organitzatiu OpenLDAP (Figura 3) i model Entitat-Relació conceptual en notació Chen (Figura 4), a més de la neteja d'encapçalaments residuals abans del Gantt global.
-    - Actualització del Registre de Fites i Dates d'Acompliment Reals a la Secció 3.2 de l'E3 ([E3_pla_intervencio.md](../E3_pla_intervencio/E3_pla_intervencio.md)) i actualització d'aquest diari de treball.
+    - Incrustació formal de les figures pendents al document [E2_document_disseny_tecnic.md](../E2_disseny_tecnic/E2_document_disseny_tecnic.md): arbre organitzatiu OpenLDAP (Figura 3) i model Entitat-Relació conceptual en notació Chen (Figura 4).
+    - Actualització del pressupost consolidat a l'[E3_pla_intervencio.md](../E3_pla_intervencio/E3_pla_intervencio.md) (Secció 2.6): incorporació del fons de contingència del 10% (2.183,60 €) elevant el cost d'implantació a 24.019,60 €, i inclusió de la taula comparativa d'alternatives econòmiques (MariaDB vs SQL Server, OPNsense vs Fortinet, RS485 vs WiFi industrial).
+    - Anàlisi i preparació funcional de l'script [alta_granja.sh](../../scripts/automatitzacio-granges/alta_granja.sh) per a la variació de la Granja 2 (Mollerussa / `10.1.2.0/24`), verificant l'execució en 4 etapes atòmiques (MariaDB, LDAP, OPNsense i config gateway) i actualitzant les metadades a versió 2.0.
+  - **Treball conjunt:**
+    - Integració del logotip oficial d'AviGest S.L. ([logo_avigest.png](../img/logo_avigest.png)) a les capçaleres de tots els documents clau del repositori (`README.md`, `E2_document_disseny_tecnic.md`, `E3_pla_intervencio.md` i `diari_treball.md`).
+    - Actualització i sincronització del diagrama Gantt global Mermaid WBS (cicle complet 2026–2027) a l'E2 i l'E3, reflectint el seguiment paral·lel de tasques entre en Joan i la Mariam.
+    - Actualització del registre de fites a l'E3 (Secció 3.2) i posada al dia de la llista de verificació ([checklist_projecte_avigest.md](checklist_projecte_avigest.md)).
 - **Dedicació:** Joan: 6 h | Mariam: 6 h (Total: 12 h)
+
+
 
 ---
 
@@ -195,8 +203,9 @@
 | **S6** | Dilluns 26/10/2026 | Multi-VM (Ubuntu 24.04 + OPNsense), MariaDB 10.11 LTS i avanç E3 | 6 h | 6 h | **12 h** |
 | **S7** | Dilluns 02/11/2026 | Validació MariaDB 10.11 Docker, triggers i adaptació guia E2-E3 | 6 h | 6 h | **12 h** |
 | **S8** | Dilluns 09/11/2026 | Arbre LDAP DIT, model ER Chen (Dia) i consolidació MariaDB | 6 h | 6 h | **12 h** |
-| **S9** | Dilluns 16/11/2026 | Taula Pagaments, protocols PRD/backups i auditoria recta final E2/E3 | 6 h | 6 h | **12 h** |
-| **TOTAL** | *(Fins al 16/11)* | **9 dilluns lectius x 6 hores** | **54 h** | **54 h** | **108 h** |
+| **S9** | Dilluns 16/11/2026 | Pagaments, backups PRD, gaps E2/E3, ajust E3 i logotip | 6 h | 6 h | **12 h** |
+| **S10** | Dilluns 23/11/2026 | *(Sessió d'avui — En curs)* | *En curs* | *En curs* | *En curs* |
+| **TOTAL** | *(Tancat fins S9)* | **9 dilluns lectius x 6 hores** | **54 h** | **54 h** | **108 h** |
 
 ---
 
@@ -218,23 +227,22 @@ gantt
     S6 Multi-VM i avanç E3    :done, 2026-10-26, 1d
     S7 Validació Docker i DDL :done, 2026-11-02, 1d
     S8 Arbre LDAP i Model ER  :done, 2026-11-09, 1d
-    S9 Pagaments i Backups PRD:done, 2026-11-16, 1d
+    S9 Pagaments, Gaps i Logo :done, 2026-11-16, 1d
     section Sessions Planificades
-    S10 Assaig Variació i Tancament E3  :2026-11-23, 1d
+    S10 Sessió d'avui (en curs)         :active, 2026-11-23, 1d
     S11 Integració final E2/E3          :2026-11-30, 1d
     Lliurament oficial E2 i E3          :milestone, 2026-12-04, 0d
 ```
 
 ### Detall de les properes sessions lectives:
 
-1. **Sessió 10 (Dilluns, 23 de novembre):**
-   - **Treball conjunt:** Assaig de l'script d'alta ràpida de la Granja 2 (`alta_granja.sh`) per a la prova de variació presencial (validant l'alta atòmica a MariaDB, LDAP i firewall en menys de 10 segons).
-   - **Mariam:** Revisió econòmica final i ajust de fites del document **E3 (Pla d'Intervenció i Pressupostos)** (contrast de costos CapEx/OpEx i actualització de fites).
-   - **Joan:** Verificació de la coherència del maquinari especificat a l'E2 (Dell PowerEdge R450, switches Cisco, SAI APC) amb les taules pressupostàries de l'E3.
+1. **Sessió 10 (Dilluns, 23 de novembre — EN CURS / AVUI):**
+   - **Treball conjunt / Objectius d'avui:** Resolució de dubtes estructurals de disseny (model multitenant a la BD vs bases de dades separades), repàs de la variació presencial amb `alta_granja.sh` i avanç cap a la recta final. Al finalitzar la classe presencial es registrarà el desglossament de les 6 hores d'avui al diari.
 
-2. **Sessió 11 (Dilluns, 30 de novembre):**
+2. **Sessió 11 (Dilluns, 30 de novembre — Darrera sessió presencial a l'aula):**
    - **Treball conjunt (Revisió creuada formal):** Revisió creuada d'estil, ortografia i coherència tècnica (en Joan audita les seccions de BD, triggers, IoT i scripts; la Mariam audita xarxa, seguretat OPNsense, LDAP i backups/PRD).
    - **Treball conjunt:** Maquetació definitiva i generació dels documents oficials en format PDF (**`E2_document_disseny_tecnic.pdf`** i **`E3_pla_intervencio.pdf`**), verificant que taules i diagrames no es tallin.
+   - **Preparació de la defensa:** Repàs conjunt de la justificació de disseny i de l'assaig d'`alta_granja.sh` de cara a possibles preguntes del tribunal.
 
 3. **Divendres, 4 de desembre de 2026 (Lliurament Oficial):**
    - **Pujada al Campus Virtual:** Lliurament dels documents en PDF (E2: 20%, E3: 15% i Diari de Treball).
