@@ -2,7 +2,7 @@
 
 **Projecte:** Implantació d'un sistema informàtic de gestió de granges de pollastres  
 **Autors:** Joan (Infraestructura, Xarxa i Seguretat) i Mariam (Base de Dades, IoT i Automatització)  
-**Entorn d'execució:** Hipervisor Oracle VirtualBox (entorn estàndard d'aula) / VMware Workstation  
+**Entorn d'execució:** Hipervisor Oracle VM VirtualBox 7.x (100% de codi obert, gratuït i estàndard oficial del projecte — vegeu [FD06](../fitxes_decisio/FD06_hipervisor.md))  
 **Criteri d'homogeneïtat docent:** Seguint la recomanació del professor de no barrejar distribucions Linux a la capa de serveis, s'adopta **Ubuntu Server 24.04 LTS** per a les 5 màquines de serveis mitjançant una única plantilla màster (`ubuntu-base`), mantenint **OPNsense** exclusivament com a appliance de seguretat perimetral dedicat.  
 **Guies complementàries:**
 - [docs/Guies_MV/Guia del laboratori virtual d'AviGest.pdf](Guies_MV/Guia%20del%20laboratori%20virtual%20d’AviGest.pdf)

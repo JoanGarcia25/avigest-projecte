@@ -11,7 +11,7 @@
 | **E2 — Disseny Tècnic** | 20% | 🟢 Redacció, esquemes i logo complets | ~98% |
 | **E3 — Pla d'Intervenció** | 15% | 🟢 Pressupostos (amb contingència) i WBS al dia | ~98% |
 | **Diari de Treball** | Obligatori | 🟢 Al dia (9 tancades + S10 en curs) | 9/11 sessions |
-| **Fitxes de Decisió** | Part de l'E2 | ✅ Completat | 5/5 |
+| **Fitxes de Decisió** | Part de l'E2 | ✅ Completat | 6/6 |
 
 ---
 
@@ -52,22 +52,29 @@
 > [!IMPORTANT]
 > Fitxer principal: [E3_pla_intervencio.md](file:///c:/avigest-projecte-git/docs/E3_pla_intervencio/E3_pla_intervencio.md)
 
-**Contingut del document E3:**
+**Contingut del document E3 (Homologat amb els apartats 6.1 a 6.6 de la Guia oficial):**
 - [x] Introducció i objectius del Pla d'Intervenció (Secció 1)
-- [x] Pressupost Maquinari Seu Central — CapEx CPD (Secció 2.1)
-- [x] Pressupost Maquinari Granja Pilot — CapEx Camp (Secció 2.2)
-- [x] Pressupost Sensòrica i Cablejat IoT (Secció 2.3)
-- [x] Despeses Operatives Recurrents — OpEx Anual (Secció 2.4)
-- [x] Recursos Humans i Mà d'Obra: 396h a 30 €/h (Secció 2.5)
-- [x] Balanç Econòmic Consolidat i Cost Marginal per Nova Granja (Secció 2.6)
-- [x] Matriu de responsabilitats Joan / Mariam (Secció 3.1)
-- [x] Registre de Fites amb dates d'acompliment reals (Secció 3.2)
-- [x] Cronograma Global del Projecte amb diagrama Gantt Mermaid WBS (Secció 3.3)
-- [x] Cronograma d'Intervenció a Camp amb diagrama Gantt Mermaid (Secció 4.1)
-- [x] Protocol de Proves i Acceptació en Camp (Secció 4.2)
-- [x] Pla de Contingència i Gestió de Riscos (Secció 5)
-- [x] Annex d'Ús d'Intel·ligència Artificial (Secció 6 — Norma 4)
-- [ ] **Revisar i actualitzar les dates reals d'acompliment a la taula 3.2 a mesura que s'avanci** *(Sessions 7-11)*
+- [x] Recursos del Projecte: Humans (198h M12 Joan/Mariam), Materials (maquinari/software FOSS) i Eines (Git, VirtualBox, Docker) (Secció 2 — Guia 6.1)
+- [x] Pressupost Maquinari Seu Central — CapEx CPD: 7.800,00 € (Secció 3.1 — Guia 6.2)
+- [x] Pressupost Maquinari Granja Tipus — CapEx Camp: 1.476,00 € (Secció 3.2 — Guia 6.2)
+- [x] Pressupost Sensòrica i Cablejat IoT: 1.460,00 € (Secció 3.3 — Guia 6.2)
+- [x] Mà d'Obra d'Instal·lació in-situ i Temps d'Intervenció per Granja: 2 dies / 32h a 35 €/h = 1.200,00 € (Secció 3.4 — Guia 6.2)
+- [x] Posada en Marxa de la Seu Central — CPD AviGest: 40h = 1.400,00 € (Secció 3.5 — Guia 6.2)
+- [x] Despeses Operatives Recurrents — OpEx Anual: CPD 1.085 €/any; Granja 50 €/mes (Secció 3.6 — Guia 6.2)
+- [x] Balanç Econòmic Consolidat, CapEx Granja (4.136 €), Contingència 10% i Retorn d'Inversió ROI (<9 mesos) (Secció 3.7 — Guia 6.2)
+- [x] Comparativa Econòmica d'Alternatives Tecnològiques (FD01 a FD06 amb 9.940 € d'estalvi llicències) (Secció 3.8 — Guia 6.2)
+- [x] Matriu de responsabilitats RACI Joan / Mariam (Secció 4.1 — Guia 6.3)
+- [x] Registre de Fites amb dates d'acompliment reals i qui ho ha fet (Secció 4.2 — Guia 6.3)
+- [x] Càrrega de treball equilibrada 50% Joan · 50% Mariam (108h tancades / 120h avui) (Secció 4.3 — Guia 6.3)
+- [x] Cronograma Global del Projecte amb diagrama Gantt Mermaid fins al 30 d'abril (Secció 5.1 — Guia 6.4)
+- [x] Anàlisi de Compliment i Desviacions respecte a l'E0/E1 (Secció 5.2 — Guia 6.4)
+- [x] Fites properes d'execució: E4a/E5 (1 de març) i lliurament final (30 d'abril) (Secció 5.3 — Guia 6.4)
+- [x] Cronograma d'Intervenció a Camp amb diagrama Gantt Mermaid (Secció 6.1)
+- [x] Protocol de Proves i Acceptació en Camp (Secció 6.2)
+- [x] Pla de Contingència i Gestió de Riscos (Secció 7)
+- [x] Documentació Associada i Repositori Git: plantilles, actes, diari, manuals (Secció 8 — Guia 6.5)
+- [x] Annex d'Ús d'Intel·ligència Artificial (Secció 9 — Norma 4 / Guia 6.6)
+- [x] Bibliografia i Fonts de Preus Consultades (Secció 10 — Guia 6.6)
 - [ ] **Revisió creuada final i correcció d'estil (Joan + Mariam)** *(Sessió 11 — 30 de novembre)*
 - [ ] **Exportar E3 a PDF per al lliurament oficial al campus virtual**
 
@@ -95,6 +102,7 @@
 - [x] [FD03 — Tallafocs: OPNsense amb DMZ i Llista Blanca](file:///c:/avigest-projecte-git/docs/fitxes_decisio/FD03_tallafocs_dmz.md) *(Joan)*
 - [x] [FD04 — Còpies: srv-backup dedicat + 2n disc](file:///c:/avigest-projecte-git/docs/fitxes_decisio/FD04_backups_prd.md) *(Joan)*
 - [x] [FD05 — IoT: Híbrid RS485 + LoRaWAN + MQTT](file:///c:/avigest-projecte-git/docs/fitxes_decisio/FD05_iot_comunicacions.md) *(Mariam)*
+- [x] [FD06 — Hipervisor: Oracle VM VirtualBox 7.x](file:///c:/avigest-projecte-git/docs/fitxes_decisio/FD06_hipervisor.md) *(Joan + Mariam)*
 
 ---
 

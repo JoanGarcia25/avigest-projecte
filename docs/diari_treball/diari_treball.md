@@ -237,7 +237,10 @@ gantt
 ### Detall de les properes sessions lectives:
 
 1. **Sessió 10 (Dilluns, 23 de novembre — EN CURS / AVUI):**
-   - **Treball conjunt / Objectius d'avui:** Resolució de dubtes estructurals de disseny (model multitenant a la BD vs bases de dades separades), repàs de la variació presencial amb `alta_granja.sh` i avanç cap a la recta final. Al finalitzar la classe presencial es registrarà el desglossament de les 6 hores d'avui al diari.
+   - **Treball conjunt / Activitats d'avui:**
+     - Conversa amb el professor sobre el dimensionament econòmic: reestructuració integral de l'E3 per establir el pressupost per granja (4.136 €), el temps real d'instal·lació in-situ (2 dies laborables de 2 tècnics a 8h/dia ordinàries) i la quota de manteniment/SaaS (50 €/mes).
+     - Acord i adopció oficial d'**Oracle VM VirtualBox 100%** com a hipervisor del laboratori: redacció de la fitxa de decisió tècnica [FD06_hipervisor.md](../fitxes_decisio/FD06_hipervisor.md) i incorporació a l'E2 i al checklist.
+     - Repàs de la variació presencial amb `alta_granja.sh` i resolució de dubtes estructurals de la base de dades. Al finalitzar la jornada es tancarà el registre complet d'hores al diari.
 
 2. **Sessió 11 (Dilluns, 30 de novembre — Darrera sessió presencial a l'aula):**
    - **Treball conjunt (Revisió creuada formal):** Revisió creuada d'estil, ortografia i coherència tècnica (en Joan audita les seccions de BD, triggers, IoT i scripts; la Mariam audita xarxa, seguretat OPNsense, LDAP i backups/PRD).
