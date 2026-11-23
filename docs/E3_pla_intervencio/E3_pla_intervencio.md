@@ -171,7 +171,7 @@ En compliment del requisit de la guia d'avaluació, es justifica l'estalvi econ�
 
 ## 3. Actualització de Tasques i Rols (Acompliment i Seguiment)
 
-En compliment directe de la instrucció de l'enunciat (*"marcar dates d'acompliment i qui ho ha fet"*), es detalla el registre oficial d'execució de tasques des de l'inici del projecte fins a la data actual (26 d'octubre) i la planificació d'acompliment fins al 4 de desembre:
+En compliment directe de la instrucció de l'enunciat (*"marcar dates d'acompliment i qui ho ha fet"*), es detalla el registre oficial d'execució de tasques des de l'inici del projecte fins a la data actual (23 de novembre) i la planificació d'acompliment fins al 4 de desembre:
 
 ### 3.1. Matriu de Responsabilitats i Rols (Model RACI)
 En compliment dels requisits d'organització (RA3), s'estableix la matriu de rols definint qui és el **Responsable directe d'execució (R)**, qui fa la **Revisió creuada de qualitat (A/C)** i qui n'és l'**Informat (I)**:
@@ -212,7 +212,7 @@ En compliment dels requisits d'organització (RA3), s'estableix la matriu de rol
 | **Validació RTO/RPO a `srv-backup`** | 4.5 | Joan | 16/11/2026 | **16/11/2026** | **Completat** | Taula RTO/RPO per servei, scripts de backup i protocol PRD (< 30 min). |
 | **Proves de buffer Store-and-Forward** | 4.8 | Mariam | 16/11/2026 | **16/11/2026** | **Completat** | Disseny de cua local de 72h a `granja1-srv` i recuperació de telemetria. |
 | **Redacció inicial Pla Intervenció E3** | E3 | Joan / Mariam | 23/11/2026 | **26/10/2026** | **Completat** | Avançat per anticipar la fita del 4 de desembre. |
-| **Proves de variació (Granja 2)** | 4.7 | Joan / Mariam | 23/11/2026 | *Planificat (S10)* | Pendent | Execució i validació de l'script `alta_granja.sh` per a la Granja 2. |
+| **Proves de variació (Granja 2)** | 4.7 | Joan / Mariam | 23/11/2026 | *Planificat (S10)* | En curs | Execució i validació de l'script `alta_granja.sh` per a la Granja 2. |
 | **Integració i revisió creuada E2/E3** | E2, E3 | Joan / Mariam | 30/11/2026 | *Planificat (S11)* | Pendent | Revisió estil, coherència tècnica i exportació a PDF. |
 | **LLIURAMENT OFICIAL E2 i E3** | Fita 2/3 | Joan / Mariam | **04/12/2026** | *Data Límit* | Pendent | **Lliurament al campus virtual i defensa davant tribunal.** |
 

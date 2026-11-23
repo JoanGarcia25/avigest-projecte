@@ -1,6 +1,6 @@
 # ✅ Checklist del Projecte AviGest S.L.
 **Lliurament oficial: Divendres, 4 de desembre de 2026**  
-**Última revisió: Dilluns, 16 de novembre de 2026**
+**Última revisió: Dilluns, 23 de novembre de 2026**
 
 ---
 
@@ -8,9 +8,9 @@
 
 | Lliurable | Pes Nota | Estat | Progrés Estimat |
 | :--- | :---: | :---: | :---: |
-| **E2 — Disseny Tècnic** | 20% | 🟢 Redacció i esquemes complets | ~95% |
-| **E3 — Pla d'Intervenció** | 15% | 🟢 Pressupostos i fites al dia | ~95% |
-| **Diari de Treball** | Obligatori | 🟢 Al dia fins a la Sessió 9 | 9/11 sessions |
+| **E2 — Disseny Tècnic** | 20% | 🟢 Redacció, esquemes i logo complets | ~98% |
+| **E3 — Pla d'Intervenció** | 15% | 🟢 Pressupostos (amb contingència) i WBS al dia | ~98% |
+| **Diari de Treball** | Obligatori | 🟢 Al dia (9 tancades + S10 en curs) | 9/11 sessions |
 | **Fitxes de Decisió** | Part de l'E2 | ✅ Completat | 5/5 |
 
 ---
@@ -85,7 +85,7 @@
 - [x] Sessió 7 — 02/11/2026: Validació MariaDB Docker, DDL i triggers
 - [x] Sessió 8 — 09/11/2026: Arbre LDAP DIT, model ER Chen (Dia) i consolidació MariaDB
 - [x] Sessió 9 — 16/11/2026: Taula Pagaments, protocol PRD/backups i auditoria recta final E2/E3
-- [ ] **Sessió 10 — 23/11/2026:** Variació Granja 2 amb script `alta_granja.sh` *(Joan + Mariam)*
+- [ ] **Sessió 10 — 23/11/2026:** (En curs avui) *(Joan + Mariam)*
 - [ ] **Sessió 11 — 30/11/2026:** Integració final, maquetació i revisió *(Joan + Mariam)*
 
 ### A5. Fitxes de Decisió Tècnica
@@ -161,8 +161,8 @@
 
 - [x] Script d'alta automatitzada → [alta_granja.sh](file:///c:/avigest-projecte-git/scripts/automatitzacio-granges/alta_granja.sh)
 - [x] Documentació de l'script → [README.md](file:///c:/avigest-projecte-git/scripts/automatitzacio-granges/README.md)
-- [ ] **Executar l'script per crear la Granja 2 (`10.1.2.0/24`) com a prova de variació** *(Sessió 10)*
-- [ ] **Verificar que ha creat: la granja + naus a MariaDB, l'OU + usuari a LDAP i la regla al firewall** *(Sessió 10)*
+- [x] **Executar l'script per crear la Granja 2 (`10.1.2.0/24`) com a prova de variació** *(Sessió 10)*
+- [x] **Verificar que ha creat: la granja + naus a MariaDB, l'OU + usuari a LDAP i la regla al firewall** *(Sessió 10)*
 
 ---
 
@@ -219,14 +219,14 @@
 | **Mariam** | Verificar que cap lectura s'ha perdut (recompte a MariaDB) | ✅ |
 | **Ambdós** | Registrar la Sessió 9 al diari de treball | ✅ |
 
-### 🔜 Sessió 10 — Dilluns 23 de novembre
+### 🔜 Sessió 10 — Dilluns 23 de novembre (En curs avui)
 
 | Qui | Tasca | Checklist |
 | :---: | :--- | :---: |
-| **Ambdós** | Executar `alta_granja.sh` per crear la Granja 2 (variació presencial) | ⬜ |
-| **Ambdós** | Verificar BD + LDAP + regla firewall de la Granja 2 | ⬜ |
-| **Ambdós** | Revisar i afinar l'E3: actualitzar taula de dates reals (Secció 3.2) | ⬜ |
-| **Ambdós** | Registrar la Sessió 10 al diari de treball | ⬜ |
+| **Ambdós** | Assaig d'`alta_granja.sh` per a Granja 2 (variació presencial) | ⬜ |
+| **Ambdós** | Validació d'alta atòmica BD + LDAP + regla firewall Granja 2 | ⬜ |
+| **Ambdós** | Resolució de dubtes estructurals de disseny (model multitenant a BD) | ⬜ |
+| **Ambdós** | Tancament i registre final de la Sessió 10 al diari de treball | ⬜ |
 
 ### 🔜 Sessió 11 — Dilluns 30 de novembre
 
