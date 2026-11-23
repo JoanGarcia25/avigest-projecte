@@ -23,6 +23,7 @@ La infraestructura d'AviGest es desplega mitjançant un conjunt coordinat de 6 m
 
 > [!TIP]
 > **Consulteu les guies de desplegament de laboratori:**
+> - [Distribució de serveis i justificació de màquines virtuals](docs/Guies_MV/distribucio_serveis_per_vm.md)
 > - [Guia de desplegament de la topologia de VMs (amb plantilles Netplan)](docs/guia_desplegament_maquines_virtuals.md)
 > - [Guia del laboratori virtual d'AviGest (PDF)](docs/Guies_MV/Guia%20del%20laboratori%20virtual%20d’AviGest.pdf)
 > - [Guia pas a pas de plantilles i xarxes virtuals (Word)](docs/Guies_MV/Pas%20a%20pas%20plantilla%20debian-base%20i%20xarxes%20virtuals.docx)

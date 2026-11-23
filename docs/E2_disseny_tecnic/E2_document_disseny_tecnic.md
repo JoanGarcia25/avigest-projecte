@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 <p align="center">
   <img src="../img/logo_avigest.png" alt="AviGest S.L. Logo" width="180">
 </p>
@@ -10,6 +11,15 @@
 **Equip de treball:** Joan (Infraestructura, Xarxa i Seguretat) i Mariam (Base de Dades, IoT i Automatització)  
 **Data:** Actualitzat a 16 de novembre de 2026 (Lliurament oficial: 4 de desembre de 2026)  
 **Versió del document:** 2.0 (Memòria Tècnica de Disseny)  
+=======
+# E2 â€” Document de Disseny TÃ¨cnic del Projecte
+**Projecte:** ImplantaciÃ³ d'un sistema informÃ tic de gestiÃ³ de granges de pollastres  
+**Empresa:** AviGest S.L.  
+**Cicle:** CFGS AdministraciÃ³ de Sistemes InformÃ tics en Xarxa (ASIX) â€” 2n Curs  
+**MÃ²dul:** M12 - Projecte (Pes: 20%)  
+**Equip de treball:** Joan (Infraestructura, Xarxa i Seguretat) i Mariam (Base de Dades, IoT i AutomatitzaciÃ³)  
+**Data:** Actualitzat a 23 de novembre de 2026 (Lliurament oficial: 4 de desembre de 2026)  
+>>>>>>> Stashed changes
 
 ---
 
@@ -100,6 +110,7 @@ L'entorn es desplega mitjanÃ§ant un conjunt coordinat de mÃ quines virtuals 
 
 > [!TIP]
 > Teniu disponible el diagrama font vectorial editable a [`docs/diagrames/esquema_xarxa_vms.drawio`](../diagrames/esquema_xarxa_vms.drawio) (llest per obrir amb Draw.io / diagrams.net).
+> Consulteu la fitxa detallada de serveis i justificació de cada màquina a [`docs/Guies_MV/distribucio_serveis_per_vm.md`](../Guies_MV/distribucio_serveis_per_vm.md).
 
 ```mermaid
 flowchart TD
@@ -322,9 +333,9 @@ L'esquema relacional d'AviGest ha estat dissenyat estrictament en **3FN** per ga
 
 #### TraÃ§abilitat de Codi i Dades de Prova
 El disseny estÃ  directament implementat i versionat al repositori per a la seva execuciÃ³ a Docker:
-- **DDL d'Esquema i Ãndexs:** [`bd/sql/01_esquema.sql`](file:///c:/avigest-projecte-git/bd/sql/01_esquema.sql) (amb rÃ¨plica a [`docker/initdb/01_esquema.sql`](file:///c:/avigest-projecte-git/docker/initdb/01_esquema.sql)).
-- **LÃ²gica procedural (Triggers i Funcions MariaDB Procedural):** [`bd/procediments-triggers/02_triggers_procedures.sql`](file:///c:/avigest-projecte-git/bd/procediments-triggers/02_triggers_procedures.sql).
-- **Dades de prova inicials:** [`bd/sql/03_dades_prova.sql`](file:///c:/avigest-projecte-git/bd/sql/03_dades_prova.sql) (precarrega clients com *AgroPonent S.L.* i *AvÃ­cola del SegriÃ  S.A.*, granges a Bellpuig i AlcarrÃ s, sensors amb llindars reals i un histÃ²ric de lectures per comprovar vistes).
+- **DDL d'Esquema i Ãndexs:** [`bd/sql/01_esquema.sql`](file:///c:/avigest-projecte/bd/sql/01_esquema.sql) (amb rÃ¨plica a [`docker/initdb/01_esquema.sql`](file:///c:/avigest-projecte/docker/initdb/01_esquema.sql)).
+- **LÃ²gica procedural (Triggers i Funcions MariaDB Procedural):** [`bd/procediments-triggers/02_triggers_procedures.sql`](file:///c:/avigest-projecte/bd/procediments-triggers/02_triggers_procedures.sql).
+- **Dades de prova inicials:** [`bd/sql/03_dades_prova.sql`](file:///c:/avigest-projecte/bd/sql/03_dades_prova.sql) (precarrega clients com *AgroPonent S.L.* i *AvÃ­cola del SegriÃ  S.A.*, granges a Bellpuig i AlcarrÃ s, sensors amb llindars reals i un histÃ²ric de lectures per comprovar vistes).
 
 > [!TIP]
 > Teniu disponible el diagrama Entitat-Relació conceptual oficial dibuixat a [bd/model-er/diagrama_avigest.dia](../../bd/model-er/diagrama_avigest.dia), la imatge exportada a [bd/model-er/diagrama_avigest.png](../../bd/model-er/diagrama_avigest.png) i el gràfic vectorial SVG a [bd/model-er/diagrama_er_chen.svg](../../bd/model-er/diagrama_er_chen.svg).
@@ -359,7 +370,6 @@ erDiagram
         DECIMAL import
         DATETIME data
         VARCHAR estat
-    }
     }
     GRANGES {
         INT id_granja PK
@@ -509,21 +519,21 @@ Per a la seu central d'AviGest s'ha avaluat la tipologia de cÃ²pies:
 ### 9.3. AutomatitzaciÃ³ del Buidatge (Crontab i Scripts)
 El procÃ©s estÃ  completament desatÃ¨s a la mÃ quina `srv-backup` mitjanÃ§ant crontab:
 ```cron
-# ExecuciÃ³ cada nit a les 02:00 AM (baixa cÃ rrega)
-- `avigest_backup`: Drets de lectura transaccional (`SELECT, LOCK TABLES, SHOW VIEW, TRIGGER, EVENT`) per a buidatge complet amb `mariadb-dump` des de `srv-backup`.
+# Execució cada nit a les 02:00 AM (baixa càrrega)
+0 2 * * * /opt/avigest/scripts/backup_avigest.sh >> /var/log/avigest/backup.log 2>&1
 ```
 
-L'script [`infra/backups-prd/backup_avigest.sh`](file:///c:/avigest-projecte-git/infra/backups-prd/backup_avigest.sh) executa:
-1. ComprovaciÃ³ de connectivitat cap a `srv-serveis:3306` i `srv-serveis:389`.
-- `avigest_backup`: Drets de lectura transaccional (`SELECT, LOCK TABLES, SHOW VIEW, TRIGGER, EVENT`) per a buidatge complet amb `mariadb-dump` des de `srv-backup`.
-3. ExtracciÃ³ en calent de la base LDAP amb `slapcat`.
-- `avigest_backup`: Drets de lectura transaccional (`SELECT, LOCK TABLES, SHOW VIEW, TRIGGER, EVENT`) per a buidatge complet amb `mariadb-dump` des de `srv-backup`.
-5. GeneraciÃ³ del fitxer de comprovaciÃ³ `.sha256`.
-6. CÃ²pia al segon disc dur muntat a `/mnt/disc-extern-backup/` (simulant suport extern) i purga de fitxers de mÃ©s de 30 dies.
+L'script [`infra/backups-prd/backup_avigest.sh`](file:///c:/avigest-projecte/infra/backups-prd/backup_avigest.sh) executa:
+1. Comprovació de connectivitat cap a `srv-serveis:3306` i `srv-serveis:389`.
+2. Buidatge consistent de la base de dades MariaDB amb `mariadb-dump --single-transaction --quick --routines --triggers --events`.
+3. Extracció en calent del directori LDAP mitjançant comanda `ldapsearch` / `slapcat`.
+4. Empaquetament i compressió de les còpies en arxiu datat `.tar.gz`.
+5. Generació del fitxer de comprovació criptogràfica `.sha256`.
+6. Còpia al segon disc dur muntat a `/mnt/disc-extern-backup/` (simulant suport extern) i purga de fitxers de més de 30 dies.
 
 ### 9.4. Protocol de Prova de RestauraciÃ³ davant Desastre (SimulaciÃ³ PRD)
 Per validar el compliment del **RTO â‰¤ 30 minuts**, s'ha establert el segÃ¼ent protocol de prova:
-1. **InvocaciÃ³:** ExecuciÃ³ de l'script [`infra/backups-prd/restaurar_avigest.sh`](file:///c:/avigest-projecte-git/infra/backups-prd/restaurar_avigest.sh) indicant el paquet de cÃ²pia.
+1. **InvocaciÃ³:** ExecuciÃ³ de l'script [`infra/backups-prd/restaurar_avigest.sh`](file:///c:/avigest-projecte/infra/backups-prd/restaurar_avigest.sh) indicant el paquet de cÃ²pia.
 2. **ValidaciÃ³ del Hash:** L'script verifica `sha256sum -c` per comprovar que el paquet no s'ha corromput al disc.
 3. **Parada i neteja controlada:** Aturada temporal d'`avigest_mariadb` o recreaciÃ³ del volum de base de dades.
 4. **RestauraciÃ³:** InjecciÃ³ del bolcat amb `mariadb -u avigest_app -pavigest_secret_2026 avigest_db`.
@@ -537,7 +547,7 @@ L'script d'automatitzaciÃ³ estÃ  preparat per donar resposta a la **prova pr
 
 > *"Per afegir la Granja 2 (la variaciÃ³ que us demanaran), es clonen `granja1-srv` i `granja1-sim` en una xarxa nova (`10.1.2.0/24`). L'script del 4.7 crea l'usuari a LDAP, l'esquema a la BD i la regla al firewall."*
 
-L'eina desenvolupada Ã©s [`scripts/automatitzacio-granges/alta_granja.sh`](file:///c:/avigest-projecte-git/scripts/automatitzacio-granges/alta_granja.sh). Per complir amb el grau de detall de disseny requerit per la guia oficial d'avaluaciÃ³, s'especifiquen els parÃ metres, comprovacions i arquitectura del procÃ©s.
+L'eina desenvolupada Ã©s [`scripts/automatitzacio-granges/alta_granja.sh`](file:///c:/avigest-projecte/scripts/automatitzacio-granges/alta_granja.sh). Per complir amb el grau de detall de disseny requerit per la guia oficial d'avaluaciÃ³, s'especifiquen els parÃ metres, comprovacions i arquitectura del procÃ©s.
 
 ### 10.1. ParÃ metres d'Entrada de l'Script
 L'script accepta arguments mitjanÃ§ant flags estÃ ndard POSIX (`getopts`):
@@ -594,8 +604,12 @@ L'execuciÃ³ del projecte es divideix en fases seqÃ¼encials amb fites i crite
 
 ### 11.2. Diagrama de Gantt Global del Projecte (Curs 2026-2027)
 
+<<<<<<< Updated upstream
 #### Evolució i Maduració des del Pla Inicial (Lliurable E0)
 A l'inici del projecte (Lliurable E0, setembre de 2026), es va establir un primer cronograma temptatiu i provisional sense disposar encara de la definició d'arquitectura ni de l'anàlisi detallada de requeriments. Un cop desenvolupat el present document de **Disseny Tècnic (E2)** i el **Pla d'Intervenció (E3)**, la planificació temporal s'ha reestructurat completament en una estructura de desglossament del treball (**WBS - Work Breakdown Structure**) exhaustiva, dividida per fases oficials d'avaluació i amb assignació de responsabilitats individuals directes:
+=======
+El següent diagrama temporal reflecteix les fites principals del projecte AviGest, la dedicació continuada i el lliurament dels diferents requeriments:
+>>>>>>> Stashed changes
 
 ```mermaid
 gantt
