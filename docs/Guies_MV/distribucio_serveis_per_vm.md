@@ -1,4 +1,4 @@
-# 🖥️ Arquitectura, Justificació i Distribució de Màquines Virtuals — AviGest S.L.
+﻿# 🖥️ Arquitectura, Justificació i Distribució de Màquines Virtuals — AviGest S.L.
 
 **Document:** `docs/Guies_MV/distribucio_serveis_per_vm.md`  
 **Cicle Formatiu:** CFGS Administració de Sistemes Informàtics en Xarxa (ASIX) — Mòdul M12 (Projecte)  
@@ -95,7 +95,7 @@ graph TD
   - Regla DMZ $\rightarrow$ LAN: només autoritza trànsit cap a `10.0.20.10:3306` (MariaDB) i `10.0.20.10:389/636` (LDAP). Tota la resta es descarta.
   - Servidor WireGuard VPN (`10.0.100.1/24`, port UDP 51820): autenticació de claus asimètriques amb les granges rurals.
   - Regla VPN $\rightarrow$ LAN: només autoritza trànsit cap a `10.0.20.10:1883` (Broker MQTT central). La granja té vetat l'accés a la BD o a LDAP.
-* **Fitxers del repositori associats:** [`infra/dmz-tallafocs/firewall_regles.sh`](file:///c:/avigest-projecte/infra/dmz-tallafocs/firewall_regles.sh) i [`infra/dmz-tallafocs/disseny_dmz_seguretat.md`](file:///c:/avigest-projecte/infra/dmz-tallafocs/disseny_dmz_seguretat.md).
+* **Fitxers del repositori associats:** [`infra/dmz-tallafocs/firewall_regles.sh`](../../infra/dmz-tallafocs/firewall_regles.sh) i [`infra/dmz-tallafocs/disseny_dmz_seguretat.md`](../../infra/dmz-tallafocs/disseny_dmz_seguretat.md).
 
 ---
 
@@ -137,7 +137,7 @@ graph TD
      - 4 rols de seguretat `posixGroup` i branques multitenant per client.
   6. **`avigest_phpldapadmin` (phpLDAPadmin - Port 8081 en local):**
      - Administració web del directori accessible únicament a través del proxy invers de la DMZ.
-* **Fitxers del repositori associats:** [`docker/docker-compose.yml`](file:///c:/avigest-projecte/docker/docker-compose.yml), [`bd/sql/`](file:///c:/avigest-projecte/bd/sql/), [`docker/initdb/`](file:///c:/avigest-projecte/docker/initdb/), [`iot/ingestio/`](file:///c:/avigest-projecte/iot/ingestio/) i [`infra/ldap/ldif/`](file:///c:/avigest-projecte/infra/ldap/ldif/).
+* **Fitxers del repositori associats:** [`docker/docker-compose.yml`](../../docker/docker-compose.yml), [`bd/sql/`](../../bd/sql/), [`docker/initdb/`](../../docker/initdb/), [`iot/ingestio/`](../../iot/ingestio/) i [`infra/ldap/ldif/`](../../infra/ldap/ldif/).
 
 ---
 
@@ -149,16 +149,16 @@ graph TD
   1. Adaptador 1: Xarxa Interna (`lan-seu`) $\rightarrow$ IP estàtica `10.0.20.20/24` (GW: `10.0.20.1`).
 * **Quins serveis i configuracions hi van:**
   - **Dimoni `cron`:** programat cada nit a les 02:00 AM (`crontab.txt`).
-  - **Script de còpies [`backup_avigest.sh`](file:///c:/avigest-projecte/infra/backups-prd/backup_avigest.sh):**
+  - **Script de còpies [`backup_avigest.sh`](../../infra/backups-prd/backup_avigest.sh):**
     1. Executa un buidatge transaccional complet de MariaDB (`mariadb-dump` amb `--single-transaction --routines --triggers`) connectant-se remotament a `srv-serveis:3306`.
     2. Extreu l'arbre LDAP complet amb `slapcat` / `ldapsearch`.
     3. Empaqueta i comprimeix en arxiu `.tar.gz`.
     4. Genera la suma de verificació criptogràfica SHA-256 per garantir que la còpia no ha estat manipulada ni corrompuda.
     5. Emmagatzema el paquet al segon disc virtual separat muntat a `/mnt/disc-extern-backup/` (simulant la còpia externa fora de la màquina principal).
     6. Aplica una política de rotació de retenció automàtica de 30 dies.
-  - **Script de recuperació [`restaurar_avigest.sh`](file:///c:/avigest-projecte/infra/backups-prd/restaurar_avigest.sh):**
+  - **Script de recuperació [`restaurar_avigest.sh`](../../infra/backups-prd/restaurar_avigest.sh):**
     - Permet restaurar íntegrament la base de dades i els usuaris en menys de 30 minuts davant d'un desastre total (compliment de RTO < 30 min i RPO < 24 h).
-* **Fitxers del repositori associats:** [`infra/backups-prd/`](file:///c:/avigest-projecte/infra/backups-prd/).
+* **Fitxers del repositori associats:** [`infra/backups-prd/`](../../infra/backups-prd/).
 
 ---
 
@@ -189,7 +189,7 @@ graph TD
 * **Adaptadors de xarxa:**
   1. Adaptador 1: Xarxa Interna (`lan-granja1`) $\rightarrow$ IP estàtica `10.1.1.20/24` (GW: `10.1.1.10`).
 * **Quins serveis i processos hi van:**
-  - **Simulador IoT en Python:** [`iot/sensors/simulador_iot.py`](file:///c:/avigest-projecte/iot/sensors/simulador_iot.py).
+  - **Simulador IoT en Python:** [`iot/sensors/simulador_iot.py`](../../iot/sensors/simulador_iot.py).
   - **Simulació del bus industrial RS485 Modbus RTU:**
     - Generació de dades de temperatura i humitat (sondes SHT30) cada 30 segons.
     - Generació de concentració de CO2 (sensor Senseair S8) cada 60 segons.
@@ -198,7 +198,7 @@ graph TD
   - **Modes de prova:**
     - Mode normal (valors regulars de funcionament).
     - Mode alarma / estrès tèrmic (genera 34 ºC per comprovar com reacciona el tallafocs, el gateway i els triggers de MariaDB).
-* **Fitxers del repositori associats:** [`iot/sensors/simulador_iot.py`](file:///c:/avigest-projecte/iot/sensors/simulador_iot.py) i [`iot/sensors/codi_esp32_referencia.ino`](file:///c:/avigest-projecte/iot/sensors/codi_esp32_referencia.ino).
+* **Fitxers del repositori associats:** [`iot/sensors/simulador_iot.py`](../../iot/sensors/simulador_iot.py) i [`iot/sensors/codi_esp32_referencia.ino`](../../iot/sensors/codi_esp32_referencia.ino).
 
 ---
 

@@ -8,9 +8,9 @@
 
 | Lliurable | Pes Nota | Estat | Progrés Estimat |
 | :--- | :---: | :---: | :---: |
-| **E2 — Disseny Tècnic** | 20% | 🟢 Redacció, esquemes i logo complets | ~98% |
-| **E3 — Pla d'Intervenció** | 15% | 🟢 Pressupostos (amb contingència) i WBS al dia | ~98% |
-| **Diari de Treball** | Obligatori | 🟢 Al dia (9 tancades + S10 en curs) | 9/11 sessions |
+| **E2 — Disseny Tècnic** | 20% | 🟢 Redacció, esquemes, logo i rutes relatives completes | ~100% |
+| **E3 — Pla d'Intervenció** | 15% | 🟢 Pressupostos, WBS i dates reals d'acompliment | ~100% |
+| **Diari de Treball** | Obligatori | 🟢 Al dia (10 sessions tancades · 120 h lectives) | 10/11 sessions |
 | **Fitxes de Decisió** | Part de l'E2 | ✅ Completat | 6/6 |
 
 ---
@@ -19,14 +19,14 @@
 
 ### A1. Fites ja Tancades (Anteriors al 4 de desembre)
 
-- [x] **E0 — Constitució d'Equip i Rols** → [E0_divisio_tasques_rols.md](file:///c:/avigest-projecte-git/docs/E0_divisio_tasques_rols.md)
-- [x] **E1 — Estudi de Necessitats** → [PDF lliurat](file:///c:/avigest-projecte-git/docs/E1_estudi_necessitats_joangarcia_mariamsolano%20(2).pdf)
+- [x] **E0 — Constitució d'Equip i Rols** → [E0_divisio_tasques_rols.md](../E0_divisio_tasques_rols.md)
+- [x] **E1 — Estudi de Necessitats** → [PDF lliurat](../E1_estudi_necessitats_joangarcia_mariamsolano%2520(2).pdf)
 - [x] **Defensa oral E1** (5 d'octubre de 2026)
 
 ### A2. E2 — Document de Disseny Tècnic (20% nota)
 
 > [!IMPORTANT]
-> Fitxer principal: [E2_document_disseny_tecnic.md](file:///c:/avigest-projecte-git/docs/E2_disseny_tecnic/E2_document_disseny_tecnic.md)
+> Fitxer principal: [E2_document_disseny_tecnic.md](../E2_disseny_tecnic/E2_document_disseny_tecnic.md)
 
 **Contingut del document E2:**
 - [x] Introducció i Visió Global del Sistema (Secció 1)
@@ -50,7 +50,7 @@
 ### A3. E3 — Pla d'Intervenció (15% nota)
 
 > [!IMPORTANT]
-> Fitxer principal: [E3_pla_intervencio.md](file:///c:/avigest-projecte-git/docs/E3_pla_intervencio/E3_pla_intervencio.md)
+> Fitxer principal: [E3_pla_intervencio.md](../E3_pla_intervencio/E3_pla_intervencio.md)
 
 **Contingut del document E3 (Homologat amb els apartats 6.1 a 6.6 de la Guia oficial):**
 - [x] Introducció i objectius del Pla d'Intervenció (Secció 1)
@@ -80,7 +80,7 @@
 
 ### A4. Diari de Treball
 
-> Fitxer: [diari_treball.md](file:///c:/avigest-projecte-git/docs/diari_treball/diari_treball.md)
+> Fitxer: [diari_treball.md](diari_treball.md)
 
 - [x] Sessió 1 — 14/09/2026: Constitució equip i rols (E0)
 - [x] Sessió 2 — 21/09/2026: Estudi de necessitats i mercat (E1)
@@ -97,12 +97,12 @@
 
 ### A5. Fitxes de Decisió Tècnica
 
-- [x] [FD01 — SGBD: MariaDB 10.11 LTS + Rèplica GTID](file:///c:/avigest-projecte-git/docs/fitxes_decisio/FD01_sgbd.md) *(Mariam)*
-- [x] [FD02 — Directori: OpenLDAP + phpLDAPadmin](file:///c:/avigest-projecte-git/docs/fitxes_decisio/FD02_ldap.md) *(Joan)*
-- [x] [FD03 — Tallafocs: OPNsense amb DMZ i Llista Blanca](file:///c:/avigest-projecte-git/docs/fitxes_decisio/FD03_tallafocs_dmz.md) *(Joan)*
-- [x] [FD04 — Còpies: srv-backup dedicat + 2n disc](file:///c:/avigest-projecte-git/docs/fitxes_decisio/FD04_backups_prd.md) *(Joan)*
-- [x] [FD05 — IoT: Híbrid RS485 + LoRaWAN + MQTT](file:///c:/avigest-projecte-git/docs/fitxes_decisio/FD05_iot_comunicacions.md) *(Mariam)*
-- [x] [FD06 — Hipervisor: Oracle VM VirtualBox 7.x](file:///c:/avigest-projecte-git/docs/fitxes_decisio/FD06_hipervisor.md) *(Joan + Mariam)*
+- [x] [FD01 — SGBD: MariaDB 10.11 LTS + Rèplica GTID](../fitxes_decisio/FD01_sgbd.md) *(Mariam)*
+- [x] [FD02 — Directori: OpenLDAP + phpLDAPadmin](../fitxes_decisio/FD02_ldap.md) *(Joan)*
+- [x] [FD03 — Tallafocs: OPNsense amb DMZ i Llista Blanca](../fitxes_decisio/FD03_tallafocs_dmz.md) *(Joan)*
+- [x] [FD04 — Còpies: srv-backup dedicat + 2n disc](../fitxes_decisio/FD04_backups_prd.md) *(Joan)*
+- [x] [FD05 — IoT: Híbrid RS485 + LoRaWAN + MQTT](../fitxes_decisio/FD05_iot_comunicacions.md) *(Mariam)*
+- [x] [FD06 — Hipervisor: Oracle VM VirtualBox 7.x](../fitxes_decisio/FD06_hipervisor.md) *(Joan + Mariam)*
 
 ---
 
@@ -110,56 +110,56 @@
 
 ### B1. Base de Dades — MariaDB 10.11 LTS *(Responsable: Mariam)*
 
-- [x] Esquema DDL complet (11 taules normalitzades en 3FN) → [01_esquema.sql](file:///c:/avigest-projecte-git/bd/sql/01_esquema.sql)
-- [x] Document d'arquitectura i justificació del disseny (11 taules, vistes multitenant, triggers) → [explicacio_disseny_base_dades.md](file:///c:/avigest-projecte-git/bd/explicacio_disseny_base_dades.md)
-- [x] Triggers i procediments SQL MariaDB (termòstat, alarmes, alta atòmica) → [02_triggers_procedures.sql](file:///c:/avigest-projecte-git/bd/procediments-triggers/02_triggers_procedures.sql)
-- [x] Dades de prova inicials → [03_dades_prova.sql](file:///c:/avigest-projecte-git/bd/sql/03_dades_prova.sql)
-- [x] Usuaris i rols SQL de mínim privilegi → [04_usuaris_rols_bd.sql](file:///c:/avigest-projecte-git/bd/sql/04_usuaris_rols_bd.sql)
-- [x] Vistes comparatives de negoci (mortalitat, climàtic, silos, panell executiu) → [05_vistes_consultes_comparatives.sql](file:///c:/avigest-projecte-git/bd/sql/05_vistes_consultes_comparatives.sql)
-- [x] Model ER documentat amb diagrama Mermaid → [model_er.md](file:///c:/avigest-projecte-git/bd/model-er/model_er.md)
+- [x] Esquema DDL complet (11 taules normalitzades en 3FN) → [01_esquema.sql](../../bd/sql/01_esquema.sql)
+- [x] Document d'arquitectura i justificació del disseny (11 taules, vistes multitenant, triggers) → [explicacio_disseny_base_dades.md](../../bd/explicacio_disseny_base_dades.md)
+- [x] Triggers i procediments SQL MariaDB (termòstat, alarmes, alta atòmica) → [02_triggers_procedures.sql](../../bd/procediments-triggers/02_triggers_procedures.sql)
+- [x] Dades de prova inicials → [03_dades_prova.sql](../../bd/sql/03_dades_prova.sql)
+- [x] Usuaris i rols SQL de mínim privilegi → [04_usuaris_rols_bd.sql](../../bd/sql/04_usuaris_rols_bd.sql)
+- [x] Vistes comparatives de negoci (mortalitat, climàtic, silos, panell executiu) → [05_vistes_consultes_comparatives.sql](../../bd/sql/05_vistes_consultes_comparatives.sql)
+- [x] Model ER documentat amb diagrama Mermaid → [model_er.md](../../bd/model-er/model_er.md)
 - [ ] **Provar l'execució real de les 4 vistes noves amb Docker Compose** *(Sessió 7)*
 - [ ] **Provar l'execució del trigger amb lectures extremes des del simulador IoT** *(Sessió 8)*
 
 ### B2. Docker Compose — Entorn `srv-serveis` *(Responsable: Joan + Mariam)*
 
-- [x] `docker-compose.yml` amb MariaDB 10.11 LTS, Rèplica, MQTT Mosquitto, OpenLDAP i phpLDAPadmin → [docker-compose.yml](file:///c:/avigest-projecte-git/docker/docker-compose.yml)
-- [x] Configuració Mosquitto → [mosquitto.conf](file:///c:/avigest-projecte-git/docker/mosquitto.conf)
+- [x] `docker-compose.yml` amb MariaDB 10.11 LTS, Rèplica, MQTT Mosquitto, OpenLDAP i phpLDAPadmin → [docker-compose.yml](../../docker/docker-compose.yml)
+- [x] Configuració Mosquitto → [mosquitto.conf](../../docker/mosquitto.conf)
 - [x] Scripts d'inicialització BD dins de `docker/initdb/` (01 a 05)
 - [ ] **Aixecar Docker Compose a la VM `srv-serveis` i verificar que tots els serveis arranquen sense errors** *(Sessió 7)*
 
 ### B3. Infraestructura de Xarxa i Seguretat *(Responsable: Joan)*
 
-- [x] Disseny de la DMZ, regles de tallafocs i política de seguretat → [disseny_dmz_seguretat.md](file:///c:/avigest-projecte-git/infra/dmz-tallafocs/disseny_dmz_seguretat.md)
-- [x] Script de regles de tallafocs OPNsense → [firewall_regles.sh](file:///c:/avigest-projecte-git/infra/dmz-tallafocs/firewall_regles.sh)
-- [x] Especificació de maquinari i redundància → [infraestructura_maquinari.md](file:///c:/avigest-projecte-git/infra/xarxa/infraestructura_maquinari.md)
+- [x] Disseny de la DMZ, regles de tallafocs i política de seguretat → [disseny_dmz_seguretat.md](../../infra/dmz-tallafocs/disseny_dmz_seguretat.md)
+- [x] Script de regles de tallafocs OPNsense → [firewall_regles.sh](../../infra/dmz-tallafocs/firewall_regles.sh)
+- [x] Especificació de maquinari i redundància → [infraestructura_maquinari.md](../../infra/xarxa/infraestructura_maquinari.md)
 - [ ] **Implementar les regles a la VM `fw-seu` d'OPNsense real** *(Sessió 7)*
 - [ ] **Provar l'aïllament DMZ→LAN: des de `dmz-web` intentar fer ping a `srv-backup` (ha de fallar)** *(Sessió 7)*
 - [ ] **Provar que la VPN només permet trànsit MQTT (ports 1883/8883) i bloqueja tot el reste** *(Sessió 7)*
 
 ### B4. LDAP — Directori Centralitzat d'Usuaris *(Responsable: Joan)*
 
-- [x] Política de permisos, rols i aïllament → [politica_permisos_ldap.md](file:///c:/avigest-projecte-git/infra/ldap/politica_permisos_ldap.md)
-- [x] Fitxer LDIF d'arbre base → [01_arbre_base.ldif](file:///c:/avigest-projecte-git/infra/ldap/ldif/01_arbre_base.ldif)
-- [x] Fitxer LDIF d'usuaris inicials → [02_usuaris_inicials.ldif](file:///c:/avigest-projecte-git/infra/ldap/ldif/02_usuaris_inicials.ldif)
+- [x] Política de permisos, rols i aïllament → [politica_permisos_ldap.md](../../infra/ldap/politica_permisos_ldap.md)
+- [x] Fitxer LDIF d'arbre base → [01_arbre_base.ldif](../../infra/ldap/ldif/01_arbre_base.ldif)
+- [x] Fitxer LDIF d'usuaris inicials → [02_usuaris_inicials.ldif](../../infra/ldap/ldif/02_usuaris_inicials.ldif)
 - [ ] **Carregar els LDIFs al contenidor OpenLDAP i verificar amb `ldapsearch`** *(Sessió 8)*
 - [ ] **Verificar phpLDAPadmin: entrar amb `cn=admin,dc=avigest,dc=cat` i veure l'arbre** *(Sessió 8)*
 - [ ] **Comprovar que un gestor de la Granja Bellpuig no pot veure la Granja Alcarràs** *(Sessió 8)*
 
 ### B5. Còpies de Seguretat i PRD *(Responsable: Joan)*
 
-- [x] Pla de Recuperació davant Desastres complet → [pla_recuperacio_desastres_prd.md](file:///c:/avigest-projecte-git/infra/backups-prd/pla_recuperacio_desastres_prd.md)
-- [x] Script de backup automatitzat → [backup_avigest.sh](file:///c:/avigest-projecte-git/infra/backups-prd/backup_avigest.sh)
-- [x] Script de restauració → [restaurar_avigest.sh](file:///c:/avigest-projecte-git/infra/backups-prd/restaurar_avigest.sh)
-- [x] Configuració de crontab → [crontab.txt](file:///c:/avigest-projecte-git/infra/backups-prd/crontab.txt)
+- [x] Pla de Recuperació davant Desastres complet → [pla_recuperacio_desastres_prd.md](../../infra/backups-prd/pla_recuperacio_desastres_prd.md)
+- [x] Script de backup automatitzat → [backup_avigest.sh](../../infra/backups-prd/backup_avigest.sh)
+- [x] Script de restauració → [restaurar_avigest.sh](../../infra/backups-prd/restaurar_avigest.sh)
+- [x] Configuració de crontab → [crontab.txt](../../infra/backups-prd/crontab.txt)
 - [ ] **Crear la VM `srv-backup` amb el segon disc virtual muntat a `/mnt/disc-extern-backup/`** *(Sessió 9)*
 - [ ] **Executar `backup_avigest.sh` i comprovar que genera el `.tar.gz` amb SHA-256** *(Sessió 9)*
 - [ ] **Simular desastre total: destruir les dades de `srv-serveis` i restaurar amb `restaurar_avigest.sh` en < 30 min** *(Sessió 9)*
 
 ### B6. IoT — Simulador i Comunicacions *(Responsable: Mariam)*
 
-- [x] Simulador IoT Python complet → [simulador_iot.py](file:///c:/avigest-projecte-git/iot/sensors/simulador_iot.py)
-- [x] Codi de referència ESP32 Arduino → [codi_esp32_referencia.ino](file:///c:/avigest-projecte-git/iot/sensors/codi_esp32_referencia.ino)
-- [x] Arquitectura del flux de dades documentada → [arquitectura_flux_dades.md](file:///c:/avigest-projecte-git/iot/comunicacions/arquitectura_flux_dades.md)
+- [x] Simulador IoT Python complet → [simulador_iot.py](../../iot/sensors/simulador_iot.py)
+- [x] Codi de referència ESP32 Arduino → [codi_esp32_referencia.ino](../../iot/sensors/codi_esp32_referencia.ino)
+- [x] Arquitectura del flux de dades documentada → [arquitectura_flux_dades.md](../../iot/comunicacions/arquitectura_flux_dades.md)
 - [ ] **Executar `python3 simulador_iot.py --mode normal` i veure lectures a MariaDB** *(Sessió 7-8)*
 - [ ] **Executar `python3 simulador_iot.py --mode alarma` i verificar que el trigger activa el ventilador i genera l'alarma** *(Sessió 8)*
 - [ ] **Provar mode MQTT: `simulador_iot.py --mode mqtt --broker 10.1.1.10`** *(Sessió 8)*
@@ -167,8 +167,8 @@
 
 ### B7. Automatització de Granges — Script de Variació *(Responsable: Joan + Mariam)*
 
-- [x] Script d'alta automatitzada → [alta_granja.sh](file:///c:/avigest-projecte-git/scripts/automatitzacio-granges/alta_granja.sh)
-- [x] Documentació de l'script → [README.md](file:///c:/avigest-projecte-git/scripts/automatitzacio-granges/README.md)
+- [x] Script d'alta automatitzada → [alta_granja.sh](../../scripts/automatitzacio-granges/alta_granja.sh)
+- [x] Documentació de l'script → [README.md](../../scripts/automatitzacio-granges/README.md)
 - [x] **Executar l'script per crear la Granja 2 (`10.1.2.0/24`) com a prova de variació** *(Sessió 10)*
 - [x] **Verificar que ha creat: la granja + naus a MariaDB, l'OU + usuari a LDAP i la regla al firewall** *(Sessió 10)*
 
@@ -177,7 +177,7 @@
 ## 🖥️ C. MÀQUINES VIRTUALS — PROVES DE LABORATORI
 
 > [!TIP]
-> Guia pas a pas: [guia_desplegament_maquines_virtuals.md](file:///c:/avigest-projecte-git/docs/guia_desplegament_maquines_virtuals.md) i [Guies_MV](file:///c:/avigest-projecte-git/docs/Guies_MV)
+> Guia pas a pas: [guia_desplegament_maquines_virtuals.md](../guia_desplegament_maquines_virtuals.md) i [Guies_MV](../Guies_MV)
 
 | Màquina Virtual | SO / Base | Xarxa (VirtualBox / VMware) | IP | Funció | Estat |
 | :--- | :--- | :--- | :--- | :--- | :---: |

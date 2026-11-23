@@ -12,6 +12,7 @@
 - **Joan Garcia** (Cap de Projecte · Infraestructura, Xarxa, Seguretat i Serveis Centralitzats)  
 - **Mariam Solano** (Desenvolupament de Dades, IoT, Automatització i Scripts)  
 **Data de lliurament oficial:** 4 de desembre de 2026  
+**Repositori oficial GitHub:** [https://github.com/JoanGarcia25/avigest-projecte](https://github.com/JoanGarcia25/avigest-projecte)  
 **Versió del document:** 2.1 (Pla d'Intervenció i Pressupostos Homologat)  
 
 ---
@@ -94,7 +95,7 @@ Tots els recursos materials han estat seleccionats per garantir compatibilitat m
 
 ### 2.3. Eines de Treball, Laboratori i Gestió
 
-- **Control de Versions:** Git i repositori centralitzat a GitHub ([avigest-projecte-git](https://github.com/)).
+- **Control de Versions:** Git i repositori centralitzat a GitHub ([https://github.com/JoanGarcia25/avigest-projecte](https://github.com/JoanGarcia25/avigest-projecte)).
 - **Entorn de Virtualització de Laboratori:** **Oracle VM VirtualBox 7.x** (vegeu fitxa [FD06_hipervisor.md](../fitxes_decisio/FD06_hipervisor.md)), utilitzant adaptadors de xarxa interna (`intnet`) per simular l'aïllament físic WAN, DMZ, LAN i Xarxa de Granja.
 - **Eines de Modelat i Documentació:** VS Code, Markdown natiu, Mermaid JS per a diagrames d'arquitectura/Gantt i Dia / Draw.io per a l'esquema relacional Entity-Relationship.
 - **Eines de Prova i Simulació:** Scripts Python 3.12 (`simulador_iot.py`) amb llibreries `paho-mqtt` i `pymodbus` per generar telemetria real de camp.
@@ -440,26 +441,26 @@ El projecte manté un registre documental i de codi unificat al repositori Git:
 ### 8.1. Plantilles i Documents d'Operació Oficials
 - **Actes de Reunió i Seguiment:** Registre d'acords presos setmanalment a classe.
 - **Fitxes de Decisió Tècnica (FD01 a FD06):** Seguint la plantilla oficial de la guia (Decisió, Context, Alternatives, Decisió Presa, Verificació i Fonts).
-- **Diari de Treball i Checklist:** Fitxers [`diari_treball.md`](file:///c:/avigest-projecte-git/docs/diari_treball/diari_treball.md) i [`checklist_projecte_avigest.md`](file:///c:/avigest-projecte-git/docs/diari_treball/checklist_projecte_avigest.md) amb registre hora a hora.
-- **Manuals d'Implantació i Operació:** [Guia de desplegament de màquines virtuals](file:///c:/avigest-projecte-git/docs/Guies_MV/guia_desplegament_maquines_virtuals.md) i procediment de restauració davant de desastres ([PRD](file:///c:/avigest-projecte-git/infra/backups-prd/pla_recuperacio_desastres_prd.md)).
+- **Diari de Treball i Checklist:** Fitxers [`diari_treball.md`](../diari_treball/diari_treball.md) i [`checklist_projecte_avigest.md`](../diari_treball/checklist_projecte_avigest.md) amb registre hora a hora.
+- **Manuals d'Implantació i Operació:** [Guia de desplegament de màquines virtuals](../Guies_MV/guia_desplegament_maquines_virtuals.md) i procediment de restauració davant de desastres ([PRD](../../infra/backups-prd/pla_recuperacio_desastres_prd.md)).
 
 ### 8.2. Estructura de Carpetes del Repositori Git
 
 | Carpeta / Ruta al Repositori | Contingut i Propòsit | Responsable de Manteniment |
 | :--- | :--- | :---: |
-| [`bd/sql/`](file:///c:/avigest-projecte-git/bd/sql/) | Esquema DDL en 3FN, dades de prova inicials, vistes i rols de MariaDB 10.11 LTS. | **Mariam Solano** |
-| [`bd/procediments-triggers/`](file:///c:/avigest-projecte-git/bd/procediments-triggers/) | Triggers de termòstat automàtic, alarmes i procediments en MariaDB SQL. | **Mariam Solano** |
-| [`bd/model-er/`](file:///c:/avigest-projecte-git/bd/model-er/) | Documentació i diagrames del model de dades relacional (Dia i gràfic). | **Mariam Solano** |
-| [`docker/`](file:///c:/avigest-projecte-git/docker/) | `docker-compose.yml`, configuració de Mosquitto i scripts d'arrencada (`initdb/`). | **Joan Garcia / Mariam** |
-| [`infra/dmz-tallafocs/`](file:///c:/avigest-projecte-git/infra/dmz-tallafocs/) | Disseny de la DMZ, polítiques de seguretat i scripts de regles d'OPNsense. | **Joan Garcia** |
-| [`infra/ldap/`](file:///c:/avigest-projecte-git/infra/ldap/) | Arbre base organitzatiu i fitxers LDIF d'usuaris inicials per a OpenLDAP. | **Joan Garcia** |
-| [`infra/backups-prd/`](file:///c:/avigest-projecte-git/infra/backups-prd/) | Scripts d'automatització de còpies (`backup_avigest.sh`) i restauració PRD. | **Joan Garcia** |
-| [`iot/sensors/`](file:///c:/avigest-projecte-git/iot/sensors/) | Simulador IoT en Python (`simulador_iot.py`) i codi C++ ESP32 de referència. | **Mariam Solano** |
-| [`scripts/automatitzacio-granges/`](file:///c:/avigest-projecte-git/scripts/automatitzacio-granges/) | Script bash d'alta automàtica de granges (`alta_granja.sh`) per a la variació. | **Mariam Solano** |
-| [`docs/E2_disseny_tecnic/`](file:///c:/avigest-projecte-git/docs/E2_disseny_tecnic/) | Memòria oficial de Disseny Tècnic del Projecte (Lliurable E2). | **Ambdós** |
-| [`docs/E3_pla_intervencio/`](file:///c:/avigest-projecte-git/docs/E3_pla_intervencio/) | Memòria oficial del Pla d'Intervenció i Pressupostos (Lliurable E3). | **Ambdós** |
-| [`docs/fitxes_decisio/`](file:///c:/avigest-projecte-git/docs/fitxes_decisio/) | Fitxes de decisió tècnica justificades FD01 a FD06 amb fonts oficials. | **Ambdós** |
-| [`docs/diari_treball/`](file:///c:/avigest-projecte-git/docs/diari_treball/) | Diari de treball setmanal d'hores lectives i checklist del projecte. | **Ambdós** |
+| [`bd/sql/`](../../bd/sql/) | Esquema DDL en 3FN, dades de prova inicials, vistes i rols de MariaDB 10.11 LTS. | **Mariam Solano** |
+| [`bd/procediments-triggers/`](../../bd/procediments-triggers/) | Triggers de termòstat automàtic, alarmes i procediments en MariaDB SQL. | **Mariam Solano** |
+| [`bd/model-er/`](../../bd/model-er/) | Documentació i diagrames del model de dades relacional (Dia i gràfic). | **Mariam Solano** |
+| [`docker/`](../../docker/) | `docker-compose.yml`, configuració de Mosquitto i scripts d'arrencada (`initdb/`). | **Joan Garcia / Mariam** |
+| [`infra/dmz-tallafocs/`](../../infra/dmz-tallafocs/) | Disseny de la DMZ, polítiques de seguretat i scripts de regles d'OPNsense. | **Joan Garcia** |
+| [`infra/ldap/`](../../infra/ldap/) | Arbre base organitzatiu i fitxers LDIF d'usuaris inicials per a OpenLDAP. | **Joan Garcia** |
+| [`infra/backups-prd/`](../../infra/backups-prd/) | Scripts d'automatització de còpies (`backup_avigest.sh`) i restauració PRD. | **Joan Garcia** |
+| [`iot/sensors/`](../../iot/sensors/) | Simulador IoT en Python (`simulador_iot.py`) i codi C++ ESP32 de referència. | **Mariam Solano** |
+| [`scripts/automatitzacio-granges/`](../../scripts/automatitzacio-granges/) | Script bash d'alta automàtica de granges (`alta_granja.sh`) per a la variació. | **Mariam Solano** |
+| [`docs/E2_disseny_tecnic/`](../E2_disseny_tecnic/) | Memòria oficial de Disseny Tècnic del Projecte (Lliurable E2). | **Ambdós** |
+| [`docs/E3_pla_intervencio/`](./E3_pla_intervencio.md) | Memòria oficial del Pla d'Intervenció i Pressupostos (Lliurable E3). | **Ambdós** |
+| [`docs/fitxes_decisio/`](../fitxes_decisio/) | Fitxes de decisió tècnica justificades FD01 a FD06 amb fonts oficials. | **Ambdós** |
+| [`docs/diari_treball/`](../diari_treball/) | Diari de treball setmanal d'hores lectives i checklist del projecte. | **Ambdós** |
 
 ---
 

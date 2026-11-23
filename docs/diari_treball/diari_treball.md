@@ -186,14 +186,35 @@
     - Actualització del registre de fites a l'E3 (Secció 3.2) i posada al dia de la llista de verificació ([checklist_projecte_avigest.md](checklist_projecte_avigest.md)).
 - **Dedicació:** Joan: 6 h | Mariam: 6 h (Total: 12 h)
 
+---
 
+### Sessió 10: Dilluns, 23 de novembre de 2026 (6 hores)
+**Fita:** Auditoria Integral E2/E3 contra l'Enunciat Oficial, Portabilitat de Rutes Relatives, Vinculació de GitHub i Guia de Lliurament
+
+- **Objectiu:** Realitzar una auditoria rigorosa de compliment dels requeriments de l'enunciat oficial (`04_projecte_ASIX_01 .docx.pdf`), blindar la coherència creuada entre el document de Disseny Tècnic (E2) i el Pla d'Intervenció (E3), eliminar les rutes absolutes locals incompatibles convertint-les a rutes relatives de Git portables, vincular el repositori oficial de GitHub (`https://github.com/JoanGarcia25/avigest-projecte`) i crear la guia/checklist oficial de lliurament del 4 de desembre.
+- **Treball realitzat durant les 6 hores:**
+  - **Joan:**
+    - Revisió d'infraestructura, seguretat i xarxes d'E2 contra els requeriments 4.1, 4.4, 4.5 i 4.6 de l'enunciat oficial: comprovació de la topologia de 7 màquines virtuals, taula de 9 regles perimetrals d'OPNsense amb política *Default DROP*, llista blanca d'IPs de clients, xarxa VPN WireGuard (`10.0.100.0/24`) i aïllament físic DMZ-LAN.
+    - Detecció i correcció crítica de portabilitat de fitxers: substitució de totes les rutes absolutes locals `file:///c:/avigest-projecte/...` per rutes relatives estàndard de Git (`../../infra/...`, `../fitxes_decisio/...`) perquè el repositori sigui 100% portable i funcional per als professors en qualsevol sistema operatiu (Windows, Linux, macOS) o directament a la interfície web de GitHub.
+    - Vinculació del repositori oficial de GitHub (`https://github.com/JoanGarcia25/avigest-projecte`) a la portada i metadades dels documents clau (`README.md`, `E2_document_disseny_tecnic.md`, `E3_pla_intervencio.md` i `guia_lliurament_e2_e3.md`).
+    - Neteja de marcadors de conflicte Git residuals a la capçalera i a la secció 11.2 de l'E2, unificant formalment els noms i rols de l'equip.
+  - **Mariam:**
+    - Revisió de la base de dades MariaDB 10.11 LTS, procediments i IoT contra els requeriments 4.2, 4.3, 4.7 i 4.8 de l'enunciat oficial: comprovació del model Entitat-Relació Chen oficial ([diagrama_er_chen.svg](../../bd/model-er/diagrama_er_chen.svg)) amb la incorporació de l'entitat `pagaments` requerida pel professorat, justificació de la 3FN, triggers climàtics automàtics i 4 vistes de negoci.
+    - Creació de la guia de lliurament oficial [guia_lliurament_e2_e3.md](../guia_lliurament_e2_e3.md) amb el checklist complet d'avaluació que mapeja cadascun dels apartats d'E2 i E3 amb les evidències al repositori.
+    - Verificació del dimensionament de camp IoT: inventari de sensòrica (SHT30, Senseair S8, càrrega de sitges, impulsos d'aigua), freqüències de mostreig justificades (30s a 15min) i funcionament autònom Edge Computing amb buffer *Store-and-Forward* de 72 hores davant talls de xarxa.
+    - Comprovació de l'script bash d'alta automatitzada [alta_granja.sh](../../scripts/automatitzacio-granges/alta_granja.sh) per a la prova presencial de variació de la Granja 2 (`10.1.2.0/24`).
+  - **Treball conjunt:**
+    - Auditoria de coherència creuada E2 vs E3: verificació que tots els costos, inventaris, models de maquinari (Dell PowerEdge, Advantech, Teltonika, Dragino, Cisco), matriu RACI i càrrega lectiva oficial (198h per alumne = 396h totals) coincideixen al 100% sense cap discrepància.
+    - Verificació de la Norma 4 de l'enunciat: assegurat que tant l'E2 com l'E3 contenen l'Annex obligatori d'Ús d'Intel·ligència Artificial degudament emplenat amb eines, àmbit i mètode de verificació per part dels alumnes.
+    - Posada al dia del diari de treball i tancament de la sessió 10 amb les 12 hores computades.
+- **Dedicació:** Joan: 6 h | Mariam: 6 h (Total: 12 h)
 
 ---
 
 ## Taula Resum d'Hores Lectives Dedicades
 
 | Sessió | Data | Fase / Fita | Hores Joan | Hores Mariam | Total Sessió |
-| :---: | :---: | :--- | :--- :---: | :---: | :---: |
+| :---: | :---: | :--- | :---: | :---: | :---: |
 | **S1** | Dilluns 14/09/2026 | Constitució equip i rols (E0) | 6 h | 6 h | **12 h** |
 | **S2** | Dilluns 21/09/2026 | Estudi de necessitats i mercat (E1) | 6 h | 6 h | **12 h** |
 | **S3** | Dilluns 28/09/2026 | Tancament E1 i preparació diapositives | 6 h | 6 h | **12 h** |
@@ -204,8 +225,8 @@
 | **S7** | Dilluns 02/11/2026 | Validació MariaDB 10.11 Docker, triggers i adaptació guia E2-E3 | 6 h | 6 h | **12 h** |
 | **S8** | Dilluns 09/11/2026 | Arbre LDAP DIT, model ER Chen (Dia) i consolidació MariaDB | 6 h | 6 h | **12 h** |
 | **S9** | Dilluns 16/11/2026 | Pagaments, backups PRD, gaps E2/E3, ajust E3 i logotip | 6 h | 6 h | **12 h** |
-| **S10** | Dilluns 23/11/2026 | *(Sessió d'avui — En curs)* | *En curs* | *En curs* | *En curs* |
-| **TOTAL** | *(Tancat fins S9)* | **9 dilluns lectius x 6 hores** | **54 h** | **54 h** | **108 h** |
+| **S10** | Dilluns 23/11/2026 | Auditoria E2/E3, portabilitat rutes relatives, GitHub i guia lliurament | 6 h | 6 h | **12 h** |
+| **TOTAL** | *(Tancat fins S10)* | **10 dilluns lectius x 6 hores** | **60 h** | **60 h** | **120 h** |
 
 ---
 
@@ -228,26 +249,20 @@ gantt
     S7 Validació Docker i DDL :done, 2026-11-02, 1d
     S8 Arbre LDAP i Model ER  :done, 2026-11-09, 1d
     S9 Pagaments, Gaps i Logo :done, 2026-11-16, 1d
+    S10 Auditoria, Rutes i Git:done, 2026-11-23, 1d
     section Sessions Planificades
-    S10 Sessió d'avui (en curs)         :active, 2026-11-23, 1d
-    S11 Integració final E2/E3          :2026-11-30, 1d
-    Lliurament oficial E2 i E3          :milestone, 2026-12-04, 0d
+    S11 Integració final i PDF :2026-11-30, 1d
+    Lliurament oficial E2 i E3 :milestone, 2026-12-04, 0d
 ```
 
 ### Detall de les properes sessions lectives:
 
-1. **Sessió 10 (Dilluns, 23 de novembre — EN CURS / AVUI):**
-   - **Treball conjunt / Activitats d'avui:**
-     - Conversa amb el professor sobre el dimensionament econòmic: reestructuració integral de l'E3 per establir el pressupost per granja (4.136 €), el temps real d'instal·lació in-situ (2 dies laborables de 2 tècnics a 8h/dia ordinàries) i la quota de manteniment/SaaS (50 €/mes).
-     - Acord i adopció oficial d'**Oracle VM VirtualBox 100%** com a hipervisor del laboratori: redacció de la fitxa de decisió tècnica [FD06_hipervisor.md](../fitxes_decisio/FD06_hipervisor.md) i incorporació a l'E2 i al checklist.
-     - Repàs de la variació presencial amb `alta_granja.sh` i resolució de dubtes estructurals de la base de dades. Al finalitzar la jornada es tancarà el registre complet d'hores al diari.
+1. **Sessió 11 (Dilluns, 30 de novembre — Darrera sessió presencial a l'aula abans del lliurament):**
+   - **Treball conjunt (Revisió creuada formal):** Revisió creuada final d'estil, ortografia i coherència tècnica (en Joan audita les seccions de BD, triggers, IoT i scripts; la Mariam audita xarxa, seguretat OPNsense, LDAP i backups/PRD).
+   - **Treball conjunt:** Generació i maquetació definitiva dels documents oficials en format PDF (**`E2_document_disseny_tecnic.pdf`** i **`E3_pla_intervencio.pdf`**), verificant que taules i diagrames no es tallin.
+   - **Preparació de la defensa:** Repàs conjunt de la justificació de disseny i de l'assaig d'`alta_granja.sh` de cara a possibles preguntes del tribunal docent.
 
-2. **Sessió 11 (Dilluns, 30 de novembre — Darrera sessió presencial a l'aula):**
-   - **Treball conjunt (Revisió creuada formal):** Revisió creuada d'estil, ortografia i coherència tècnica (en Joan audita les seccions de BD, triggers, IoT i scripts; la Mariam audita xarxa, seguretat OPNsense, LDAP i backups/PRD).
-   - **Treball conjunt:** Maquetació definitiva i generació dels documents oficials en format PDF (**`E2_document_disseny_tecnic.pdf`** i **`E3_pla_intervencio.pdf`**), verificant que taules i diagrames no es tallin.
-   - **Preparació de la defensa:** Repàs conjunt de la justificació de disseny i de l'assaig d'`alta_granja.sh` de cara a possibles preguntes del tribunal.
-
-3. **Divendres, 4 de desembre de 2026 (Lliurament Oficial):**
+2. **Divendres, 4 de desembre de 2026 (Lliurament Oficial):**
    - **Pujada al Campus Virtual:** Lliurament dels documents en PDF (E2: 20%, E3: 15% i Diari de Treball).
-   - **Control de versions final a GitHub:** `git push` definitiu a la branca principal amb tot el repositori net, etiquetat i llest per a l'avaluació.
+   - **Control de versions final a GitHub:** `git push` definitiu a la branca `main` amb tot el repositori net, etiquetat i llest per a l'avaluació.
 

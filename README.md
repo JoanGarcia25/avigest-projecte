@@ -5,7 +5,8 @@
 # AviGest S.L. — Sistema de gestió centralitzada de granges avícoles
 
 Projecte de mòdul ASIX (CFGS Administració de Sistemes Informàtics en Xarxa).  
-Equip: **Joan** (Infraestructura, Xarxa i Seguretat) i **Mariam** (Base de Dades, IoT i Automatització).
+Equip: **Joan Garcia** (Infraestructura, Xarxa i Seguretat) i **Mariam Solano** (Base de Dades, IoT i Automatització).  
+**Repositori oficial:** [https://github.com/JoanGarcia25/avigest-projecte](https://github.com/JoanGarcia25/avigest-projecte)
 
 ---
 
