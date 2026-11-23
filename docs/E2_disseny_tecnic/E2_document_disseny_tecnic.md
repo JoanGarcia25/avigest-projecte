@@ -168,6 +168,7 @@ flowchart TD
 | **FD03** | Seguretat Perimetral | **OPNsense (`fw-seu`)** | Appliance dedicat amb 3 interfÃ­cies fÃ­siques (WAN, DMZ, LAN), servidor VPN integrat, llista blanca d'IPs i polÃ­tica estricta DMZ-LAN. | [FD03_tallafocs_dmz.md](../fitxes_decisio/FD03_tallafocs_dmz.md) |
 | **FD04** | CÃ²pies de Seguretat | **`srv-backup` dedicat + 2n disc** | AÃ¯llament de fallades (VM prÃ²pia), model 3-2-1 amb segon disc virtual per simular emmagatzematge extern, cron nocturn i RTO < 30 min. | [FD04_backups_prd.md](../fitxes_decisio/FD04_backups_prd.md) |
 | **FD05** | Comunicacions IoT | **Model HÃ­brid Edge (RS485 + LoRaWAN + MQTT)** | `granja1-sim` (Modbus a naus i LoRa a silos exteriors) cap a `granja1-srv` (MQTT local + buffer) i tÃºnel VPN cap a la seu. | [FD05_iot_comunicacions.md](../fitxes_decisio/FD05_iot_comunicacions.md) |
+| **FD06** | Hipervisor de VirtualitzaciÃ³ | **Oracle VM VirtualBox 7.x** | 100% de codi obert i gratuÃ¯t (GPLv2), xarxes internes `intnet` sense requerir permisos d'administrador al host de l'aula, multiplataforma i control per CLI (`VBoxManage`). | [FD06_hipervisor.md](../fitxes_decisio/FD06_hipervisor.md) |
 
 ---
 
